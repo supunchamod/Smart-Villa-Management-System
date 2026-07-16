@@ -3,7 +3,8 @@
         request()->routeIs('dashboard') => 'dashboards',
         request()->routeIs(['projects.index', 'file-manager', 'calendar', 'chat', 'inbox']) => 'apps',
         request()->routeIs(['customers.index', 'customers.show', 'products.index', 'invoices.index', 'invoices.show', 'rooms.*', 'bookings.*']) => 'commerce',
-        request()->routeIs(['settings', 'team', 'reports']) => 'pages',
+        request()->routeIs(['income.index', 'expenses.index', 'profit.index', 'reports', 'reports.generate']) => 'finance',
+        request()->routeIs(['settings', 'team']) => 'pages',
         request()->routeIs(['login', 'register']) => 'auth',
         default => null,
     };
@@ -58,12 +59,22 @@
           </div>
         </div>
 
+        <div class="nav-section nav-accordion {{ $openSection === 'finance' ? 'open' : '' }}">
+          <button class="nav-accordion-toggle" type="button" data-nav-accordion aria-expanded="{{ $openSection === 'finance' ? 'true' : 'false' }}"><span><i class="bi bi-cash-coin"></i>Finance</span><i class="bi bi-chevron-down"></i></button>
+          <div class="nav-accordion-panel">
+            <a class="nav-link {{ request()->routeIs('income.index') ? 'active' : '' }}" href="{{ route('income.index') }}"><i class="bi bi-cash-stack"></i><span>Income</span></a>
+            <a class="nav-link {{ request()->routeIs('expenses.index') ? 'active' : '' }}" href="{{ route('expenses.index') }}"><i class="bi bi-receipt-cutoff"></i><span>Expenses</span></a>
+            <a class="nav-link {{ request()->routeIs('profit.index') ? 'active' : '' }}" href="{{ route('profit.index') }}"><i class="bi bi-graph-up-arrow"></i><span>Profit Analyzer</span></a>
+            <a class="nav-link {{ request()->routeIs(['reports', 'reports.generate']) ? 'active' : '' }}" href="{{ route('reports') }}"><i class="bi bi-clipboard-data"></i><span>Reports</span></a>
+
+          </div>
+        </div>
+
         <div class="nav-section nav-accordion {{ $openSection === 'pages' ? 'open' : '' }}">
           <button class="nav-accordion-toggle" type="button" data-nav-accordion aria-expanded="{{ $openSection === 'pages' ? 'true' : 'false' }}"><span><i class="bi bi-layers"></i>Pages</span><i class="bi bi-chevron-down"></i></button>
           <div class="nav-accordion-panel">
             <a class="nav-link {{ request()->routeIs('settings') ? 'active' : '' }}" href="{{ route('settings') }}"><i class="bi bi-gear"></i><span>Settings</span></a>
             <a class="nav-link {{ request()->routeIs('team') ? 'active' : '' }}" href="{{ route('team') }}"><i class="bi bi-person-workspace"></i><span>Team</span></a>
-            <a class="nav-link {{ request()->routeIs('reports') ? 'active' : '' }}" href="{{ route('reports') }}"><i class="bi bi-clipboard-data"></i><span>Reports</span></a>
 
           </div>
         </div>

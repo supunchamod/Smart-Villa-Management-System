@@ -47,7 +47,7 @@
                         <td>{{ $booking->check_out->format('d M Y') }}</td>
                         <td>{{ number_format($booking->total_amount, 2) }}</td>
                         <td>{{ number_format($booking->advance_payment, 2) }}</td>
-                        <td>{{ number_format($booking->total_amount - $booking->advance_payment, 2) }}</td>
+                        <td>{{ number_format($booking->remaining_balance, 2) }}</td>
                         <td>
                           @php
                             $badge = ['confirmed' => 'new', 'checked_out' => 'won', 'cancelled' => 'stuck'][$booking->status] ?? 'new';

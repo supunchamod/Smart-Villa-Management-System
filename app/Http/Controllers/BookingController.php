@@ -111,7 +111,8 @@ class BookingController extends Controller
 
         $booking->update([
             'status' => 'checked_out',
-            'advance_payment' => $booking->total_amount,
+            'final_settlement_amount' => (float) $booking->total_amount - (float) $booking->advance_payment,
+            'checked_out_at' => now(),
         ]);
 
         return redirect()->route('bookings.show', $booking)
@@ -171,7 +172,7 @@ class BookingController extends Controller
                     'check_out' => $booking->check_out->toFormattedDateString(),
                     'total_amount' => number_format((float) $booking->total_amount, 2),
                     'advance_payment' => number_format((float) $booking->advance_payment, 2),
-                    'balance' => number_format((float) $booking->total_amount - (float) $booking->advance_payment, 2),
+                    'balance' => number_format($booking->remaining_balance, 2),
                     'status' => $booking->status,
                 ],
             ];

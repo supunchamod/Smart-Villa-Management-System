@@ -61,7 +61,7 @@
               <div class="balance-grid">
                 <div class="balance-stat"><span>Total Amount</span><strong>{{ number_format($booking->total_amount, 2) }}</strong></div>
                 <div class="balance-stat"><span>Advance Payment</span><strong>{{ number_format($booking->advance_payment, 2) }}</strong></div>
-                <div class="balance-stat"><span>Remaining Balance</span><strong>{{ number_format($booking->total_amount - $booking->advance_payment, 2) }}</strong></div>
+                <div class="balance-stat"><span>Remaining Balance</span><strong>{{ number_format($booking->remaining_balance, 2) }}</strong></div>
               </div>
             </div>
           </div>
@@ -75,7 +75,7 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
               </div>
               <div class="modal-body">
-                <p>This confirms the remaining balance of <strong>{{ number_format($booking->total_amount - $booking->advance_payment, 2) }}</strong> has been received from {{ $booking->customer_name }}. The booking will be marked as checked out and the final invoice will be generated.</p>
+                <p>This confirms the remaining balance of <strong>{{ number_format($booking->remaining_balance, 2) }}</strong> has been received from {{ $booking->customer_name }}. The booking will be marked as checked out and the final invoice will be generated.</p>
               </div>
               <div class="modal-footer">
                 <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>

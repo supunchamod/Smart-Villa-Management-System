@@ -3,7 +3,7 @@
         request()->routeIs('dashboard') => 'dashboards',
         request()->routeIs(['projects.index', 'file-manager', 'calendar', 'chat', 'inbox']) => 'apps',
         request()->routeIs(['customers.index', 'customers.show', 'products.index', 'invoices.index', 'invoices.show']) => 'commerce',
-        request()->routeIs(['settings', 'team', 'reports']) => 'pages',
+        request()->routeIs(['settings', 'team']) => 'pages',
         request()->routeIs(['login', 'register']) => 'auth',
         default => null,
     };

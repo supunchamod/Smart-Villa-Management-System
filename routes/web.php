@@ -2,8 +2,12 @@
 
 use App\Http\Controllers\BookingController;
 use App\Http\Controllers\CustomerController;
+use App\Http\Controllers\ExpenseController;
+use App\Http\Controllers\IncomeController;
 use App\Http\Controllers\InvoiceController;
 use App\Http\Controllers\PageController;
+use App\Http\Controllers\ProfitController;
+use App\Http\Controllers\ReportController;
 use App\Http\Controllers\RoomController;
 use App\Http\Controllers\SettingsController;
 use Illuminate\Support\Facades\Route;
@@ -18,7 +22,6 @@ Route::middleware('auth')->group(function () {
     Route::get('/inbox', [PageController::class, 'inbox'])->name('inbox');
     Route::get('/file-manager', [PageController::class, 'fileManager'])->name('file-manager');
     Route::get('/products', [PageController::class, 'products'])->name('products.index');
-    Route::get('/reports', [PageController::class, 'reports'])->name('reports');
     Route::get('/team', [PageController::class, 'team'])->name('team');
 
     Route::get('/settings', [SettingsController::class, 'edit'])->name('settings');
@@ -38,6 +41,15 @@ Route::middleware('auth')->group(function () {
     Route::post('/bookings/{booking}/checkout', [BookingController::class, 'checkout'])->name('bookings.checkout');
     Route::get('/bookings/{booking}/invoice/confirmation', [BookingController::class, 'confirmationInvoice'])->name('bookings.invoice.confirmation');
     Route::get('/bookings/{booking}/invoice/final', [BookingController::class, 'finalInvoice'])->name('bookings.invoice.final');
+
+    Route::get('/income', [IncomeController::class, 'index'])->name('income.index');
+
+    Route::resource('expenses', ExpenseController::class)->only(['index', 'store', 'update', 'destroy']);
+
+    Route::get('/profit', [ProfitController::class, 'index'])->name('profit.index');
+
+    Route::get('/reports', [ReportController::class, 'index'])->name('reports');
+    Route::get('/reports/generate', [ReportController::class, 'generate'])->name('reports.generate');
 });
 
 require __DIR__.'/auth.php';
