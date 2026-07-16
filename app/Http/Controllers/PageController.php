@@ -41,11 +41,6 @@ class PageController extends Controller
         return view('products');
     }
 
-    public function settings(): View
-    {
-        return view('settings');
-    }
-
     public function reports(): View
     {
         return view('reports');

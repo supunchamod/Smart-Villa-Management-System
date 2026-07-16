@@ -48,7 +48,10 @@
               <a href="pricing.html"><i class="bi bi-currency-dollar"></i><span>Pricing</span></a>
               <a href="faq.html"><i class="bi bi-question-lg"></i><span>FAQ</span></a>
             </div>
-            <a class="profile-logout" href="{{ route('login') }}">Logout <i class="bi bi-box-arrow-right"></i></a>
+            <form method="POST" action="{{ route('logout') }}">
+              @csrf
+              <button type="submit" class="profile-logout">Logout <i class="bi bi-box-arrow-right"></i></button>
+            </form>
           </div>
         </div>
       </header>
