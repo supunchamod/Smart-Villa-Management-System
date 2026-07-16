@@ -66,6 +66,7 @@
   <script src="{{ asset('assets/vendor/bootstrap/js/bootstrap.bundle.min.js') }}"></script>
   <script src="{{ asset('assets/vendor/chart/chart.umd.min.js') }}"></script>
   @stack('scripts')
+  <script defer src="{{ asset('assets/vendor/alpinejs/alpine.min.js') }}"></script>
   <script src="{{ asset('assets/js/main.js') }}"></script>
 </body>
 </html>

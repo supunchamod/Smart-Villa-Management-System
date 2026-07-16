@@ -2,7 +2,7 @@
     $openSection = match (true) {
         request()->routeIs('dashboard') => 'dashboards',
         request()->routeIs(['projects.index', 'file-manager', 'calendar', 'chat', 'inbox']) => 'apps',
-        request()->routeIs(['customers.index', 'customers.show', 'products.index', 'invoices.index', 'invoices.show']) => 'commerce',
+        request()->routeIs(['customers.index', 'customers.show', 'products.index', 'invoices.index', 'invoices.show', 'rooms.*', 'bookings.*']) => 'commerce',
         request()->routeIs(['settings', 'team', 'reports']) => 'pages',
         request()->routeIs(['login', 'register']) => 'auth',
         default => null,
@@ -50,6 +50,8 @@
             <a class="nav-link {{ request()->routeIs('customers.index') ? 'active' : '' }}" href="{{ route('customers.index') }}"><i class="bi bi-people"></i><span>Customers</span></a>
             <a class="nav-link {{ request()->routeIs('customers.show') ? 'active' : '' }}" href="{{ route('customers.show') }}"><i class="bi bi-person-vcard"></i><span>Customer Details</span></a>
             <a class="nav-link {{ request()->routeIs('products.index') ? 'active' : '' }}" href="{{ route('products.index') }}"><i class="bi bi-box-seam"></i><span>Products</span></a>
+            <a class="nav-link {{ request()->routeIs('rooms.*') ? 'active' : '' }}" href="{{ route('rooms.index') }}"><i class="bi bi-door-open"></i><span>Rooms</span></a>
+            <a class="nav-link {{ request()->routeIs('bookings.*') ? 'active' : '' }}" href="{{ route('bookings.index') }}"><i class="bi bi-journal-check"></i><span>Bookings</span></a>
             <a class="nav-link {{ request()->routeIs('invoices.index') ? 'active' : '' }}" href="{{ route('invoices.index') }}"><i class="bi bi-file-earmark-text"></i><span>Invoice List</span></a>
             <a class="nav-link {{ request()->routeIs('invoices.show') ? 'active' : '' }}" href="{{ route('invoices.show') }}"><i class="bi bi-file-richtext"></i><span>Invoice Details</span></a>
 

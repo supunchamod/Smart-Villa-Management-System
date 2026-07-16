@@ -738,6 +738,7 @@
     try {
       if (!window.FullCalendar) throw new Error('FullCalendar is not loaded.');
       calendarEl.innerHTML = '';
+      const eventsUrl = calendarEl.dataset.eventsUrl;
       const calendar = new FullCalendar.Calendar(calendarEl, {
         initialView: 'dayGridMonth',
         initialDate: calendarToday,
@@ -758,7 +759,19 @@
           day: 'Day',
           list: 'List'
         },
-        events: calendarEvents
+        events: eventsUrl || calendarEvents,
+        eventClick: (info) => {
+          info.jsEvent.preventDefault();
+          window.dispatchEvent(new CustomEvent('calendar-event-selected', {
+            detail: {
+              title: info.event.title,
+              start: info.event.start,
+              end: info.event.end,
+              color: info.event.backgroundColor,
+              ...info.event.extendedProps
+            }
+          }));
+        }
       });
       calendar.render();
       setTimeout(() => {

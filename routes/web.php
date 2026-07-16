@@ -1,8 +1,10 @@
 <?php
 
+use App\Http\Controllers\BookingController;
 use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\InvoiceController;
 use App\Http\Controllers\PageController;
+use App\Http\Controllers\RoomController;
 use App\Http\Controllers\SettingsController;
 use Illuminate\Support\Facades\Route;
 
@@ -27,6 +29,12 @@ Route::middleware('auth')->group(function () {
 
     Route::get('/customers', [CustomerController::class, 'index'])->name('customers.index');
     Route::get('/customers/details', [CustomerController::class, 'show'])->name('customers.show');
+
+    Route::resource('rooms', RoomController::class)->except('show');
+    Route::patch('/rooms/{room}/toggle-status', [RoomController::class, 'toggleStatus'])->name('rooms.toggle-status');
+
+    Route::get('/api/bookings', [BookingController::class, 'calendarFeed'])->name('bookings.calendar');
+    Route::resource('bookings', BookingController::class)->except('show');
 });
 
 require __DIR__.'/auth.php';
