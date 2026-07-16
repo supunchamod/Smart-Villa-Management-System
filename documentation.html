@@ -1,0 +1,274 @@
+<!doctype html>
+<html lang="en">
+
+<!-- Mirrored from html.themewant.com/dashora/documentation.html by HTTrack Website Copier/3.x [XR&CO'2014], Thu, 16 Jul 2026 17:06:04 GMT -->
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Dashora Documentation</title>
+  <meta name="description" content="Dashora documentation for setup, layouts, pages, components, customization, and browser features.">
+  <link rel="icon" type="image/svg+xml" href="assets/img/favicon.svg">
+  <link rel="shortcut icon" href="assets/img/favicon.svg">
+  <link href="assets/vendor/bootstrap/css/bootstrap.min.css" rel="stylesheet">
+  <link href="assets/vendor/bootstrap-icons/bootstrap-icons.css" rel="stylesheet">
+  <link href="assets/css/style.css" rel="stylesheet">
+  <style>
+    html, body { max-width: 100%; overflow-x: hidden; }
+    .docs-shell { display: grid; grid-template-columns: 300px minmax(0,1fr); min-height: 100vh; background: var(--bg); }
+    .docs-nav { position: sticky; top: 0; height: 100vh; padding: 24px; background: var(--surface); border-right: 1px solid var(--line); overflow-y: auto; }
+    .docs-nav .brand { margin-bottom: 24px; padding: 0; }
+    .docs-nav-group { display: grid; gap: 4px; margin-bottom: 18px; }
+    .docs-nav-label { display: block; margin: 14px 12px 6px; color: var(--muted); font-size: 11px; font-weight: 900; text-transform: uppercase; letter-spacing: .06em; }
+    .docs-nav a:not(.brand) { display: block; color: var(--muted); border-radius: 8px; padding: 9px 12px; font-weight: 700; }
+    .docs-nav a:not(.brand):hover { color: var(--primary); background: rgba(82,120,255,.10); }
+    .docs-main { min-width: 0; padding: 34px; max-width: 1220px; width: 100%; }
+    .docs-hero { margin-bottom: 24px; background: linear-gradient(135deg,#5278ff,#2fb6d0); color: #fff; }
+    .docs-hero p, .docs-hero .eyebrow { color: rgba(255,255,255,.84); }
+    .docs-hero h1 { margin: 6px 0 10px; max-width: 820px; font-size: clamp(34px, 5vw, 56px); font-weight: 900; line-height: 1.04; overflow-wrap: anywhere; }
+    .docs-grid { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: 16px; margin-top: 24px; }
+    .docs-stat { padding: 16px; border: 1px solid rgba(255,255,255,.22); border-radius: 8px; background: rgba(255,255,255,.12); }
+    .docs-stat strong { display: block; font-size: 28px; line-height: 1; margin-bottom: 7px; }
+    .docs-section { margin-bottom: 24px; }
+    .docs-section h2 { margin-bottom: 12px; font-size: 24px; font-weight: 800; }
+    .docs-section h3 { margin: 22px 0 10px; font-size: 18px; font-weight: 800; }
+    .docs-section p { color: var(--muted); }
+    .docs-card-grid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 16px; margin-top: 16px; }
+    .docs-mini-card { padding: 18px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface-2); }
+    .docs-mini-card i { color: var(--primary); font-size: 24px; margin-bottom: 10px; }
+    .docs-mini-card strong { display: block; margin-bottom: 5px; color: var(--text); font-size: 16px; }
+    .docs-mini-card span { display: block; color: var(--muted); font-size: 13px; line-height: 1.55; }
+    .docs-table-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 8px; }
+    .docs-table { width: 100%; min-width: 720px; border-collapse: collapse; }
+    .docs-table th, .docs-table td { padding: 13px 14px; border-bottom: 1px solid var(--line); vertical-align: top; }
+    .docs-table tr:last-child td { border-bottom: 0; }
+    .docs-table th { color: var(--text); background: var(--surface-2); font-size: 13px; }
+    .docs-code { display: block; padding: 14px; color: var(--text); background: var(--surface-2); border: 1px solid var(--line); border-radius: 8px; overflow-x: auto; font-size: 13px; line-height: 1.65; }
+    .docs-list { display: grid; gap: 9px; margin: 0; padding-left: 18px; color: var(--muted); }
+    .docs-check-list { display: grid; gap: 10px; margin: 16px 0 0; padding: 0; list-style: none; }
+    .docs-check-list li { display: flex; gap: 10px; color: var(--muted); }
+    .docs-check-list i { color: var(--success); flex: 0 0 auto; margin-top: 2px; }
+    .docs-callout { padding: 16px 18px; border: 1px solid rgba(82,120,255,.22); border-radius: 8px; background: rgba(82,120,255,.08); color: var(--muted); }
+    .docs-callout strong { display: block; color: var(--text); margin-bottom: 4px; }
+    @media (max-width: 991.98px) { .docs-shell { grid-template-columns: 1fr; } .docs-nav { position: static; height: auto; } .docs-grid, .docs-card-grid { grid-template-columns: 1fr 1fr; } }
+    @media (max-width: 575.98px) { .docs-nav { padding: 18px; border-right: 0; border-bottom: 1px solid var(--line); } .docs-nav .brand { margin-bottom: 16px; } .docs-nav-group { display: flex; gap: 8px; margin-bottom: 10px; overflow-x: auto; padding-bottom: 2px; scrollbar-width: none; } .docs-nav-group::-webkit-scrollbar { display: none; } .docs-nav-label { flex: 0 0 auto; margin: 7px 4px 0 0; } .docs-nav a:not(.brand) { flex: 0 0 auto; white-space: nowrap; padding: 7px 10px; border: 1px solid var(--line); background: var(--surface-2); font-size: 13px; } .docs-main { width: 100vw; padding: 20px 16px; overflow-x: hidden; } .docs-main > .panel { width: calc(100% - 16px); } .docs-hero h1 { width: min(100%, 310px); max-width: 310px; } .docs-hero p, .docs-section p, .docs-mini-card span, .docs-check-list li { width: min(100%, 310px); max-width: 310px; overflow-wrap: anywhere; } .docs-grid, .docs-card-grid { grid-template-columns: 1fr; } }
+
+  </style>
+</head>
+<body>
+  <div class="docs-shell">
+    <aside class="docs-nav">
+      <a class="brand" href="index.html"><span class="brand-mark">D</span><div><strong>Dashora</strong><small>Documentation</small></div></a>
+      <div class="docs-nav-group">
+        <span class="docs-nav-label">Start</span>
+        <a href="#intro">Introduction</a>
+        <a href="#quick-start">Quick Start</a>
+        <a href="#structure">Folder Structure</a>
+      </div>
+      <div class="docs-nav-group">
+        <span class="docs-nav-label">Template</span>
+        <a href="#pages">Pages Included</a>
+        <a href="#components">Components</a>
+        <a href="#layouts">Layouts</a>
+        <a href="#features">Browser Features</a>
+      </div>
+      <div class="docs-nav-group">
+        <span class="docs-nav-label">Customize</span>
+        <a href="#customize">Customization</a>
+        <a href="#charts">Charts</a>
+        <a href="#forms">Forms & Modals</a>
+        <a href="#assets">Assets</a>
+      </div>
+      <div class="docs-nav-group">
+        <span class="docs-nav-label">Release</span>
+        <a href="#validation">Validation</a>
+        <a href="#dependencies">Dependencies</a>
+        <a href="#support">Support Notes</a>
+      </div>
+    </aside>
+    <main class="docs-main">
+      <section id="intro" class="panel docs-hero">
+        <span class="eyebrow">Documentation</span>
+        <h1>Dashora HTML Admin Dashboard Template</h1>
+        <p>Dashora is a static, responsive admin dashboard template built with HTML5, Bootstrap 5, vanilla JavaScript, Chart.js, and local vendor assets. No backend, npm install, or build process is required.</p>
+        <div class="docs-grid">
+          <div class="docs-stat"><strong>61</strong><span>Total HTML files</span></div>
+          <div class="docs-stat"><strong>23</strong><span>Component pages</span></div>
+          <div class="docs-stat"><strong>5</strong><span>Layout modes</span></div>
+          <div class="docs-stat"><strong>RTL</strong><span>Built-in direction support</span></div>
+        </div>
+      </section>
+
+      <section id="quick-start" class="panel docs-section">
+        <h2>Quick Start</h2>
+        <p>Open any HTML file directly in a browser, or serve the folder from a local server if your integration workflow needs one.</p>
+        <pre class="docs-code">Dashora/
+open index.html
+
+# optional local server
+python3 -m http.server 8080
+# then visit http://localhost:8080</pre>
+        <div class="docs-callout"><strong>No build step required.</strong> All CSS, JavaScript, fonts, icons, charts, and calendar assets are included locally inside the template folder.</div>
+        <div class="docs-callout"><strong>Standalone docs folder.</strong> The nested <code>docs/index.html</code> file includes its own page CSS and a data-URI favicon, so the docs folder can be copied without depending on parent template files.</div>
+      </section>
+
+      <section id="structure" class="panel docs-section">
+        <h2>Folder Structure</h2>
+        <pre class="docs-code">Dashora/
+├── index.html
+├── analytics.html
+├── ecommerce.html
+├── crm.html
+├── dashboard-crypto.html
+├── dashboard-projects.html
+├── dashboard-job.html
+├── file-manager.html
+├── kanban.html
+├── component-*.html
+├── assets/
+│   ├── css/style.css
+│   ├── js/main.js
+│   ├── img/favicon.svg
+│   ├── img/team/team-1.jpg ... team-6.jpg
+│   └── vendor/
+│       ├── bootstrap/
+│       ├── bootstrap-icons/
+│       ├── chart/
+│       └── fullcalendar/
+├── docs/index.html
+├── documentation.html
+└── landing.html</pre>
+        <p>Root HTML files are complete demo pages. Shared styling lives in <code>assets/css/style.css</code>. Shared behavior lives in <code>assets/js/main.js</code>.</p>
+      </section>
+
+      <section id="pages" class="panel docs-section">
+        <h2>Pages Included</h2>
+        <div class="docs-table-wrap"><table class="docs-table"><thead><tr><th>Category</th><th>Pages</th><th>Notes</th></tr></thead><tbody>
+          <tr><td>Dashboards</td><td>Default, Analytics, eCommerce, CRM, Crypto, Projects, Job</td><td>Charts, KPIs, tables, activity feeds, and app-specific widgets.</td></tr>
+          <tr><td>Apps</td><td>Projects, Tasks, Kanban, File Manager, Calendar, Chat, Inbox, Comments</td><td>Interactive UI patterns for common SaaS workflows.</td></tr>
+          <tr><td>Commerce</td><td>Customers, Customer Details, Products, Orders, Invoice List, Invoice Details</td><td>Customer, order, invoice, and catalog screens.</td></tr>
+          <tr><td>Components</td><td>Accordion, Alerts, Badge, Breadcrumb, Buttons, Typography, Button Group, Card, Collapse, Carousel, Dropdowns, Modal, Navbar, List Group, Tabs, Offcanvas, Pagination, Popovers, Progress, Scrollspy, Spinners, Toasts, Tooltips</td><td>Each component has its own HTML page with multiple examples.</td></tr>
+          <tr><td>Pages</td><td>Pricing, Profile, Settings, Team, Notifications, Reports, FAQ, Layouts</td><td>Reusable business and account pages.</td></tr>
+          <tr><td>Auth & Utility</td><td>Login, Register, Forgot Password, 404, Coming Soon</td><td>Standalone utility pages with matching branding.</td></tr>
+          <tr><td>Marketing & Docs</td><td>Landing, Documentation, Docs Index</td><td>Landing page, root docs, and nested docs file.</td></tr>
+        </tbody></table></div>
+      </section>
+
+      <section id="components" class="panel docs-section">
+        <h2>Components</h2>
+        <p>Component pages live as individual files, which makes them easy to copy into projects or link from a UI kit menu.</p>
+        <div class="docs-card-grid">
+          <div class="docs-mini-card"><i class="bi bi-boxes"></i><strong>23 separate component pages</strong><span>Every Bootstrap component page is split into its own HTML file.</span></div>
+          <div class="docs-mini-card"><i class="bi bi-columns-gap"></i><strong>Richer examples</strong><span>Pages include multiple variants such as two-column accordions, styled cards, badges, tabs, alerts, and more.</span></div>
+          <div class="docs-mini-card"><i class="bi bi-phone"></i><strong>Responsive demos</strong><span>Component layouts collapse cleanly on phone and tablet screens.</span></div>
+          <div class="docs-mini-card"><i class="bi bi-palette"></i><strong>Dashora styling</strong><span>Components follow the same lighter, sharper visual language as the dashboard pages.</span></div>
+        </div>
+      </section>
+
+      <section id="layouts" class="panel docs-section">
+        <h2>Layouts</h2>
+        <p>Dashora includes Default, Horizontal, Detached, Two Column, and Hovered layouts. Layout choice is stored in <code>localStorage</code>, so it remains active while navigating pages.</p>
+        <ul class="docs-check-list">
+          <li><i class="bi bi-check-circle"></i><span>Use the topbar Layout dropdown to switch layouts.</span></li>
+          <li><i class="bi bi-check-circle"></i><span>Use the sidebar layout switcher for the same controls.</span></li>
+          <li><i class="bi bi-check-circle"></i><span>Horizontal layout shows grouped dropdown navigation across the top.</span></li>
+          <li><i class="bi bi-check-circle"></i><span>Hovered layout keeps the sidebar compact until the sidebar is hovered.</span></li>
+          <li><i class="bi bi-check-circle"></i><span>Mobile always uses the hamburger sidebar flow for consistent navigation.</span></li>
+        </ul>
+      </section>
+
+      <section id="features" class="panel docs-section">
+        <h2>Browser Features</h2>
+        <div class="docs-table-wrap"><table class="docs-table"><thead><tr><th>Feature</th><th>How it works</th><th>File</th></tr></thead><tbody>
+          <tr><td>Dark mode</td><td>Toggles <code>data-theme="dark"</code> and stores the setting.</td><td><code>assets/js/main.js</code>, <code>assets/css/style.css</code></td></tr>
+          <tr><td>RTL mode</td><td>Toggles the document <code>dir</code> attribute and adjusts menu placement.</td><td><code>assets/js/main.js</code>, RTL CSS selectors</td></tr>
+          <tr><td>Command search</td><td><code>CTRL + K</code> or <code>CMD + K</code> opens a searchable command modal.</td><td>HTML modal markup and <code>main.js</code></td></tr>
+          <tr><td>Mobile sidebar</td><td>Hamburger opens the sidebar above the topbar with a backdrop.</td><td><code>main.js</code>, responsive CSS</td></tr>
+          <tr><td>Charts</td><td>Chart.js initializes line, bar, and doughnut charts from <code>data-chart</code>.</td><td><code>assets/js/main.js</code></td></tr>
+          <tr><td>Calendar</td><td>FullCalendar runs from a local vendor file, with fallback calendar rendering.</td><td><code>calendar.html</code>, <code>main.js</code></td></tr>
+        </tbody></table></div>
+      </section>
+
+      <section id="customize" class="panel docs-section">
+        <h2>Customization</h2>
+        <h3>Colors and Theme Tokens</h3>
+        <p>Most visual decisions are controlled with CSS variables near the top of <code>assets/css/style.css</code>.</p>
+        <pre class="docs-code">:root {
+  --bg: #f5f6fa;
+  --surface: #ffffff;
+  --text: #15171c;
+  --muted: #707783;
+  --line: #dfe5ef;
+  --primary: #5278ff;
+  --primary-2: #2fb6d0;
+}</pre>
+        <h3>Navigation</h3>
+        <p>Sidebar, horizontal navigation, and command search links are static HTML in each page. The helper script <code>scripts/add-app-pages.js</code> was used to keep repeated Apps navigation consistent after adding Kanban and File Manager.</p>
+        <h3>Spacing</h3>
+        <p>Dashboard rows use Bootstrap <code>.row.g-4</code>. The visible vertical row gap is controlled by the gutter, so row and column spacing stay consistent.</p>
+      </section>
+
+      <section id="charts" class="panel docs-section">
+        <h2>Charts</h2>
+        <p>Add a canvas with a supported <code>data-chart</code> value. The current supported values are line-style default charts, <code>traffic</code> doughnut charts, and <code>sales-bars</code> bar charts.</p>
+        <pre class="docs-code">&lt;canvas class="chart-md" data-chart="sales-bars"&gt;&lt;/canvas&gt;
+&lt;canvas class="chart-md" data-chart="traffic"&gt;&lt;/canvas&gt;</pre>
+        <p>To change chart colors, labels, or datasets, edit the Chart.js initialization block in <code>assets/js/main.js</code>.</p>
+      </section>
+
+      <section id="forms" class="panel docs-section">
+        <h2>Forms & Modals</h2>
+        <p>Dashora uses static forms and Bootstrap modals. Buttons with <code>data-create-open</code> open the shared Create modal and load fields based on the <code>data-create-type</code>.</p>
+        <pre class="docs-code">&lt;button class="btn btn-primary"
+  data-create-open
+  data-create-type="tasks"
+  data-create-label="Create Task"&gt;
+  Create Task
+&lt;/button&gt;</pre>
+        <p>Edit the <code>fieldSets</code> object in <code>assets/js/main.js</code> to add or change modal fields.</p>
+      </section>
+
+      <section id="assets" class="panel docs-section">
+        <h2>Assets</h2>
+        <ul class="docs-list">
+          <li>Favicon: <code>assets/img/favicon.svg</code></li>
+          <li>Team images: <code>assets/img/team/team-1.jpg</code> through <code>team-6.jpg</code></li>
+          <li>Bootstrap CSS/JS: <code>assets/vendor/bootstrap/</code></li>
+          <li>Bootstrap Icons: <code>assets/vendor/bootstrap-icons/</code></li>
+          <li>Chart.js: <code>assets/vendor/chart/chart.umd.min.js</code></li>
+          <li>FullCalendar: <code>assets/vendor/fullcalendar/index.global.min.js</code></li>
+        </ul>
+      </section>
+
+      <section id="validation" class="panel docs-section">
+        <h2>Validation & Browser Checks</h2>
+        <p>During template updates, representative pages were checked with local HTML validation and browser screenshots. Before shipping your customized version, validate any page you edit.</p>
+        <pre class="docs-code">tidy -quiet -errors index.html analytics.html file-manager.html kanban.html
+node --check assets/js/main.js</pre>
+        <div class="docs-callout"><strong>Static template note.</strong> Some buttons intentionally show static demo toasts. Connect those actions to your backend or frontend framework in production.</div>
+      </section>
+
+      <section id="dependencies" class="panel docs-section">
+        <h2>Dependencies</h2>
+        <div class="docs-table-wrap"><table class="docs-table"><thead><tr><th>Dependency</th><th>Purpose</th><th>Location</th></tr></thead><tbody>
+          <tr><td>Bootstrap 5</td><td>Grid, utilities, dropdowns, modals, offcanvas, forms, and base components.</td><td><code>assets/vendor/bootstrap/</code></td></tr>
+          <tr><td>Bootstrap Icons</td><td>Dashboard, app, action, status, and component icons.</td><td><code>assets/vendor/bootstrap-icons/</code></td></tr>
+          <tr><td>Chart.js</td><td>Dashboard charts and visual analytics widgets.</td><td><code>assets/vendor/chart/chart.umd.min.js</code></td></tr>
+          <tr><td>FullCalendar</td><td>Interactive calendar page.</td><td><code>assets/vendor/fullcalendar/index.global.min.js</code></td></tr>
+        </tbody></table></div>
+      </section>
+
+      <section id="support" class="panel docs-section">
+        <h2>Support Notes</h2>
+        <ul class="docs-check-list">
+          <li><i class="bi bi-check-circle"></i><span>Dashora is frontend-only. It does not include backend authentication, database logic, or API endpoints.</span></li>
+          <li><i class="bi bi-check-circle"></i><span>All pages can be copied into a framework such as Laravel, React, Vue, Next.js, or plain server-rendered HTML.</span></li>
+          <li><i class="bi bi-check-circle"></i><span>Keep asset paths correct when moving files into subfolders.</span></li>
+          <li><i class="bi bi-check-circle"></i><span>For production, replace demo table rows, chart values, and static toast actions with real data.</span></li>
+        </ul>
+      </section>
+    </main>
+  </div>
+</body>
+
+<!-- Mirrored from html.themewant.com/dashora/documentation.html by HTTrack Website Copier/3.x [XR&CO'2014], Thu, 16 Jul 2026 17:06:04 GMT -->
+</html>
