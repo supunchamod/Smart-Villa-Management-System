@@ -16,6 +16,9 @@
         @if (session('status'))
           <div class="alert alert-success">{{ session('status') }}</div>
         @endif
+        @if (session('error'))
+          <div class="alert alert-danger">{{ session('error') }}</div>
+        @endif
         <div class="row g-4">
           <div class="col-12">
             <div class="panel">
@@ -53,7 +56,11 @@
                         </td>
                         <td>
                           <div class="d-flex gap-2">
+                            <a class="btn btn-sm btn-light" href="{{ route('bookings.show', $booking) }}" aria-label="View booking"><i class="bi bi-eye"></i></a>
                             <a class="btn btn-sm btn-light" href="{{ route('bookings.edit', $booking) }}" aria-label="Edit booking"><i class="bi bi-pencil"></i></a>
+                            @if ($booking->status !== 'cancelled')
+                              <a class="btn btn-sm btn-light" href="{{ route($booking->status === 'checked_out' ? 'bookings.invoice.final' : 'bookings.invoice.confirmation', $booking) }}" target="_blank" aria-label="Download invoice"><i class="bi bi-file-earmark-pdf"></i></a>
+                            @endif
                             <form method="POST" action="{{ route('bookings.destroy', $booking) }}" onsubmit="return confirm('Delete this booking?');">
                               @csrf
                               @method('DELETE')

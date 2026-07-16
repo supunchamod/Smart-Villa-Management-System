@@ -34,7 +34,10 @@ Route::middleware('auth')->group(function () {
     Route::patch('/rooms/{room}/toggle-status', [RoomController::class, 'toggleStatus'])->name('rooms.toggle-status');
 
     Route::get('/api/bookings', [BookingController::class, 'calendarFeed'])->name('bookings.calendar');
-    Route::resource('bookings', BookingController::class)->except('show');
+    Route::resource('bookings', BookingController::class);
+    Route::post('/bookings/{booking}/checkout', [BookingController::class, 'checkout'])->name('bookings.checkout');
+    Route::get('/bookings/{booking}/invoice/confirmation', [BookingController::class, 'confirmationInvoice'])->name('bookings.invoice.confirmation');
+    Route::get('/bookings/{booking}/invoice/final', [BookingController::class, 'finalInvoice'])->name('bookings.invoice.final');
 });
 
 require __DIR__.'/auth.php';

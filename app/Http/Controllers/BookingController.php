@@ -4,12 +4,14 @@ namespace App\Http\Controllers;
 
 use App\Models\Booking;
 use App\Models\Room;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
+use Symfony\Component\HttpFoundation\Response;
 
 class BookingController extends Controller
 {
@@ -56,6 +58,16 @@ class BookingController extends Controller
     }
 
     /**
+     * Display the given booking.
+     */
+    public function show(Booking $booking): View
+    {
+        return view('bookings.show', [
+            'booking' => $booking->load('room'),
+        ]);
+    }
+
+    /**
      * Show the form for editing the given booking.
      */
     public function edit(Booking $booking): View
@@ -86,6 +98,56 @@ class BookingController extends Controller
         $booking->delete();
 
         return redirect()->route('bookings.index')->with('status', 'Booking deleted successfully.');
+    }
+
+    /**
+     * Mark a confirmed booking as checked out, settling the balance.
+     */
+    public function checkout(Booking $booking): RedirectResponse
+    {
+        if ($booking->status !== 'confirmed') {
+            return back()->with('error', 'Only confirmed bookings can be checked out.');
+        }
+
+        $booking->update([
+            'status' => 'checked_out',
+            'advance_payment' => $booking->total_amount,
+        ]);
+
+        return redirect()->route('bookings.show', $booking)
+            ->with('status', 'Booking checked out successfully. The final invoice is ready to download.');
+    }
+
+    /**
+     * Stream the stage 1 confirmation invoice, showing the remaining balance due.
+     */
+    public function confirmationInvoice(Booking $booking): Response
+    {
+        $booking->load('room', 'villa');
+
+        return Pdf::loadView('invoices.pdf', [
+            'booking' => $booking,
+            'villa' => $booking->villa,
+            'stage' => 'confirmation',
+        ])->setPaper('a4', 'portrait')->stream("invoice-confirmation-{$booking->id}.pdf");
+    }
+
+    /**
+     * Stream the stage 2 final invoice once the booking has been checked out.
+     */
+    public function finalInvoice(Booking $booking): Response|RedirectResponse
+    {
+        if ($booking->status !== 'checked_out') {
+            return back()->with('error', 'This booking has not been checked out yet.');
+        }
+
+        $booking->load('room', 'villa');
+
+        return Pdf::loadView('invoices.pdf', [
+            'booking' => $booking,
+            'villa' => $booking->villa,
+            'stage' => 'final',
+        ])->setPaper('a4', 'portrait')->stream("invoice-final-{$booking->id}.pdf");
     }
 
     /**
