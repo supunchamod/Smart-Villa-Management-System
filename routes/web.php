@@ -10,19 +10,18 @@ use App\Http\Controllers\ProfitController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\RoomController;
 use App\Http\Controllers\SettingsController;
+use App\Http\Controllers\TeamController;
 use Illuminate\Support\Facades\Route;
 
 Route::redirect('/', '/dashboard');
 
 Route::middleware('auth')->group(function () {
     Route::get('/dashboard', [PageController::class, 'dashboard'])->name('dashboard');
-    Route::get('/calendar', [PageController::class, 'calendar'])->name('calendar');
     Route::get('/projects', [PageController::class, 'projects'])->name('projects.index');
     Route::get('/chat', [PageController::class, 'chat'])->name('chat');
     Route::get('/inbox', [PageController::class, 'inbox'])->name('inbox');
     Route::get('/file-manager', [PageController::class, 'fileManager'])->name('file-manager');
     Route::get('/products', [PageController::class, 'products'])->name('products.index');
-    Route::get('/team', [PageController::class, 'team'])->name('team');
 
     Route::get('/settings', [SettingsController::class, 'edit'])->name('settings');
     Route::post('/settings', [SettingsController::class, 'update'])->name('settings.update');
@@ -36,20 +35,40 @@ Route::middleware('auth')->group(function () {
     Route::resource('rooms', RoomController::class)->except('show');
     Route::patch('/rooms/{room}/toggle-status', [RoomController::class, 'toggleStatus'])->name('rooms.toggle-status');
 
-    Route::get('/api/bookings', [BookingController::class, 'calendarFeed'])->name('bookings.calendar');
-    Route::resource('bookings', BookingController::class);
-    Route::post('/bookings/{booking}/checkout', [BookingController::class, 'checkout'])->name('bookings.checkout');
-    Route::get('/bookings/{booking}/invoice/confirmation', [BookingController::class, 'confirmationInvoice'])->name('bookings.invoice.confirmation');
-    Route::get('/bookings/{booking}/invoice/final', [BookingController::class, 'finalInvoice'])->name('bookings.invoice.final');
+    // Bookings and the calendar are both booking-management surfaces, so
+    // both sit behind the same permission.
+    Route::middleware('can:manage_bookings')->group(function () {
+        Route::get('/calendar', [PageController::class, 'calendar'])->name('calendar');
+        Route::get('/api/bookings', [BookingController::class, 'calendarFeed'])->name('bookings.calendar');
+        Route::resource('bookings', BookingController::class);
+        Route::post('/bookings/{booking}/checkout', [BookingController::class, 'checkout'])->name('bookings.checkout');
+        Route::get('/bookings/{booking}/invoice/confirmation', [BookingController::class, 'confirmationInvoice'])->name('bookings.invoice.confirmation');
+        Route::get('/bookings/{booking}/invoice/final', [BookingController::class, 'finalInvoice'])->name('bookings.invoice.final');
+    });
 
-    Route::get('/income', [IncomeController::class, 'index'])->name('income.index');
+    Route::middleware('can:manage_expenses')->group(function () {
+        Route::resource('expenses', ExpenseController::class)->only(['index', 'store', 'update', 'destroy']);
+    });
 
-    Route::resource('expenses', ExpenseController::class)->only(['index', 'store', 'update', 'destroy']);
+    // Income, Profit Analyzer, and the Reports page are all part of the
+    // finance dashboard; actually generating a report PDF is a further,
+    // more specific permission on top of that.
+    Route::middleware('can:view_finance_dashboard')->group(function () {
+        Route::get('/income', [IncomeController::class, 'index'])->name('income.index');
+        Route::get('/profit', [ProfitController::class, 'index'])->name('profit.index');
+        Route::get('/reports', [ReportController::class, 'index'])->name('reports');
+    });
+    Route::get('/reports/generate', [ReportController::class, 'generate'])
+        ->middleware('can:generate_reports')
+        ->name('reports.generate');
 
-    Route::get('/profit', [ProfitController::class, 'index'])->name('profit.index');
-
-    Route::get('/reports', [ReportController::class, 'index'])->name('reports');
-    Route::get('/reports/generate', [ReportController::class, 'generate'])->name('reports.generate');
+    // Managing staff and their permissions is owner-only.
+    Route::middleware('can:manage-team')->group(function () {
+        Route::get('/team', [TeamController::class, 'index'])->name('team');
+        Route::post('/team', [TeamController::class, 'store'])->name('team.store');
+        Route::put('/team/{user}', [TeamController::class, 'update'])->name('team.update');
+        Route::delete('/team/{user}', [TeamController::class, 'destroy'])->name('team.destroy');
+    });
 });
 
 require __DIR__.'/auth.php';

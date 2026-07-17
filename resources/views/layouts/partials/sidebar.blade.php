@@ -38,7 +38,9 @@
           <div class="nav-accordion-panel">
             <a class="nav-link {{ request()->routeIs('projects.index') ? 'active' : '' }}" href="{{ route('projects.index') }}"><i class="bi bi-kanban"></i><span>Projects</span></a>
             <a class="nav-link {{ request()->routeIs('file-manager') ? 'active' : '' }}" href="{{ route('file-manager') }}"><i class="bi bi-folder2-open"></i><span>File Manager</span></a>
-            <a class="nav-link {{ request()->routeIs('calendar') ? 'active' : '' }}" href="{{ route('calendar') }}"><i class="bi bi-calendar3"></i><span>Calendar</span></a>
+            @can('manage_bookings')
+              <a class="nav-link {{ request()->routeIs('calendar') ? 'active' : '' }}" href="{{ route('calendar') }}"><i class="bi bi-calendar3"></i><span>Calendar</span></a>
+            @endcan
             <a class="nav-link {{ request()->routeIs('chat') ? 'active' : '' }}" href="{{ route('chat') }}"><i class="bi bi-chat-dots"></i><span>Chat</span></a>
             <a class="nav-link {{ request()->routeIs('inbox') ? 'active' : '' }}" href="{{ route('inbox') }}"><i class="bi bi-inbox"></i><span>Inbox</span></a>
 
@@ -52,29 +54,41 @@
             <a class="nav-link {{ request()->routeIs('customers.show') ? 'active' : '' }}" href="{{ route('customers.show') }}"><i class="bi bi-person-vcard"></i><span>Customer Details</span></a>
             <a class="nav-link {{ request()->routeIs('products.index') ? 'active' : '' }}" href="{{ route('products.index') }}"><i class="bi bi-box-seam"></i><span>Products</span></a>
             <a class="nav-link {{ request()->routeIs('rooms.*') ? 'active' : '' }}" href="{{ route('rooms.index') }}"><i class="bi bi-door-open"></i><span>Rooms</span></a>
-            <a class="nav-link {{ request()->routeIs('bookings.*') ? 'active' : '' }}" href="{{ route('bookings.index') }}"><i class="bi bi-journal-check"></i><span>Bookings</span></a>
+            @can('manage_bookings')
+              <a class="nav-link {{ request()->routeIs('bookings.*') ? 'active' : '' }}" href="{{ route('bookings.index') }}"><i class="bi bi-journal-check"></i><span>Bookings</span></a>
+            @endcan
             <a class="nav-link {{ request()->routeIs('invoices.index') ? 'active' : '' }}" href="{{ route('invoices.index') }}"><i class="bi bi-file-earmark-text"></i><span>Invoice List</span></a>
             <a class="nav-link {{ request()->routeIs('invoices.show') ? 'active' : '' }}" href="{{ route('invoices.show') }}"><i class="bi bi-file-richtext"></i><span>Invoice Details</span></a>
 
           </div>
         </div>
 
+        @canany(['manage_expenses', 'view_finance_dashboard'])
         <div class="nav-section nav-accordion {{ $openSection === 'finance' ? 'open' : '' }}">
           <button class="nav-accordion-toggle" type="button" data-nav-accordion aria-expanded="{{ $openSection === 'finance' ? 'true' : 'false' }}"><span><i class="bi bi-cash-coin"></i>Finance</span><i class="bi bi-chevron-down"></i></button>
           <div class="nav-accordion-panel">
-            <a class="nav-link {{ request()->routeIs('income.index') ? 'active' : '' }}" href="{{ route('income.index') }}"><i class="bi bi-cash-stack"></i><span>Income</span></a>
-            <a class="nav-link {{ request()->routeIs('expenses.index') ? 'active' : '' }}" href="{{ route('expenses.index') }}"><i class="bi bi-receipt-cutoff"></i><span>Expenses</span></a>
-            <a class="nav-link {{ request()->routeIs('profit.index') ? 'active' : '' }}" href="{{ route('profit.index') }}"><i class="bi bi-graph-up-arrow"></i><span>Profit Analyzer</span></a>
-            <a class="nav-link {{ request()->routeIs(['reports', 'reports.generate']) ? 'active' : '' }}" href="{{ route('reports') }}"><i class="bi bi-clipboard-data"></i><span>Reports</span></a>
+            @can('view_finance_dashboard')
+              <a class="nav-link {{ request()->routeIs('income.index') ? 'active' : '' }}" href="{{ route('income.index') }}"><i class="bi bi-cash-stack"></i><span>Income</span></a>
+            @endcan
+            @can('manage_expenses')
+              <a class="nav-link {{ request()->routeIs('expenses.index') ? 'active' : '' }}" href="{{ route('expenses.index') }}"><i class="bi bi-receipt-cutoff"></i><span>Expenses</span></a>
+            @endcan
+            @can('view_finance_dashboard')
+              <a class="nav-link {{ request()->routeIs('profit.index') ? 'active' : '' }}" href="{{ route('profit.index') }}"><i class="bi bi-graph-up-arrow"></i><span>Profit Analyzer</span></a>
+              <a class="nav-link {{ request()->routeIs(['reports', 'reports.generate']) ? 'active' : '' }}" href="{{ route('reports') }}"><i class="bi bi-clipboard-data"></i><span>Reports</span></a>
+            @endcan
 
           </div>
         </div>
+        @endcanany
 
         <div class="nav-section nav-accordion {{ $openSection === 'pages' ? 'open' : '' }}">
           <button class="nav-accordion-toggle" type="button" data-nav-accordion aria-expanded="{{ $openSection === 'pages' ? 'true' : 'false' }}"><span><i class="bi bi-layers"></i>Pages</span><i class="bi bi-chevron-down"></i></button>
           <div class="nav-accordion-panel">
             <a class="nav-link {{ request()->routeIs('settings') ? 'active' : '' }}" href="{{ route('settings') }}"><i class="bi bi-gear"></i><span>Settings</span></a>
-            <a class="nav-link {{ request()->routeIs('team') ? 'active' : '' }}" href="{{ route('team') }}"><i class="bi bi-person-workspace"></i><span>Team</span></a>
+            @can('manage-team')
+              <a class="nav-link {{ request()->routeIs('team') ? 'active' : '' }}" href="{{ route('team') }}"><i class="bi bi-person-workspace"></i><span>Team</span></a>
+            @endcan
 
           </div>
         </div>

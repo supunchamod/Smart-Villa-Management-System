@@ -50,7 +50,12 @@
                   </template>
                 </div>
                 <div class="mt-3">
-                  <button class="btn btn-primary" type="submit"><i class="bi bi-file-earmark-pdf"></i> Generate PDF Report</button>
+                  @can('generate_reports')
+                    <button class="btn btn-primary" type="submit"><i class="bi bi-file-earmark-pdf"></i> Generate PDF Report</button>
+                  @else
+                    <button class="btn btn-light" type="button" disabled title="Ask the villa owner for the Generate Reports permission"><i class="bi bi-lock"></i> Generate PDF Report</button>
+                    <p class="text-muted small mt-2 mb-0">You can view report options, but generating a PDF requires the Generate Reports permission.</p>
+                  @endcan
                 </div>
               </form>
             </div>

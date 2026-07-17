@@ -40,9 +40,4 @@ class PageController extends Controller
     {
         return view('products');
     }
-
-    public function team(): View
-    {
-        return view('team');
-    }
 }
