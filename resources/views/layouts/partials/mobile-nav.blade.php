@@ -4,9 +4,9 @@
     <span>Home</span>
   </a>
   @can('manage_bookings')
-    <a class="mobile-nav-link {{ request()->routeIs('bookings.*') && ! request()->routeIs('bookings.create') ? 'active' : '' }}" href="{{ route('bookings.index') }}">
-      <svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="5" width="17" height="15" rx="2"/><path d="M3.5 9.5h17M8 3v4M16 3v4"/></svg>
-      <span>Bookings</span>
+    <a class="mobile-nav-link {{ request()->routeIs('calendar') ? 'active' : '' }}" href="{{ route('calendar') }}">
+      <svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="5" width="17" height="15" rx="2"/><path d="M3.5 9.5h17M8 3v4M16 3v4"/><path d="M8 14h1M12 14h1M16 14h.01"/></svg>
+      <span>Calendar</span>
     </a>
     <a class="mobile-nav-fab" href="{{ route('bookings.create') }}" aria-label="Add booking">
       <svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
