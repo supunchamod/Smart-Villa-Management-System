@@ -1373,9 +1373,9 @@ h1 { font-size: clamp(30px, 3.5vw, 42px); margin: 4px 0 8px; font-weight: 700; l
    the .d-md-none utility already applied on the .mdash wrapper. The
    desktop dashboard markup is untouched inside its own .d-none.d-md-block
    wrapper, so these rules never interact with it. */
-.mdash { display: flex; flex-direction: column; gap: 20px; padding: 16px 20px 128px; }
+.mdash { display: block; padding: 16px 16px 128px; }
 
-.mdash-header { display: flex; flex-direction: column; gap: 4px; }
+.mdash-header { display: flex; flex-direction: column; gap: 4px; margin-bottom: 20px; }
 .mdash-header small { display: block; color: var(--muted); font-size: 12.5px; font-weight: 600; }
 .mdash-header h2 { margin: 0; font-size: 22px; font-weight: 800; letter-spacing: -.01em; }
 
@@ -1383,7 +1383,7 @@ h1 { font-size: clamp(30px, 3.5vw, 42px); margin: 4px 0 8px; font-weight: 700; l
 .mdash-avatar.sm { width: 38px; height: 38px; border-radius: 13px; font-size: 13px; box-shadow: none; }
 .mdash-avatar.alt { background: linear-gradient(150deg, #34d399, #0d9488); box-shadow: none; }
 
-.mdash-hero { position: relative; overflow: hidden; border-radius: 26px; padding: 20px; background: linear-gradient(145deg, #4f6dfb 0%, #6a4cf0 52%, #2fb6d0 100%); color: #fff; box-shadow: 0 18px 40px rgba(79,109,251,.35); }
+.mdash-hero { position: relative; overflow: hidden; border-radius: 26px; padding: 20px; margin-bottom: 24px; background: linear-gradient(145deg, #4f6dfb 0%, #6a4cf0 52%, #2fb6d0 100%); color: #fff; box-shadow: 0 18px 40px rgba(79,109,251,.35); }
 .mdash-hero::after { content: ""; position: absolute; inset: -40% -20% auto auto; width: 220px; height: 220px; border-radius: 50%; background: rgba(255,255,255,.10); }
 .mdash-hero-top { position: relative; display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 18px; }
 .mdash-hero-eyebrow { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 800; letter-spacing: .01em; }
@@ -1397,7 +1397,7 @@ h1 { font-size: clamp(30px, 3.5vw, 42px); margin: 4px 0 8px; font-weight: 700; l
 .mdash-hero-occupancy-bar { height: 100%; border-radius: 999px; background: #ffffff; }
 .mdash-hero-occupancy span { font-size: 12.5px; font-weight: 700; opacity: .92; }
 
-.mdash-quick-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; }
+.mdash-quick-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; margin-bottom: 24px; }
 .mdash-quick-card { display: flex; flex-direction: column; align-items: flex-start; gap: 14px; padding: 20px; border-radius: 20px; text-decoration: none; color: #fff; font-size: 15px; font-weight: 600; letter-spacing: -.005em; line-height: 1.25; min-height: 108px; justify-content: flex-end; }
 .mdash-quick-card:active { transform: scale(.97); }
 .mdash-quick-icon { display: grid; place-items: center; width: 40px; height: 40px; border-radius: 13px; background: rgba(255,255,255,.24); font-size: 18px; }
@@ -1406,14 +1406,14 @@ h1 { font-size: clamp(30px, 3.5vw, 42px); margin: 4px 0 8px; font-weight: 700; l
 .mdash-quick-teal { background: linear-gradient(145deg, #2dd4bf, #0d9488); box-shadow: 0 10px 22px rgba(13,148,136,.28); }
 .mdash-quick-amber { background: linear-gradient(145deg, #fbbf24, #d97706); box-shadow: 0 10px 22px rgba(217,119,6,.28); }
 
-.mdash-section { display: flex; flex-direction: column; gap: 12px; }
-.mdash-section-head { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
+.mdash-section { display: block; margin-bottom: 24px; }
+.mdash-section-head { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; margin-bottom: 16px; }
 .mdash-section-head h2 { margin: 0; font-size: 16.5px; font-weight: 800; letter-spacing: -.01em; }
 .mdash-section-head a { font-size: 12.5px; font-weight: 700; color: var(--primary); text-decoration: none; }
 .mdash-section-sub { font-size: 12px; font-weight: 700; color: var(--muted); }
 
-.mdash-booking-list { display: flex; flex-direction: column; gap: 10px; }
-.mdash-booking-card { display: flex; align-items: center; gap: 12px; padding: 14px; border-radius: 18px; background: var(--surface); border: 1px solid var(--line); box-shadow: var(--shadow); }
+.mdash-booking-list { display: flex; flex-direction: column; gap: 12px; }
+.mdash-booking-card { display: flex; align-items: center; gap: 12px; padding: 16px; border-radius: 16px; background: var(--surface); border: 1px solid var(--line); box-shadow: var(--shadow); }
 .mdash-booking-info { display: flex; flex-direction: column; gap: 3px; min-width: 0; flex: 1 1 auto; }
 .mdash-booking-info strong { font-size: 14px; font-weight: 800; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .mdash-booking-info small { font-size: 12px; color: var(--muted); font-weight: 600; }
