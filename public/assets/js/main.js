@@ -42,6 +42,7 @@
     topbar.insertBefore(brand, sidebarToggle || search || topbar.firstChild);
   });
 
+  if (location.pathname.endsWith('.html')) {
   const componentItems = [
     ['accordion', 'Accordion', 'bi-chevron-bar-expand'],
     ['alerts', 'Alerts', 'bi-exclamation-triangle'],
@@ -118,6 +119,7 @@
     document.querySelectorAll('[data-components-nav] .nav-link, [data-components-horizontal] .dropdown-item').forEach((link) => {
       link.classList.toggle('active', activeFile && link.getAttribute('href') === activeFile);
     });
+  }
   }
 
   document.querySelectorAll('[data-bs-toggle="dropdown"]').forEach((trigger) => {
