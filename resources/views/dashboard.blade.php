@@ -189,15 +189,15 @@
 
         <div class="mdash-quick-grid">
           @can('manage_bookings')
-            <a href="{{ route('bookings.create') }}" class="mdash-quick-card mdash-quick-blue">
-              <span class="mdash-quick-icon"><i class="bi bi-calendar-plus"></i></span>
-              <span>Add Booking</span>
+            <a href="{{ route('bookings.index') }}" class="mdash-quick-card mdash-quick-blue">
+              <span class="mdash-quick-icon"><i class="bi bi-calendar-check"></i></span>
+              <span>Manage Bookings</span>
             </a>
           @endcan
-          @can('manage_expenses')
-            <a href="{{ route('expenses.index') }}" class="mdash-quick-card mdash-quick-rose">
-              <span class="mdash-quick-icon"><i class="bi bi-receipt-cutoff"></i></span>
-              <span>Add Expense</span>
+          @can('view_finance')
+            <a href="{{ route('income.index') }}" class="mdash-quick-card mdash-quick-rose">
+              <span class="mdash-quick-icon"><i class="bi bi-cash-stack"></i></span>
+              <span>Income</span>
             </a>
           @endcan
           <a href="{{ route('rooms.index') }}" class="mdash-quick-card mdash-quick-teal">
@@ -340,48 +340,6 @@
                     }
                 });
             }
-        };
-    }
-
-    function checkoutCard(checkoutUrl, finalInvoiceUrl) {
-        return {
-            processing: false,
-            checkedOut: false,
-            error: null,
-            finalInvoiceUrl: finalInvoiceUrl,
-            checkout() {
-                if (this.processing || this.checkedOut) return;
-
-                this.processing = true;
-                this.error = null;
-
-                fetch(checkoutUrl, {
-                    method: 'POST',
-                    headers: {
-                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
-                        'Accept': 'application/json',
-                    },
-                })
-                    .then(async (response) => {
-                        const data = await response.json().catch(() => ({}));
-
-                        if (!response.ok) {
-                            throw new Error(data.message || 'Unable to check out this booking.');
-                        }
-
-                        return data;
-                    })
-                    .then((data) => {
-                        this.finalInvoiceUrl = data.final_invoice_url || this.finalInvoiceUrl;
-                        this.checkedOut = true;
-                    })
-                    .catch((err) => {
-                        this.error = err.message;
-                    })
-                    .finally(() => {
-                        this.processing = false;
-                    });
-            },
         };
     }
 </script>

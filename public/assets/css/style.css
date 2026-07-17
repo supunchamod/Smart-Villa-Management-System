@@ -1366,6 +1366,24 @@ h1 { font-size: clamp(30px, 3.5vw, 42px); margin: 4px 0 8px; font-weight: 700; l
      line so .table-responsive's horizontal scroll is meaningful
      instead of cells wrapping and the row growing taller. */
   .dash-table td, .dash-table th { white-space: nowrap; }
+
+  /* Booking filter tabs: scroll horizontally as a row of chips sized to
+     their label instead of the desktop's forced-equal-width pills, which
+     squeeze into multiple lines on a phone-width screen. */
+  .booking-tabs { flex-wrap: nowrap; padding: 4px 4px 10px; overflow-y: hidden; scrollbar-width: none; -ms-overflow-style: none; }
+  .booking-tabs::-webkit-scrollbar { display: none; height: 0; }
+  .booking-tab { flex: 0 0 auto; min-width: 0; }
+
+  /* Booking Details page: stack the details/payment panels and the info
+     fields with clear breathing room, and make the header actions
+     full-width, touch-friendly buttons instead of a cramped inline row. */
+  .booking-detail-actions { flex-direction: column; align-items: stretch; width: 100%; }
+  .booking-detail-actions .btn { width: 100%; justify-content: center; }
+  .booking-detail-grid { --bs-gutter-y: 1.25rem; }
+  .booking-info-grid { --bs-gutter-y: 1rem; }
+  .booking-info-grid > div { padding: 14px 16px; border-radius: 12px; background: var(--surface-2); }
+  .booking-info-grid > div small { margin-bottom: 6px; }
+  .booking-detail-balance .balance-stat { padding: 18px; }
 }
 
 /* Mobile dashboard - a native-app-style replacement for the desktop

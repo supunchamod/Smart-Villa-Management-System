@@ -1085,3 +1085,49 @@
     chartRegistry.set(canvas, chart);
   });
 })();
+
+// Shared Alpine component for the "Checkout & Pay Balance" -> "Download Final
+// Invoice PDF" inline swap, used by both the mobile dashboard and the Manage
+// Bookings mobile cards. Defined outside the IIFE above so it's global and
+// reachable from x-data attributes.
+function checkoutCard(checkoutUrl, finalInvoiceUrl) {
+    return {
+        processing: false,
+        checkedOut: false,
+        error: null,
+        finalInvoiceUrl: finalInvoiceUrl,
+        checkout() {
+            if (this.processing || this.checkedOut) return;
+
+            this.processing = true;
+            this.error = null;
+
+            fetch(checkoutUrl, {
+                method: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                    'Accept': 'application/json',
+                },
+            })
+                .then(async (response) => {
+                    const data = await response.json().catch(() => ({}));
+
+                    if (!response.ok) {
+                        throw new Error(data.message || 'Unable to check out this booking.');
+                    }
+
+                    return data;
+                })
+                .then((data) => {
+                    this.finalInvoiceUrl = data.final_invoice_url || this.finalInvoiceUrl;
+                    this.checkedOut = true;
+                })
+                .catch((err) => {
+                    this.error = err.message;
+                })
+                .finally(() => {
+                    this.processing = false;
+                });
+        },
+    };
+}

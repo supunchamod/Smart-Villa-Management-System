@@ -13,7 +13,7 @@
               <li aria-current="page"><h1>{{ $booking->customer_name }}</h1></li>
             </ol>
           </nav>
-          <div class="page-actions" x-data>
+          <div class="page-actions booking-detail-actions" x-data>
             <a class="btn btn-light" href="{{ route('bookings.edit', $booking) }}"><i class="bi bi-pencil"></i> Edit</a>
             @if ($booking->status !== 'cancelled')
               <a class="btn btn-light" href="{{ route('bookings.invoice.confirmation', $booking) }}" target="_blank"><i class="bi bi-file-earmark-pdf"></i> Confirmation Invoice</a>
@@ -34,11 +34,11 @@
           <div class="alert alert-danger">{{ session('error') }}</div>
         @endif
 
-        <div class="row g-4">
+        <div class="row g-4 booking-detail-grid">
           <div class="col-xl-7">
             <div class="panel">
               <div class="panel-head"><div><h2>Booking Details</h2><p>Customer and stay information</p></div></div>
-              <div class="row g-3">
+              <div class="row g-3 booking-info-grid">
                 <div class="col-md-6"><small class="text-muted d-block">Customer</small><strong>{{ $booking->customer_name }}</strong></div>
                 <div class="col-md-6"><small class="text-muted d-block">Room</small><strong>{{ $booking->room->name_or_number }} ({{ $booking->room->type }})</strong></div>
                 <div class="col-md-6"><small class="text-muted d-block">Email</small><strong>{{ $booking->customer_email ?: '—' }}</strong></div>
@@ -56,7 +56,7 @@
             </div>
           </div>
           <div class="col-xl-5">
-            <div class="panel">
+            <div class="panel booking-detail-balance">
               <div class="panel-head"><div><h2>Payment Summary</h2><p>Total, advance, and outstanding balance</p></div></div>
               <div class="balance-grid">
                 <div class="balance-stat"><span>Total Amount</span><strong>{{ number_format($booking->total_amount, 2) }}</strong></div>

@@ -94,7 +94,13 @@
                       $tabKey = ['checked_out' => 'completed', 'cancelled' => 'cancelled'][$booking->status] ?? 'active';
                       $badge = ['confirmed' => 'new', 'checked_out' => 'won', 'cancelled' => 'stuck'][$booking->status] ?? 'new';
                     @endphp
-                    <div class="mdash-booking-card stacked" x-show="tab === 'all' || tab === '{{ $tabKey }}'">
+                    <div
+                      class="mdash-booking-card stacked"
+                      x-show="tab === 'all' || tab === '{{ $tabKey }}'"
+                      @if ($booking->status === 'confirmed')
+                        x-data="checkoutCard(@js(route('bookings.checkout', $booking)), @js(route('bookings.invoice.final', $booking)))"
+                      @endif
+                    >
                       <div class="mdash-card-top">
                         <span class="mdash-avatar sm">{{ $booking->customer_initials }}</span>
                         <div class="mdash-booking-info">
@@ -109,18 +115,43 @@
                         <span>Balance <strong>{{ number_format($booking->remaining_balance, 2) }}</strong></span>
                       </div>
 
+                      @if ($booking->status === 'confirmed')
+                        <a
+                          href="{{ route('bookings.invoice.confirmation', $booking) }}"
+                          class="mdash-action-btn mdash-action-btn-primary"
+                          target="_blank"
+                          rel="noopener"
+                        ><i class="bi bi-file-earmark-arrow-down"></i> Download Confirmation PDF</a>
+
+                        <button
+                          type="button"
+                          class="mdash-action-btn mdash-action-btn-amber"
+                          x-show="!checkedOut"
+                          :disabled="processing"
+                          @click="checkout()"
+                        ><i class="bi bi-box-arrow-right"></i> <span x-text="processing ? 'Processing…' : 'Checkout & Pay Balance'"></span></button>
+
+                        <a
+                          :href="finalInvoiceUrl"
+                          class="mdash-action-btn mdash-action-btn-success"
+                          target="_blank"
+                          rel="noopener"
+                          x-show="checkedOut"
+                        ><i class="bi bi-file-earmark-check"></i> Download Final Invoice PDF</a>
+
+                        <p class="mdash-inline-error" x-show="error" x-text="error"></p>
+                      @elseif ($booking->status === 'checked_out')
+                        <a
+                          href="{{ route('bookings.invoice.final', $booking) }}"
+                          class="mdash-action-btn mdash-action-btn-success"
+                          target="_blank"
+                          rel="noopener"
+                        ><i class="bi bi-file-earmark-check"></i> Download Final Invoice PDF</a>
+                      @endif
+
                       <div class="mdash-card-actions">
                         <a class="mdash-icon-btn" href="{{ route('bookings.show', $booking) }}" aria-label="View booking"><i class="bi bi-eye"></i></a>
                         <a class="mdash-icon-btn" href="{{ route('bookings.edit', $booking) }}" aria-label="Edit booking"><i class="bi bi-pencil"></i></a>
-                        @if ($booking->status !== 'cancelled')
-                          <a
-                            class="mdash-icon-btn primary"
-                            href="{{ route($booking->status === 'checked_out' ? 'bookings.invoice.final' : 'bookings.invoice.confirmation', $booking) }}"
-                            target="_blank"
-                            rel="noopener"
-                            aria-label="Download {{ $booking->status === 'checked_out' ? 'final' : 'confirmation' }} invoice"
-                          ><i class="bi bi-file-earmark-pdf"></i></a>
-                        @endif
                         <form method="POST" action="{{ route('bookings.destroy', $booking) }}" onsubmit="return confirm('Delete this booking?');">
                           @csrf
                           @method('DELETE')
