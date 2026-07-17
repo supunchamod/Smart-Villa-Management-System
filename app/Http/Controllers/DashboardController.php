@@ -84,6 +84,18 @@ class DashboardController extends Controller
             ->limit(4)
             ->get();
 
+        // Mobile "Villa Status Today" hero card and "Tomorrow" section need
+        // a same-day check-in count and the next day's arrivals separately
+        // from the desktop widgets above.
+        $checkInsToday = Booking::where('status', 'confirmed')->whereDate('check_in', $today)->count();
+
+        $tomorrow = $today->copy()->addDay();
+        $tomorrowCheckIns = Booking::with('room')
+            ->where('status', 'confirmed')
+            ->whereDate('check_in', $tomorrow)
+            ->orderBy('check_in')
+            ->get();
+
         $activeBookings = Booking::with('room')
             ->where('status', '!=', 'cancelled')
             ->orderByDesc('check_in')
@@ -104,6 +116,8 @@ class DashboardController extends Controller
             ->values();
 
         return view('dashboard', [
+            'today' => $today,
+            'tomorrow' => $tomorrow,
             'totalBookings' => $totalBookings,
             'confirmedBookings' => $confirmedBookings,
             'totalRooms' => $totalRooms,
@@ -115,10 +129,12 @@ class DashboardController extends Controller
             'monthlyRevenue' => $monthlyRevenue,
             'revenueTrend' => $this->percentChange($monthlyRevenue, $previousMonthlyRevenue),
             'checkedOutToday' => $checkedOutToday,
+            'checkInsToday' => $checkInsToday,
             'chartLabels' => $chartLabels,
             'chartIncome' => $chartIncome,
             'chartExpenses' => $chartExpenses,
             'upcomingCheckIns' => $upcomingCheckIns,
+            'tomorrowCheckIns' => $tomorrowCheckIns,
             'activeBookings' => $activeBookings,
             'staffMembers' => $staffMembers,
             'recentPayments' => $recentPayments,

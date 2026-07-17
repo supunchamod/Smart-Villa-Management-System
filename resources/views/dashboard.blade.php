@@ -3,6 +3,7 @@
 @section('title', 'Villa Cabana Management Dashboard | Dashora Admin Dashboard')
 
 @section('content')
+      <div class="d-none d-md-block">
         <div class="page-title">
           <nav class="page-breadcrumb" aria-label="breadcrumb">
             <ol>
@@ -157,6 +158,122 @@
     </div>
   </div>
 </div>
+      </div>
+
+      <div class="d-block d-md-none mdash">
+        @php
+          $ownerFirstName = explode(' ', trim(auth()->user()->name))[0];
+          $occupancyPct = $totalRooms > 0 ? round($occupiedRooms / $totalRooms * 100) : 0;
+        @endphp
+
+        <div class="mdash-header">
+          <div class="mdash-header-user">
+            <span class="mdash-avatar">{{ auth()->user()->initials }}</span>
+            <div>
+              <small>Welcome back</small>
+              <strong>Hello, {{ $ownerFirstName }}</strong>
+            </div>
+          </div>
+          <div class="mdash-header-actions">
+            <button type="button" class="mdash-icon-btn" data-command-search-open aria-label="Search"><i class="bi bi-search"></i></button>
+            <a href="{{ route('inbox') }}" class="mdash-icon-btn" aria-label="Notifications"><i class="bi bi-bell"></i><span class="mdash-dot"></span></a>
+          </div>
+        </div>
+
+        <div class="mdash-hero">
+          <div class="mdash-hero-top">
+            <span class="mdash-hero-eyebrow"><i class="bi bi-houses"></i> Villa Status Today</span>
+            <span class="mdash-hero-date">{{ $today->format('D, d M Y') }}</span>
+          </div>
+          <div class="mdash-hero-stats">
+            <div><strong>{{ $checkInsToday }}</strong><span>Check-ins</span></div>
+            <div><strong>{{ $checkedOutToday }}</strong><span>Check-outs</span></div>
+            <div><strong>{{ $occupancyPct }}%</strong><span>Occupancy</span></div>
+          </div>
+          <div class="mdash-hero-occupancy">
+            <div class="mdash-hero-occupancy-track"><div class="mdash-hero-occupancy-bar" style="width:{{ $occupancyPct }}%"></div></div>
+            <span>Rooms Occupied: {{ $occupiedRooms }}/{{ $totalRooms }}</span>
+          </div>
+        </div>
+
+        <div class="mdash-quick-grid">
+          @can('manage_bookings')
+            <a href="{{ route('bookings.create') }}" class="mdash-quick-card mdash-quick-blue">
+              <span class="mdash-quick-icon"><i class="bi bi-calendar-plus"></i></span>
+              <span>Add Booking</span>
+            </a>
+          @endcan
+          @can('manage_expenses')
+            <a href="{{ route('expenses.index') }}" class="mdash-quick-card mdash-quick-rose">
+              <span class="mdash-quick-icon"><i class="bi bi-receipt-cutoff"></i></span>
+              <span>Add Expense</span>
+            </a>
+          @endcan
+          <a href="{{ route('rooms.index') }}" class="mdash-quick-card mdash-quick-teal">
+            <span class="mdash-quick-icon"><i class="bi bi-door-open"></i></span>
+            <span>Room Status</span>
+          </a>
+          @can('view_finance')
+            <a href="{{ route('reports') }}" class="mdash-quick-card mdash-quick-amber">
+              <span class="mdash-quick-icon"><i class="bi bi-clipboard-data"></i></span>
+              <span>Reports</span>
+            </a>
+          @endcan
+        </div>
+
+        <div class="mdash-section">
+          <div class="mdash-section-head">
+            <h2>Recent Bookings</h2>
+            @can('manage_bookings')<a href="{{ route('bookings.index') }}">View all</a>@endcan
+          </div>
+          <div class="mdash-booking-list">
+            @forelse ($activeBookings->take(5) as $booking)
+              @php
+                $payStatus = $booking->status === 'checked_out' || $booking->payment_progress >= 100 ? 'paid' : ($booking->payment_progress > 0 ? 'partial' : 'pending');
+                $payLabel = ['paid' => 'Paid', 'partial' => 'Partial', 'pending' => 'Pending'][$payStatus];
+              @endphp
+              <div class="mdash-booking-card">
+                <span class="mdash-avatar sm">{{ $booking->customer_initials }}</span>
+                <div class="mdash-booking-info">
+                  <strong>{{ $booking->customer_name }}</strong>
+                  <small>{{ $booking->room->name_or_number }}</small>
+                  <span class="mdash-badge {{ $payStatus }}">{{ $payLabel }}</span>
+                </div>
+                @can('manage_bookings')
+                  <a
+                    href="{{ route($booking->status === 'checked_out' ? 'bookings.invoice.final' : 'bookings.invoice.confirmation', $booking) }}"
+                    class="mdash-invoice-btn"
+                    target="_blank"
+                    rel="noopener"
+                    aria-label="Download invoice for {{ $booking->customer_name }}"
+                  ><i class="bi bi-file-earmark-arrow-down"></i></a>
+                @endcan
+              </div>
+            @empty
+              <p class="mdash-empty">No bookings yet. Add your first booking to get started.</p>
+            @endforelse
+          </div>
+        </div>
+
+        <div class="mdash-section">
+          <div class="mdash-section-head">
+            <h2>Tomorrow</h2>
+            <span class="mdash-section-sub">{{ $tomorrow->format('D, d M') }}</span>
+          </div>
+          <div class="mdash-tomorrow-grid">
+            @forelse ($tomorrowCheckIns as $booking)
+              <div class="mdash-tomorrow-card">
+                <span class="mdash-avatar sm alt">{{ $booking->customer_initials }}</span>
+                <strong>{{ $booking->customer_name }}</strong>
+                <small><i class="bi bi-clock"></i> Check-in</small>
+                <span class="mdash-room-chip">{{ $booking->room->name_or_number }}</span>
+              </div>
+            @empty
+              <p class="mdash-empty">No check-ins scheduled for tomorrow.</p>
+            @endforelse
+          </div>
+        </div>
+      </div>
 @endsection
 
 @push('scripts')

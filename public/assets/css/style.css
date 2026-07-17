@@ -1362,21 +1362,85 @@ h1 { font-size: clamp(30px, 3.5vw, 42px); margin: 4px 0 8px; font-weight: 700; l
 @media (max-width: 767.98px) {
   .content { padding-bottom: 112px; }
 
-  /* Dashboard KPI cards: swipeable horizontal row instead of a stacked
-     grid on mobile - overrides the wider-viewport .crm-kpi-grid rules
-     above since this block comes later in the cascade. */
-  .crm-kpi-grid { display: flex; flex-wrap: nowrap; grid-template-columns: none; overflow-x: auto; scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch; scrollbar-width: none; padding-bottom: 6px; margin-bottom: 4px; }
-  .crm-kpi-grid::-webkit-scrollbar { display: none; }
-  .crm-kpi-grid > .crm-kpi-card { flex: 0 0 78%; scroll-snap-align: start; min-width: 230px; }
-
-  /* Overview chart: a shorter, phone-friendly canvas height. */
-  .chart-md { min-height: 256px; max-height: 256px; }
-
   /* Dashboard/booking/expense/etc tables: force cells to stay on one
      line so .table-responsive's horizontal scroll is meaningful
      instead of cells wrapping and the row growing taller. */
   .dash-table td, .dash-table th { white-space: nowrap; }
 }
+
+/* Mobile dashboard - a native-app-style replacement for the desktop
+   dashboard widgets, shown only below the Bootstrap md breakpoint via
+   the .d-md-none utility already applied on the .mdash wrapper. The
+   desktop dashboard markup is untouched inside its own .d-none.d-md-block
+   wrapper, so these rules never interact with it. */
+.mdash { display: flex; flex-direction: column; gap: 20px; padding: 4px 2px 32px; }
+
+.mdash-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.mdash-header-user { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.mdash-header-user small { display: block; color: var(--muted); font-size: 12px; font-weight: 600; }
+.mdash-header-user strong { display: block; font-size: 19px; font-weight: 800; letter-spacing: -.01em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mdash-header-actions { display: flex; align-items: center; gap: 8px; flex: 0 0 auto; }
+
+.mdash-avatar { display: grid; flex: 0 0 auto; place-items: center; width: 46px; height: 46px; border-radius: 16px; background: linear-gradient(150deg, var(--primary), var(--primary-2)); color: #fff; font-size: 15px; font-weight: 800; letter-spacing: .01em; box-shadow: 0 8px 18px rgba(82,120,255,.28); }
+.mdash-avatar.sm { width: 38px; height: 38px; border-radius: 13px; font-size: 13px; box-shadow: none; }
+.mdash-avatar.alt { background: linear-gradient(150deg, #34d399, #0d9488); box-shadow: none; }
+
+.mdash-icon-btn { position: relative; display: grid; place-items: center; width: 44px; height: 44px; border: 1px solid var(--line); border-radius: 14px; background: var(--surface); color: var(--text); font-size: 16px; text-decoration: none; }
+.mdash-icon-btn:active { transform: scale(.94); }
+.mdash-dot { position: absolute; top: 10px; right: 11px; width: 7px; height: 7px; border-radius: 50%; background: var(--danger); box-shadow: 0 0 0 2px var(--surface); }
+
+.mdash-hero { position: relative; overflow: hidden; border-radius: 26px; padding: 24px 22px 22px; background: linear-gradient(145deg, #4f6dfb 0%, #6a4cf0 52%, #2fb6d0 100%); color: #fff; box-shadow: 0 18px 40px rgba(79,109,251,.35); }
+.mdash-hero::after { content: ""; position: absolute; inset: -40% -20% auto auto; width: 220px; height: 220px; border-radius: 50%; background: rgba(255,255,255,.10); }
+.mdash-hero-top { position: relative; display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 18px; }
+.mdash-hero-eyebrow { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 800; letter-spacing: .01em; }
+.mdash-hero-date { font-size: 12px; font-weight: 700; opacity: .85; }
+.mdash-hero-stats { position: relative; display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 20px; }
+.mdash-hero-stats div { display: flex; flex-direction: column; gap: 2px; }
+.mdash-hero-stats strong { font-size: 24px; font-weight: 800; letter-spacing: -.02em; }
+.mdash-hero-stats span { font-size: 11.5px; font-weight: 600; opacity: .82; }
+.mdash-hero-occupancy { position: relative; display: flex; flex-direction: column; gap: 8px; }
+.mdash-hero-occupancy-track { height: 8px; border-radius: 999px; background: rgba(255,255,255,.24); overflow: hidden; }
+.mdash-hero-occupancy-bar { height: 100%; border-radius: 999px; background: #ffffff; }
+.mdash-hero-occupancy span { font-size: 12.5px; font-weight: 700; opacity: .92; }
+
+.mdash-quick-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+.mdash-quick-card { display: flex; flex-direction: column; align-items: flex-start; gap: 12px; padding: 18px 16px; border-radius: 20px; text-decoration: none; color: #fff; font-size: 13.5px; font-weight: 800; letter-spacing: -.005em; min-height: 96px; justify-content: flex-end; }
+.mdash-quick-card:active { transform: scale(.97); }
+.mdash-quick-icon { display: grid; place-items: center; width: 40px; height: 40px; border-radius: 13px; background: rgba(255,255,255,.24); font-size: 18px; }
+.mdash-quick-blue { background: linear-gradient(145deg, #4f6dfb, #3450d3); box-shadow: 0 10px 22px rgba(79,109,251,.3); }
+.mdash-quick-rose { background: linear-gradient(145deg, #fb7185, #e11d48); box-shadow: 0 10px 22px rgba(225,29,72,.28); }
+.mdash-quick-teal { background: linear-gradient(145deg, #2dd4bf, #0d9488); box-shadow: 0 10px 22px rgba(13,148,136,.28); }
+.mdash-quick-amber { background: linear-gradient(145deg, #fbbf24, #d97706); box-shadow: 0 10px 22px rgba(217,119,6,.28); }
+
+.mdash-section { display: flex; flex-direction: column; gap: 12px; }
+.mdash-section-head { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
+.mdash-section-head h2 { margin: 0; font-size: 16.5px; font-weight: 800; letter-spacing: -.01em; }
+.mdash-section-head a { font-size: 12.5px; font-weight: 700; color: var(--primary); text-decoration: none; }
+.mdash-section-sub { font-size: 12px; font-weight: 700; color: var(--muted); }
+
+.mdash-booking-list { display: flex; flex-direction: column; gap: 10px; }
+.mdash-booking-card { display: flex; align-items: center; gap: 12px; padding: 14px; border-radius: 18px; background: var(--surface); border: 1px solid var(--line); box-shadow: var(--shadow); }
+.mdash-booking-info { display: flex; flex-direction: column; gap: 3px; min-width: 0; flex: 1 1 auto; }
+.mdash-booking-info strong { font-size: 14px; font-weight: 800; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mdash-booking-info small { font-size: 12px; color: var(--muted); font-weight: 600; }
+.mdash-badge { align-self: flex-start; margin-top: 2px; padding: 3px 10px; border-radius: 999px; font-size: 10.5px; font-weight: 800; letter-spacing: .02em; text-transform: uppercase; }
+.mdash-badge.paid { background: rgba(47,168,79,.14); color: var(--success); }
+.mdash-badge.partial { background: rgba(234,179,8,.16); color: #b45309; }
+.mdash-badge.pending { background: rgba(220,38,38,.12); color: var(--danger); }
+.mdash-invoice-btn { display: grid; flex: 0 0 auto; place-items: center; width: 44px; height: 44px; border-radius: 14px; background: rgba(82,120,255,.12); color: var(--primary); font-size: 17px; text-decoration: none; }
+.mdash-invoice-btn:active { transform: scale(.93); }
+
+.mdash-tomorrow-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+.mdash-tomorrow-card { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; padding: 16px 14px; border-radius: 18px; background: var(--surface); border: 1px solid var(--line); box-shadow: var(--shadow); }
+.mdash-tomorrow-card strong { font-size: 13.5px; font-weight: 800; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%; }
+.mdash-tomorrow-card small { display: inline-flex; align-items: center; gap: 4px; font-size: 11.5px; color: var(--muted); font-weight: 600; }
+.mdash-room-chip { margin-top: 2px; padding: 3px 10px; border-radius: 999px; background: rgba(47,182,208,.14); color: var(--primary-2); font-size: 11px; font-weight: 800; }
+
+.mdash-empty { grid-column: 1 / -1; margin: 0; padding: 20px; border-radius: 16px; background: var(--surface); border: 1px dashed var(--line); color: var(--muted); font-size: 13px; text-align: center; }
+
+[data-theme="dark"] .mdash-badge.partial { color: #fbbf24; }
+[data-theme="dark"] .mdash-icon-btn { background: var(--surface-2); }
+[data-theme="dark"] .mdash-invoice-btn { background: rgba(82,120,255,.20); }
 @media print {
   .mobile-bottom-nav { display: none !important; }
   @page { margin: 14mm; }
