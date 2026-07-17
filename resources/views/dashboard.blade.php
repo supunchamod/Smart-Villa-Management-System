@@ -167,17 +167,8 @@
         @endphp
 
         <div class="mdash-header">
-          <div class="mdash-header-user">
-            <span class="mdash-avatar">{{ auth()->user()->initials }}</span>
-            <div>
-              <small>Welcome back</small>
-              <strong>Hello, {{ $ownerFirstName }}</strong>
-            </div>
-          </div>
-          <div class="mdash-header-actions">
-            <button type="button" class="mdash-icon-btn" data-command-search-open aria-label="Search"><i class="bi bi-search"></i></button>
-            <a href="{{ route('inbox') }}" class="mdash-icon-btn" aria-label="Notifications"><i class="bi bi-bell"></i><span class="mdash-dot"></span></a>
-          </div>
+          <small>Welcome back</small>
+          <h2>Hello, {{ $ownerFirstName }}</h2>
         </div>
 
         <div class="mdash-hero">
