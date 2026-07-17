@@ -20,17 +20,21 @@ class DatabaseSeeder extends Seeder
     public function run(): void
     {
         Setting::firstOrCreate([], [
-            'villa_name' => 'My Villa',
+            'villa_name' => 'Ceylon Cabana & Villa',
+            'villa_logo' => null,
+            'address' => '123, Galle Road, Hikkaduwa',
+            'phone_number' => '+94771234567',
+            'email' => 'info@ceylonvilla.com',
             'currency' => 'LKR',
         ]);
 
         // Dev-only default credentials - change the password immediately
         // on a real deployment.
         User::firstOrCreate(
-            ['email' => 'owner@example.com'],
+            ['email' => 'admin@villa.com'],
             [
-                'name' => 'Villa Owner',
-                'password' => Hash::make('password'),
+                'name' => 'Supun Chamod',
+                'password' => Hash::make('admin123'),
                 'role' => 'owner',
             ]
         );
