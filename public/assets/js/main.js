@@ -991,7 +991,9 @@
     });
   });
 
-  document.querySelectorAll('form:not(#createForm):not([data-chat-form])').forEach((form) => {
+  document.querySelectorAll('form:not(#createForm):not([data-chat-form]):not([data-live-form])').forEach((form) => {
+    const action = form.getAttribute('action');
+    if (action && action !== '#') return;
     form.addEventListener('submit', (event) => {
       event.preventDefault();
       let feedback = form.querySelector('[data-demo-form-feedback]');

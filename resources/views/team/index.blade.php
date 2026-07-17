@@ -82,7 +82,7 @@
         <div class="modal fade" id="teamModal" tabindex="-1" aria-hidden="true">
           <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content dash-modal">
-              <form method="POST" :action="formAction" @submit="submit($event)">
+              <form method="POST" :action="formAction" @submit="submit($event)" data-live-form>
                 @csrf
                 <template x-if="form.id">
                   <input type="hidden" name="_method" value="PUT">

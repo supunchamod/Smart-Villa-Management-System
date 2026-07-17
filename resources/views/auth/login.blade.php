@@ -26,7 +26,8 @@
           <input class="form-control mb-3 @error('email') is-invalid @enderror" type="email" name="email" id="email" value="{{ old('email') }}" placeholder="name@example.com" required autofocus>
           @error('email')<div class="invalid-feedback d-block mb-3">{{ $message }}</div>@enderror
           <label class="form-label">Password</label>
-          <input class="form-control mb-2" type="password" name="password" id="password" placeholder="Password" required>
+          <input class="form-control mb-2 @error('password') is-invalid @enderror" type="password" name="password" id="password" placeholder="Password" required>
+          @error('password')<div class="invalid-feedback d-block mb-2">{{ $message }}</div>@enderror
           <div class="auth-options"><label><input type="checkbox" name="remember" checked> Remember me</label><a href="forgot-password.html">Forgot password?</a></div>
           <button class="btn btn-primary w-100" type="submit">Sign In</button>
         </form>
