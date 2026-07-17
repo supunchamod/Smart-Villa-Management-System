@@ -84,10 +84,22 @@ class DashboardController extends Controller
             ->limit(4)
             ->get();
 
-        // Mobile "Villa Status Today" hero card and "Tomorrow" section need
-        // a same-day check-in count and the next day's arrivals separately
-        // from the desktop widgets above.
-        $checkInsToday = Booking::where('status', 'confirmed')->whereDate('check_in', $today)->count();
+        // Mobile "Today's Arrivals" and "Today's Check-outs" sections drive
+        // the day-focused workflow: only bookings still 'confirmed' show up
+        // here, so a booking drops off the moment it's checked out.
+        $todaysBookings = Booking::with('room')
+            ->where('status', 'confirmed')
+            ->whereDate('check_in', $today)
+            ->orderByDesc('created_at')
+            ->get();
+
+        $todaysCheckouts = Booking::with('room')
+            ->where('status', 'confirmed')
+            ->whereDate('check_out', $today)
+            ->orderBy('check_out')
+            ->get();
+
+        $checkInsToday = $todaysBookings->count();
 
         $tomorrow = $today->copy()->addDay();
         $tomorrowCheckIns = Booking::with('room')
@@ -134,6 +146,8 @@ class DashboardController extends Controller
             'chartIncome' => $chartIncome,
             'chartExpenses' => $chartExpenses,
             'upcomingCheckIns' => $upcomingCheckIns,
+            'todaysBookings' => $todaysBookings,
+            'todaysCheckouts' => $todaysCheckouts,
             'tomorrowCheckIns' => $tomorrowCheckIns,
             'activeBookings' => $activeBookings,
             'staffMembers' => $staffMembers,

@@ -101,11 +101,17 @@ class BookingController extends Controller
     }
 
     /**
-     * Mark a confirmed booking as checked out, settling the balance.
+     * Mark a confirmed booking as checked out, settling the balance. Also
+     * callable via AJAX (e.g. the dashboard's inline checkout cards), which
+     * gets a JSON reply instead of a redirect so the UI can update in place.
      */
-    public function checkout(Booking $booking): RedirectResponse
+    public function checkout(Request $request, Booking $booking): RedirectResponse|JsonResponse
     {
         if ($booking->status !== 'confirmed') {
+            if ($request->wantsJson()) {
+                return response()->json(['message' => 'Only confirmed bookings can be checked out.'], 422);
+            }
+
             return back()->with('error', 'Only confirmed bookings can be checked out.');
         }
 
@@ -114,6 +120,14 @@ class BookingController extends Controller
             'final_settlement_amount' => (float) $booking->total_amount - (float) $booking->advance_payment,
             'checked_out_at' => now(),
         ]);
+
+        if ($request->wantsJson()) {
+            return response()->json([
+                'status' => $booking->status,
+                'final_invoice_url' => route('bookings.invoice.final', $booking),
+                'message' => 'Booking checked out successfully. The final invoice is ready to download.',
+            ]);
+        }
 
         return redirect()->route('bookings.show', $booking)
             ->with('status', 'Booking checked out successfully. The final invoice is ready to download.');

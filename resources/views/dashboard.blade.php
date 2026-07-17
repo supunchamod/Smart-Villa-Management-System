@@ -214,34 +214,78 @@
 
         <div class="mdash-section">
           <div class="mdash-section-head">
-            <h2>Recent Bookings</h2>
-            @can('manage_bookings')<a href="{{ route('bookings.index') }}">View all</a>@endcan
+            <h2>Today's Arrivals / New Bookings</h2>
+            <span class="mdash-section-sub">{{ $today->format('D, d M') }}</span>
           </div>
           <div class="mdash-booking-list">
-            @forelse ($activeBookings->take(5) as $booking)
-              @php
-                $payStatus = $booking->status === 'checked_out' || $booking->payment_progress >= 100 ? 'paid' : ($booking->payment_progress > 0 ? 'partial' : 'pending');
-                $payLabel = ['paid' => 'Paid', 'partial' => 'Partial', 'pending' => 'Pending'][$payStatus];
-              @endphp
-              <div class="mdash-booking-card">
-                <span class="mdash-avatar sm">{{ $booking->customer_initials }}</span>
-                <div class="mdash-booking-info">
-                  <strong>{{ $booking->customer_name }}</strong>
-                  <small>{{ $booking->room->name_or_number }}</small>
-                  <span class="mdash-badge {{ $payStatus }}">{{ $payLabel }}</span>
+            @forelse ($todaysBookings as $booking)
+              <div class="mdash-booking-card stacked">
+                <div class="mdash-card-top">
+                  <span class="mdash-avatar sm">{{ $booking->customer_initials }}</span>
+                  <div class="mdash-booking-info">
+                    <strong>{{ $booking->customer_name }}</strong>
+                    <small>{{ $booking->room->name_or_number }}</small>
+                  </div>
+                  <span class="mdash-badge pending">Arrival Today</span>
                 </div>
                 @can('manage_bookings')
                   <a
-                    href="{{ route($booking->status === 'checked_out' ? 'bookings.invoice.final' : 'bookings.invoice.confirmation', $booking) }}"
-                    class="mdash-invoice-btn"
+                    href="{{ route('bookings.invoice.confirmation', $booking) }}"
+                    class="mdash-action-btn mdash-action-btn-primary"
                     target="_blank"
                     rel="noopener"
-                    aria-label="Download invoice for {{ $booking->customer_name }}"
-                  ><i class="bi bi-file-earmark-arrow-down"></i></a>
+                  ><i class="bi bi-file-earmark-arrow-down"></i> Download Confirmation PDF</a>
                 @endcan
               </div>
             @empty
-              <p class="mdash-empty">No bookings yet. Add your first booking to get started.</p>
+              <p class="mdash-empty">No arrivals scheduled for today.</p>
+            @endforelse
+          </div>
+        </div>
+
+        <div class="mdash-section">
+          <div class="mdash-section-head">
+            <h2>Today's Check-outs</h2>
+            <span class="mdash-section-sub">{{ $today->format('D, d M') }}</span>
+          </div>
+          <div class="mdash-booking-list">
+            @forelse ($todaysCheckouts as $booking)
+              <div
+                class="mdash-booking-card stacked"
+                x-data="checkoutCard(@js(route('bookings.checkout', $booking)), @js(route('bookings.invoice.final', $booking)))"
+              >
+                <div class="mdash-card-top">
+                  <span class="mdash-avatar sm alt">{{ $booking->customer_initials }}</span>
+                  <div class="mdash-booking-info">
+                    <strong>{{ $booking->customer_name }}</strong>
+                    <small>{{ $booking->room->name_or_number }}</small>
+                  </div>
+                  <span class="mdash-badge partial" x-show="!checkedOut">{{ $globalSettings->currency }} {{ number_format($booking->remaining_balance, 2) }}</span>
+                  <span class="mdash-badge paid" x-show="checkedOut">Paid</span>
+                </div>
+
+                @can('manage_bookings')
+                  <button
+                    type="button"
+                    class="mdash-action-btn mdash-action-btn-amber"
+                    x-show="!checkedOut"
+                    :disabled="processing"
+                    @click="checkout()"
+                  ><i class="bi bi-box-arrow-right"></i> <span x-text="processing ? 'Processing…' : 'Checkout & Pay Balance'"></span></button>
+
+                  <a
+                    :href="finalInvoiceUrl"
+                    class="mdash-action-btn mdash-action-btn-success"
+                    target="_blank"
+                    rel="noopener"
+                    x-show="checkedOut"
+                  ><i class="bi bi-file-earmark-check"></i> Download Final Invoice PDF</a>
+                @endcan
+
+                <p class="mdash-inline-error" x-show="error" x-text="error"></p>
+              </div>
+            @empty
+              <p class="mdash-empty">No check-outs scheduled for today.</p>
             @endforelse
           </div>
         </div>
@@ -296,6 +340,48 @@
                     }
                 });
             }
+        };
+    }
+
+    function checkoutCard(checkoutUrl, finalInvoiceUrl) {
+        return {
+            processing: false,
+            checkedOut: false,
+            error: null,
+            finalInvoiceUrl: finalInvoiceUrl,
+            checkout() {
+                if (this.processing || this.checkedOut) return;
+
+                this.processing = true;
+                this.error = null;
+
+                fetch(checkoutUrl, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                        'Accept': 'application/json',
+                    },
+                })
+                    .then(async (response) => {
+                        const data = await response.json().catch(() => ({}));
+
+                        if (!response.ok) {
+                            throw new Error(data.message || 'Unable to check out this booking.');
+                        }
+
+                        return data;
+                    })
+                    .then((data) => {
+                        this.finalInvoiceUrl = data.final_invoice_url || this.finalInvoiceUrl;
+                        this.checkedOut = true;
+                    })
+                    .catch((err) => {
+                        this.error = err.message;
+                    })
+                    .finally(() => {
+                        this.processing = false;
+                    });
+            },
         };
     }
 </script>
