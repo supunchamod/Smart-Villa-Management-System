@@ -22,8 +22,8 @@
           <div class="col-12">
             <label class="form-label">Villa logo</label>
             <div class="d-flex align-items-center gap-3 mb-2">
-              @if ($settings->villa_logo)
-                <img src="{{ asset('storage/'.$settings->villa_logo) }}" alt="{{ $settings->villa_name }}" style="width:56px;height:56px;object-fit:cover;border-radius:8px;">
+              @if ($globalSettings->villa_logo)
+                <img src="{{ asset('storage/'.$globalSettings->villa_logo) }}" alt="{{ $globalSettings->villa_name }}" style="width:56px;height:56px;object-fit:cover;border-radius:8px;">
               @endif
               <input class="form-control @error('villa_logo') is-invalid @enderror" type="file" name="villa_logo" accept="image/*">
             </div>
@@ -31,31 +31,31 @@
           </div>
           <div class="col-md-6">
             <label class="form-label">Villa name</label>
-            <input class="form-control @error('villa_name') is-invalid @enderror" name="villa_name" value="{{ old('villa_name', $settings->villa_name) }}">
+            <input class="form-control @error('villa_name') is-invalid @enderror" name="villa_name" value="{{ old('villa_name', $globalSettings->villa_name) }}">
             @error('villa_name')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror
           </div>
           <div class="col-md-6">
             <label class="form-label">Currency</label>
             <select class="form-select @error('currency') is-invalid @enderror" name="currency">
               @foreach (['USD', 'EUR', 'GBP', 'LKR', 'AUD'] as $code)
-                <option value="{{ $code }}" @selected(old('currency', $settings->currency) === $code)>{{ $code }}</option>
+                <option value="{{ $code }}" @selected(old('currency', $globalSettings->currency) === $code)>{{ $code }}</option>
               @endforeach
             </select>
             @error('currency')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror
           </div>
           <div class="col-md-6">
             <label class="form-label">Phone number</label>
-            <input class="form-control @error('phone_number') is-invalid @enderror" name="phone_number" value="{{ old('phone_number', $settings->phone_number) }}">
+            <input class="form-control @error('phone_number') is-invalid @enderror" name="phone_number" value="{{ old('phone_number', $globalSettings->phone_number) }}">
             @error('phone_number')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror
           </div>
           <div class="col-md-6">
             <label class="form-label">Contact email</label>
-            <input class="form-control @error('email') is-invalid @enderror" type="email" name="email" value="{{ old('email', $settings->email) }}">
+            <input class="form-control @error('email') is-invalid @enderror" type="email" name="email" value="{{ old('email', $globalSettings->email) }}">
             @error('email')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror
           </div>
           <div class="col-12">
             <label class="form-label">Address</label>
-            <textarea class="form-control @error('address') is-invalid @enderror" name="address" rows="3">{{ old('address', $settings->address) }}</textarea>
+            <textarea class="form-control @error('address') is-invalid @enderror" name="address" rows="3">{{ old('address', $globalSettings->address) }}</textarea>
             @error('address')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror
           </div>
           <div class="col-12"><button class="btn btn-primary" type="submit">Save Changes</button></div>

@@ -12,12 +12,14 @@ class SettingsController extends Controller
 {
     /**
      * Display the villa settings form.
+     *
+     * $globalSettings is already available here (and in every other view)
+     * via the view composer registered in AppServiceProvider, so there's
+     * nothing extra to pass.
      */
     public function edit(): View
     {
-        return view('settings', [
-            'settings' => Setting::current(),
-        ]);
+        return view('settings.index');
     }
 
     /**

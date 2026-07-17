@@ -11,14 +11,14 @@
     <table class="header-table">
         <tr>
             <td style="width: 55%;">
-                @if ($settings->villa_logo && file_exists(public_path('storage/'.$settings->villa_logo)))
-                    <img class="villa-logo" src="{{ public_path('storage/'.$settings->villa_logo) }}">
+                @if ($globalSettings->villa_logo && file_exists(public_path('storage/'.$globalSettings->villa_logo)))
+                    <img class="villa-logo" src="{{ public_path('storage/'.$globalSettings->villa_logo) }}">
                 @endif
-                <div class="villa-name">{{ $settings->villa_name }}</div>
+                <div class="villa-name">{{ $globalSettings->villa_name }}</div>
                 <div class="muted">
-                    @if ($settings->address){{ $settings->address }}<br>@endif
-                    @if ($settings->phone_number){{ $settings->phone_number }}<br>@endif
-                    @if ($settings->email){{ $settings->email }}@endif
+                    @if ($globalSettings->address){{ $globalSettings->address }}<br>@endif
+                    @if ($globalSettings->phone_number){{ $globalSettings->phone_number }}<br>@endif
+                    @if ($globalSettings->email){{ $globalSettings->email }}@endif
                 </div>
             </td>
             <td style="width: 45%;">
@@ -65,7 +65,7 @@
             <tr>
                 <td>{{ $booking->room->name_or_number }} — {{ $booking->room->type }}</td>
                 <td class="text-right">{{ max(1, $booking->check_in->diffInDays($booking->check_out)) }}</td>
-                <td class="text-right">{{ $settings->currency }} {{ number_format($booking->total_amount, 2) }}</td>
+                <td class="text-right">{{ $globalSettings->currency }} {{ number_format($booking->total_amount, 2) }}</td>
             </tr>
         </tbody>
     </table>
@@ -73,26 +73,26 @@
     <table class="totals-table">
         <tr>
             <td class="label">Total Amount</td>
-            <td class="value">{{ $settings->currency }} {{ number_format($booking->total_amount, 2) }}</td>
+            <td class="value">{{ $globalSettings->currency }} {{ number_format($booking->total_amount, 2) }}</td>
         </tr>
         <tr>
             <td class="label">Advance Payment (Paid)</td>
-            <td class="value">{{ $settings->currency }} {{ number_format($booking->advance_payment, 2) }}</td>
+            <td class="value">{{ $globalSettings->currency }} {{ number_format($booking->advance_payment, 2) }}</td>
         </tr>
         @if ($stage === 'final')
             <tr>
                 <td class="label">Final Settlement (Paid)</td>
-                <td class="value">{{ $settings->currency }} {{ number_format($booking->final_settlement_amount, 2) }}</td>
+                <td class="value">{{ $globalSettings->currency }} {{ number_format($booking->final_settlement_amount, 2) }}</td>
             </tr>
         @endif
         <tr class="grand">
             <td class="label">{{ $stage === 'final' ? 'Balance Due' : 'Remaining Balance Due' }}</td>
-            <td class="value" style="color: {{ $stage === 'final' ? '#2fa84f' : '#111827' }};">{{ $settings->currency }} {{ number_format($booking->remaining_balance, 2) }}</td>
+            <td class="value" style="color: {{ $stage === 'final' ? '#2fa84f' : '#111827' }};">{{ $globalSettings->currency }} {{ number_format($booking->remaining_balance, 2) }}</td>
         </tr>
     </table>
 
     <div class="footer-note">
-        Thank you for choosing {{ $settings->villa_name }}.
+        Thank you for choosing {{ $globalSettings->villa_name }}.
     </div>
 
 @endsection

@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 
 use App\Models\Booking;
 use App\Models\Room;
-use App\Models\Setting;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -129,7 +128,6 @@ class BookingController extends Controller
 
         return Pdf::loadView('invoices.pdf', [
             'booking' => $booking,
-            'settings' => Setting::current(),
             'stage' => 'confirmation',
         ])->setPaper('a4', 'portrait')->stream("invoice-confirmation-{$booking->id}.pdf");
     }
@@ -147,7 +145,6 @@ class BookingController extends Controller
 
         return Pdf::loadView('invoices.pdf', [
             'booking' => $booking,
-            'settings' => Setting::current(),
             'stage' => 'final',
         ])->setPaper('a4', 'portrait')->stream("invoice-final-{$booking->id}.pdf");
     }

@@ -2,10 +2,13 @@
 
 namespace App\Providers;
 
+use App\Models\Setting;
 use App\Models\User;
 use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
+use Illuminate\View\View as ViewInstance;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -39,5 +42,16 @@ class AppServiceProvider extends ServiceProvider
         // granular permissions above - a manager must never be able to
         // grant themselves more access.
         Gate::define('manage-team', fn (User $user) => $user->isOwner());
+
+        // Every view (including partials rendered via @include, like the
+        // sidebar) gets $globalSettings for free - villa branding never
+        // needs to be fetched or passed manually. The static cache keeps
+        // this to a single query per request even though the composer
+        // fires once per rendered view/partial.
+        View::composer('*', function (ViewInstance $view) {
+            static $settings;
+            $settings ??= Setting::current();
+            $view->with('globalSettings', $settings);
+        });
     }
 }
