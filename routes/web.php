@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\BookingController;
 use App\Http\Controllers\CustomerController;
+use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ExpenseController;
 use App\Http\Controllers\IncomeController;
 use App\Http\Controllers\InvoiceController;
@@ -16,7 +17,7 @@ use Illuminate\Support\Facades\Route;
 Route::redirect('/', '/dashboard');
 
 Route::middleware('auth')->group(function () {
-    Route::get('/dashboard', [PageController::class, 'dashboard'])->name('dashboard');
+    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
     Route::get('/projects', [PageController::class, 'projects'])->name('projects.index');
     Route::get('/chat', [PageController::class, 'chat'])->name('chat');
     Route::get('/inbox', [PageController::class, 'inbox'])->name('inbox');

@@ -68,4 +68,35 @@ class Booking extends Model
             return (float) $this->total_amount - (float) $this->advance_payment;
         });
     }
+
+    /**
+     * Up to two initials derived from the customer's name, for avatar
+     * circles where there's no profile photo to show instead.
+     */
+    protected function customerInitials(): Attribute
+    {
+        return Attribute::get(function () {
+            $initials = collect(preg_split('/\s+/', trim((string) $this->customer_name)))
+                ->filter()
+                ->take(2)
+                ->map(fn (string $part) => strtoupper(substr($part, 0, 1)))
+                ->implode('');
+
+            return $initials !== '' ? $initials : '?';
+        });
+    }
+
+    /**
+     * Advance payment as a percentage of the total booking amount.
+     */
+    protected function paymentProgress(): Attribute
+    {
+        return Attribute::get(function () {
+            if ((float) $this->total_amount <= 0.0) {
+                return 0.0;
+            }
+
+            return round(((float) $this->advance_payment / (float) $this->total_amount) * 100, 1);
+        });
+    }
 }

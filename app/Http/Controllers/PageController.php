@@ -6,11 +6,6 @@ use Illuminate\View\View;
 
 class PageController extends Controller
 {
-    public function dashboard(): View
-    {
-        return view('dashboard');
-    }
-
     public function calendar(): View
     {
         return view('calendar');
