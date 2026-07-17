@@ -22,6 +22,7 @@
       </section>
       @include('layouts.partials.footer')
     </main>
+  @include('layouts.partials.mobile-nav')
   <div class="modal fade" id="createModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-lg">
       <div class="modal-content dash-modal">

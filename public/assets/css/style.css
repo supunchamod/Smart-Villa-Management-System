@@ -1347,7 +1347,23 @@ h1 { font-size: clamp(30px, 3.5vw, 42px); margin: 4px 0 8px; font-weight: 700; l
   .auth-device-body { grid-template-columns: 54px 1fr; min-height: 260px; padding: 12px; gap: 12px; }
   .auth-device aside { padding: 8px; }
 }
+
+/* Mobile bottom navigation - shown only below the Bootstrap md breakpoint
+   (768px) via the .d-md-none utility already applied on the element. */
+.mobile-bottom-nav { position: fixed; left: 0; right: 0; bottom: 0; z-index: 1200; align-items: center; justify-content: space-around; gap: 2px; height: 64px; padding: 0 6px calc(env(safe-area-inset-bottom, 0px)); background: #080d19; border-top: 1px solid rgba(255,255,255,.08); box-shadow: 0 -10px 26px rgba(2,6,23,.32); }
+.mobile-nav-link { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; flex: 1 1 0; min-width: 0; height: 100%; padding: 6px 2px 8px; color: #8b96ab; text-decoration: none; position: relative; }
+.mobile-nav-link svg { width: 21px; height: 21px; flex: 0 0 auto; }
+.mobile-nav-link span { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 10.5px; font-weight: 700; }
+.mobile-nav-link.active { color: #ffffff; }
+.mobile-nav-link.active::before { content: ""; position: absolute; top: 4px; width: 4px; height: 4px; border-radius: 50%; background: #2fb6d0; }
+.mobile-nav-fab { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; flex: 0 0 auto; width: 54px; height: 54px; margin-top: -26px; border-radius: 50%; background: linear-gradient(150deg, #2fd6b4, #0d9488); color: #ffffff; text-decoration: none; box-shadow: 0 10px 22px rgba(20,184,166,.45), 0 0 0 4px #080d19; }
+.mobile-nav-fab svg { width: 20px; height: 20px; }
+.mobile-nav-fab span { font-size: 10px; font-weight: 800; letter-spacing: .01em; }
+@media (max-width: 767.98px) {
+  .content { padding-bottom: 96px; }
+}
 @media print {
+  .mobile-bottom-nav { display: none !important; }
   @page { margin: 14mm; }
   :root { --bg: #ffffff; --surface: #ffffff; --surface-2: #f7f9fc; --text: #111827; --muted: #4b5563; --line: #d7deea; --shadow: none; }
   body { background: #ffffff !important; color: #111827 !important; }
