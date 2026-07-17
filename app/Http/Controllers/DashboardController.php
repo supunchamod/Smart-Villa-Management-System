@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Booking;
 use App\Models\Expense;
 use App\Models\Room;
+use App\Models\User;
 use App\Support\IncomeLedger;
 use Illuminate\View\View;
 
@@ -89,6 +90,19 @@ class DashboardController extends Controller
             ->limit(6)
             ->get();
 
+        $staffMembers = User::where('role', 'manager')
+            ->orderBy('name')
+            ->limit(5)
+            ->get();
+
+        // Advance payments (recorded at booking time) and final settlements
+        // (recorded at checkout) - same events IncomeLedger feeds to the
+        // Income/Profit/Reports modules, most recent first.
+        $recentPayments = IncomeLedger::events()
+            ->sortByDesc('date')
+            ->take(6)
+            ->values();
+
         return view('dashboard', [
             'totalBookings' => $totalBookings,
             'confirmedBookings' => $confirmedBookings,
@@ -106,6 +120,8 @@ class DashboardController extends Controller
             'chartExpenses' => $chartExpenses,
             'upcomingCheckIns' => $upcomingCheckIns,
             'activeBookings' => $activeBookings,
+            'staffMembers' => $staffMembers,
+            'recentPayments' => $recentPayments,
         ]);
     }
 

@@ -3,6 +3,7 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -83,5 +84,22 @@ class User extends Authenticatable
         }
 
         return in_array($permission, $this->permissions ?? [], true);
+    }
+
+    /**
+     * Up to two initials derived from the user's name, for avatar circles
+     * where there's no profile photo to show instead.
+     */
+    protected function initials(): Attribute
+    {
+        return Attribute::get(function () {
+            $initials = collect(preg_split('/\s+/', trim($this->name)))
+                ->filter()
+                ->take(2)
+                ->map(fn (string $part) => strtoupper(substr($part, 0, 1)))
+                ->implode('');
+
+            return $initials !== '' ? $initials : '?';
+        });
     }
 }

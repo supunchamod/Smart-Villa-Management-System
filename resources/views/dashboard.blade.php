@@ -101,8 +101,61 @@
   </div>
 </div>
 <div class="row g-4 mt-1">
-  <div class="col-xl-7"><div class="panel"><div class="panel-head"><div><h2>My Tasks</h2><p>Task status by owner and deadline</p></div><div class="segmented"><button class="active">All</button><button>Progress</button><button>Pending</button></div></div><div class="table-responsive"><table class="table align-middle dash-table"><thead><tr><th>Name</th><th>Deadline</th><th>Status</th><th>Assignee</th></tr></thead><tbody><tr><td><strong>Create new Admin Template</strong></td><td>03 Nov 2026</td><td><span class="deal-badge won">Completed</span></td><td><span class="person-line"><span class="rep-avatar has-photo"><img src="{{ asset('assets/img/team/team-3.jpg') }}" alt="Marketing Coordinator"></span><span>Marketing Coordinator</span></span></td></tr><tr><td><strong>Administrative Analyst</strong></td><td>17 Nov 2026</td><td><span class="deal-badge new">Progress</span></td><td><span class="person-line"><span class="rep-avatar has-photo"><img src="{{ asset('assets/img/team/team-1.jpg') }}" alt="Donald Risher"></span><span>Donald Risher</span></span></td></tr><tr><td><strong>E-commerce Landing Page</strong></td><td>10 Dec 2026</td><td><span class="deal-badge stuck">Pending</span></td><td><span class="person-line"><span class="rep-avatar has-photo"><img src="{{ asset('assets/img/team/team-2.jpg') }}" alt="Jansh Brown"></span><span>Jansh Brown</span></span></td></tr><tr><td><strong>UI/UX Design</strong></td><td>22 Dec 2026</td><td><span class="deal-badge new">Progress</span></td><td><span class="person-line"><span class="rep-avatar has-photo"><img src="{{ asset('assets/img/team/team-3.jpg') }}" alt="Carroll Adams"></span><span>Carroll Adams</span></span></td></tr><tr><td><strong>Projects Design</strong></td><td>31 Dec 2026</td><td><span class="deal-badge stuck">Pending</span></td><td><span class="person-line"><span class="rep-avatar has-photo"><img src="{{ asset('assets/img/team/team-4.jpg') }}" alt="William Pinto"></span><span>William Pinto</span></span></td></tr></tbody></table></div></div></div>
-  <div class="col-xl-5"><div class="panel crm-widget team-members-widget"><div class="panel-head"><div><h2>Team Members</h2><p>Workload and task contribution</p></div><button class="btn btn-sm btn-light">30 Days</button></div><div class="member-row"><span class="rep-avatar has-photo"><img src="{{ asset('assets/img/team/team-1.jpg') }}" alt="Donald Risher"></span><div><strong>Donald Risher</strong><small>Product Manager</small></div><b>110h : 150h</b><em>258</em></div><div class="member-row"><span class="rep-avatar has-photo"><img src="{{ asset('assets/img/team/team-2.jpg') }}" alt="Jansh Brown"></span><div><strong>Jansh Brown</strong><small>Lead Developer</small></div><b>83h : 150h</b><em>105</em></div><div class="member-row"><span class="rep-avatar has-photo"><img src="{{ asset('assets/img/team/team-3.jpg') }}" alt="Carroll Adams"></span><div><strong>Carroll Adams</strong><small>Lead Designer</small></div><b>58h : 150h</b><em>75</em></div><div class="member-row"><span class="rep-avatar has-photo"><img src="{{ asset('assets/img/team/team-4.jpg') }}" alt="William Pinto"></span><div><strong>William Pinto</strong><small>UI/UX Designer</small></div><b>96h : 150h</b><em>85</em></div></div></div>
+  <div class="col-xl-7">
+    <div class="panel" x-data="{ filter: 'all' }">
+      <div class="panel-head">
+        <div><h2>Recent Payments</h2><p>Advance payments and final settlements</p></div>
+        <div class="segmented">
+          <button type="button" :class="{ active: filter === 'all' }" @click="filter = 'all'">All</button>
+          <button type="button" :class="{ active: filter === 'advance' }" @click="filter = 'advance'">Advance</button>
+          <button type="button" :class="{ active: filter === 'settlement' }" @click="filter = 'settlement'">Settlement</button>
+        </div>
+      </div>
+      <div class="table-responsive">
+        <table class="table align-middle dash-table">
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Date &amp; Time</th>
+              <th>Status</th>
+              <th>Payment Type</th>
+            </tr>
+          </thead>
+          <tbody>
+            @forelse ($recentPayments as $payment)
+              @php
+                $paymentKey = $payment['type'] === 'Advance Payment' ? 'advance' : 'settlement';
+                $paymentIcon = $paymentKey === 'advance' ? 'bi-wallet2' : 'bi-check2-circle';
+              @endphp
+              <tr x-show="filter === 'all' || filter === '{{ $paymentKey }}'">
+                <td><strong>{{ $payment['booking']->customer_name }} ({{ $payment['booking']->room->name_or_number }})</strong></td>
+                <td>{{ $payment['date']->format('d M Y, h:i A') }}</td>
+                <td><span class="deal-badge won">PAID &middot; {{ $globalSettings->currency }} {{ number_format($payment['amount'], 2) }}</span></td>
+                <td><span class="person-line"><span class="rep-avatar"><i class="bi {{ $paymentIcon }}"></i></span><span>{{ $payment['type'] }}</span></span></td>
+              </tr>
+            @empty
+              <tr><td colspan="4" class="text-center text-muted py-4">No payments recorded yet.</td></tr>
+            @endforelse
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+  <div class="col-xl-5">
+    <div class="panel crm-widget team-members-widget">
+      <div class="panel-head"><div><h2>Staff</h2><p>Active managers and their access</p></div><button class="btn btn-sm btn-light">30 Days</button></div>
+      @forelse ($staffMembers as $member)
+        <div class="member-row">
+          <span class="rep-avatar">{{ $member->initials }}</span>
+          <div><strong>{{ $member->name }}</strong><small>{{ ucfirst($member->role) }}</small></div>
+          <b>{{ $member->email }}</b>
+          <em>Active</em>
+        </div>
+      @empty
+        <p class="text-muted small mb-0">No managers added yet. Add one from the Team page.</p>
+      @endforelse
+    </div>
+  </div>
 </div>
 @endsection
 
