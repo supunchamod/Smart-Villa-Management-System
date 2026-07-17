@@ -62,17 +62,17 @@
           </div>
         </div>
 
-        @canany(['manage_expenses', 'view_finance_dashboard'])
+        @canany(['manage_expenses', 'view_finance'])
         <div class="nav-section nav-accordion {{ $openSection === 'finance' ? 'open' : '' }}">
           <button class="nav-accordion-toggle" type="button" data-nav-accordion aria-expanded="{{ $openSection === 'finance' ? 'true' : 'false' }}"><span><i class="bi bi-cash-coin"></i>Finance</span><i class="bi bi-chevron-down"></i></button>
           <div class="nav-accordion-panel">
-            @can('view_finance_dashboard')
+            @can('view_finance')
               <a class="nav-link {{ request()->routeIs('income.index') ? 'active' : '' }}" href="{{ route('income.index') }}"><i class="bi bi-cash-stack"></i><span>Income</span></a>
             @endcan
             @can('manage_expenses')
               <a class="nav-link {{ request()->routeIs('expenses.index') ? 'active' : '' }}" href="{{ route('expenses.index') }}"><i class="bi bi-receipt-cutoff"></i><span>Expenses</span></a>
             @endcan
-            @can('view_finance_dashboard')
+            @can('view_finance')
               <a class="nav-link {{ request()->routeIs('profit.index') ? 'active' : '' }}" href="{{ route('profit.index') }}"><i class="bi bi-graph-up-arrow"></i><span>Profit Analyzer</span></a>
               <a class="nav-link {{ request()->routeIs(['reports', 'reports.generate']) ? 'active' : '' }}" href="{{ route('reports') }}"><i class="bi bi-clipboard-data"></i><span>Reports</span></a>
             @endcan

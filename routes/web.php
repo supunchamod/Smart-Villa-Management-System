@@ -50,17 +50,14 @@ Route::middleware('auth')->group(function () {
         Route::resource('expenses', ExpenseController::class)->only(['index', 'store', 'update', 'destroy']);
     });
 
-    // Income, Profit Analyzer, and the Reports page are all part of the
-    // finance dashboard; actually generating a report PDF is a further,
-    // more specific permission on top of that.
-    Route::middleware('can:view_finance_dashboard')->group(function () {
+    // Income, Profit Analyzer, and Reports (including generating a report
+    // PDF) are all gated by the single view_finance permission.
+    Route::middleware('can:view_finance')->group(function () {
         Route::get('/income', [IncomeController::class, 'index'])->name('income.index');
         Route::get('/profit', [ProfitController::class, 'index'])->name('profit.index');
         Route::get('/reports', [ReportController::class, 'index'])->name('reports');
+        Route::get('/reports/generate', [ReportController::class, 'generate'])->name('reports.generate');
     });
-    Route::get('/reports/generate', [ReportController::class, 'generate'])
-        ->middleware('can:generate_reports')
-        ->name('reports.generate');
 
     // Managing staff and their permissions is owner-only.
     Route::middleware('can:manage-team')->group(function () {

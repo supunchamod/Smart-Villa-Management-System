@@ -22,8 +22,7 @@ class User extends Authenticatable
     public const PERMISSIONS = [
         'manage_bookings' => 'Manage Bookings',
         'manage_expenses' => 'Manage Expenses',
-        'view_finance_dashboard' => 'View Finance Dashboard',
-        'generate_reports' => 'Generate Reports',
+        'view_finance' => 'View Finance Details',
     ];
 
     /**
