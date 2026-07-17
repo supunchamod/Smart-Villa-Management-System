@@ -22,40 +22,40 @@
           <div class="col-12">
             <label class="form-label">Villa logo</label>
             <div class="d-flex align-items-center gap-3 mb-2">
-              @if ($villa->logo)
-                <img src="{{ asset('storage/'.$villa->logo) }}" alt="{{ $villa->name }}" style="width:56px;height:56px;object-fit:cover;border-radius:8px;">
+              @if ($settings->villa_logo)
+                <img src="{{ asset('storage/'.$settings->villa_logo) }}" alt="{{ $settings->villa_name }}" style="width:56px;height:56px;object-fit:cover;border-radius:8px;">
               @endif
-              <input class="form-control @error('logo') is-invalid @enderror" type="file" name="logo" accept="image/*">
+              <input class="form-control @error('villa_logo') is-invalid @enderror" type="file" name="villa_logo" accept="image/*">
             </div>
-            @error('logo')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror
+            @error('villa_logo')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror
           </div>
           <div class="col-md-6">
             <label class="form-label">Villa name</label>
-            <input class="form-control @error('name') is-invalid @enderror" name="name" value="{{ old('name', $villa->name) }}">
-            @error('name')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror
+            <input class="form-control @error('villa_name') is-invalid @enderror" name="villa_name" value="{{ old('villa_name', $settings->villa_name) }}">
+            @error('villa_name')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror
           </div>
           <div class="col-md-6">
             <label class="form-label">Currency</label>
             <select class="form-select @error('currency') is-invalid @enderror" name="currency">
               @foreach (['USD', 'EUR', 'GBP', 'LKR', 'AUD'] as $code)
-                <option value="{{ $code }}" @selected(old('currency', $villa->currency) === $code)>{{ $code }}</option>
+                <option value="{{ $code }}" @selected(old('currency', $settings->currency) === $code)>{{ $code }}</option>
               @endforeach
             </select>
             @error('currency')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror
           </div>
           <div class="col-md-6">
             <label class="form-label">Phone number</label>
-            <input class="form-control @error('phone_number') is-invalid @enderror" name="phone_number" value="{{ old('phone_number', $villa->phone_number) }}">
+            <input class="form-control @error('phone_number') is-invalid @enderror" name="phone_number" value="{{ old('phone_number', $settings->phone_number) }}">
             @error('phone_number')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror
           </div>
           <div class="col-md-6">
             <label class="form-label">Contact email</label>
-            <input class="form-control @error('email') is-invalid @enderror" type="email" name="email" value="{{ old('email', $villa->email) }}">
+            <input class="form-control @error('email') is-invalid @enderror" type="email" name="email" value="{{ old('email', $settings->email) }}">
             @error('email')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror
           </div>
           <div class="col-12">
             <label class="form-label">Address</label>
-            <textarea class="form-control @error('address') is-invalid @enderror" name="address" rows="3">{{ old('address', $villa->address) }}</textarea>
+            <textarea class="form-control @error('address') is-invalid @enderror" name="address" rows="3">{{ old('address', $settings->address) }}</textarea>
             @error('address')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror
           </div>
           <div class="col-12"><button class="btn btn-primary" type="submit">Save Changes</button></div>

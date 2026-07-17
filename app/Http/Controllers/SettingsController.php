@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Setting;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -12,38 +13,40 @@ class SettingsController extends Controller
     /**
      * Display the villa settings form.
      */
-    public function edit(Request $request): View
+    public function edit(): View
     {
         return view('settings', [
-            'villa' => $request->user()->villa,
+            'settings' => Setting::current(),
         ]);
     }
 
     /**
-     * Update the authenticated user's villa settings.
+     * Update the villa's settings.
      */
     public function update(Request $request): RedirectResponse
     {
-        $villa = $request->user()->villa;
+        $settings = Setting::current();
 
         $validated = $request->validate([
-            'name' => ['required', 'string', 'max:255'],
+            'villa_name' => ['required', 'string', 'max:255'],
             'address' => ['nullable', 'string', 'max:255'],
             'phone_number' => ['nullable', 'string', 'max:30'],
             'email' => ['nullable', 'email', 'max:255'],
             'currency' => ['required', 'string', 'max:8'],
-            'logo' => ['nullable', 'image', 'max:2048'],
+            'villa_logo' => ['nullable', 'image', 'max:2048'],
         ]);
 
-        if ($request->hasFile('logo')) {
-            if ($villa->logo) {
-                Storage::disk('public')->delete($villa->logo);
+        if ($request->hasFile('villa_logo')) {
+            if ($settings->villa_logo) {
+                Storage::disk('public')->delete($settings->villa_logo);
             }
 
-            $validated['logo'] = $request->file('logo')->store('villa-logos', 'public');
+            $validated['villa_logo'] = $request->file('villa_logo')->store('villa-logos', 'public');
         }
 
-        $villa->update($validated);
+        // Setting::current() returns an unsaved default instance if no row
+        // exists yet - save() inserts it the first time, updates it after.
+        $settings->fill($validated)->save();
 
         return back()->with('status', 'Villa settings updated successfully.');
     }

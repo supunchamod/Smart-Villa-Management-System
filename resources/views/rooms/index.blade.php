@@ -36,7 +36,7 @@
                       <tr>
                         <td><strong>{{ $room->name_or_number }}</strong></td>
                         <td>{{ $room->type }}</td>
-                        <td>{{ $villa->currency ?? 'USD' }} {{ number_format($room->price_per_night, 2) }}</td>
+                        <td>{{ $settings->currency }} {{ number_format($room->price_per_night, 2) }}</td>
                         <td><span class="status {{ $room->status === 'available' ? 'paid' : 'pending' }}">{{ ucfirst($room->status) }}</span></td>
                         <td>
                           <div class="d-flex gap-2">

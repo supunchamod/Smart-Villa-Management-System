@@ -36,7 +36,6 @@ class TeamController extends Controller
         ]);
 
         User::create([
-            'villa_id' => $request->user()->villa_id,
             'name' => $validated['name'],
             'email' => $validated['email'],
             'password' => Hash::make($validated['password']),

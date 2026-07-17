@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Room;
+use App\Models\Setting;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -12,11 +13,11 @@ class RoomController extends Controller
     /**
      * Display a listing of the villa's rooms.
      */
-    public function index(Request $request): View
+    public function index(): View
     {
         return view('rooms.index', [
             'rooms' => Room::latest()->paginate(10),
-            'villa' => $request->user()->villa,
+            'settings' => Setting::current(),
         ]);
     }
 

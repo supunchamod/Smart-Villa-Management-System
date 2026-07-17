@@ -8,7 +8,7 @@
         request()->routeIs(['login', 'register']) => 'auth',
         default => null,
     };
-    $villa = auth()->user()?->villa;
+    $settings = \App\Models\Setting::current();
 @endphp
 <aside class="mini-rail" aria-label="Quick navigation">
     <a href="{{ route('projects.index') }}" aria-label="Projects"><i class="bi bi-kanban"></i></a>
@@ -16,13 +16,13 @@
     <a href="{{ route('settings') }}" aria-label="Settings"><i class="bi bi-gear"></i></a>
   </aside>
     <aside class="sidebar" id="sidebar">
-      <a class="brand" href="{{ route('dashboard') }}" aria-label="{{ $villa->name ?? 'Dashora' }} home">
-        @if ($villa?->logo)
-          <span class="brand-mark"><img src="{{ asset('storage/'.$villa->logo) }}" alt="{{ $villa->name }}" style="width:100%;height:100%;object-fit:cover;border-radius:8px;"></span>
+      <a class="brand" href="{{ route('dashboard') }}" aria-label="{{ $settings->villa_name }} home">
+        @if ($settings->villa_logo)
+          <span class="brand-mark"><img src="{{ asset('storage/'.$settings->villa_logo) }}" alt="{{ $settings->villa_name }}" style="width:100%;height:100%;object-fit:cover;border-radius:8px;"></span>
         @else
-          <span class="brand-mark">{{ $villa ? strtoupper(substr($villa->name, 0, 1)) : 'D' }}</span>
+          <span class="brand-mark">{{ strtoupper(substr($settings->villa_name, 0, 1)) }}</span>
         @endif
-        <div><strong>{{ $villa->name ?? 'Dashora' }}</strong><small>Admin Suite</small></div>
+        <div><strong>{{ $settings->villa_name }}</strong><small>Admin Suite</small></div>
       </a>
       <nav class="sidebar-nav">
         <div class="nav-section nav-accordion {{ $openSection === 'dashboards' ? 'open' : '' }}">

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Expense;
+use App\Models\Setting;
 use App\Support\IncomeLedger;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
@@ -41,7 +42,7 @@ class ReportController extends Controller
         );
 
         $reportType = $validated['report_type'];
-        $villa = $request->user()->villa;
+        $settings = Setting::current();
 
         $incomeRows = collect();
         $expenseRows = collect();
@@ -61,7 +62,7 @@ class ReportController extends Controller
         }
 
         $pdf = Pdf::loadView('reports.pdf', [
-            'villa' => $villa,
+            'settings' => $settings,
             'reportType' => $reportType,
             'periodLabel' => $start->format('d M Y').' – '.$end->format('d M Y'),
             'incomeRows' => $incomeRows,

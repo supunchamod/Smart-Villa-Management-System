@@ -22,11 +22,8 @@
         <p>Create your account and open the full admin workspace.</p>
         <form method="POST" action="{{ route('register') }}">
           @csrf
-          <label class="form-label">Villa / property name</label>
-          <input class="form-control mb-3 @error('villa_name') is-invalid @enderror" name="villa_name" id="villa_name" value="{{ old('villa_name') }}" placeholder="Sunset Villa Resort" required autofocus>
-          @error('villa_name')<div class="invalid-feedback d-block mb-3">{{ $message }}</div>@enderror
           <label class="form-label">Full name</label>
-          <input class="form-control mb-3 @error('name') is-invalid @enderror" name="name" id="name" value="{{ old('name') }}" placeholder="Sara Ahmed" required>
+          <input class="form-control mb-3 @error('name') is-invalid @enderror" name="name" id="name" value="{{ old('name') }}" placeholder="Sara Ahmed" required autofocus>
           @error('name')<div class="invalid-feedback d-block mb-3">{{ $message }}</div>@enderror
           <label class="form-label">Email address</label>
           <input class="form-control mb-3 @error('email') is-invalid @enderror" type="email" name="email" id="email" value="{{ old('email') }}" placeholder="name@example.com" required>

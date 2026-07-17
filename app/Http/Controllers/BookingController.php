@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Booking;
 use App\Models\Room;
+use App\Models\Setting;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -124,11 +125,11 @@ class BookingController extends Controller
      */
     public function confirmationInvoice(Booking $booking): Response
     {
-        $booking->load('room', 'villa');
+        $booking->load('room');
 
         return Pdf::loadView('invoices.pdf', [
             'booking' => $booking,
-            'villa' => $booking->villa,
+            'settings' => Setting::current(),
             'stage' => 'confirmation',
         ])->setPaper('a4', 'portrait')->stream("invoice-confirmation-{$booking->id}.pdf");
     }
@@ -142,11 +143,11 @@ class BookingController extends Controller
             return back()->with('error', 'This booking has not been checked out yet.');
         }
 
-        $booking->load('room', 'villa');
+        $booking->load('room');
 
         return Pdf::loadView('invoices.pdf', [
             'booking' => $booking,
-            'villa' => $booking->villa,
+            'settings' => Setting::current(),
             'stage' => 'final',
         ])->setPaper('a4', 'portrait')->stream("invoice-final-{$booking->id}.pdf");
     }

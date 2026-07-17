@@ -2,13 +2,12 @@
 
 namespace App\Models;
 
-use App\Models\Concerns\BelongsToVilla;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class Expense extends Model
 {
-    use BelongsToVilla, HasFactory;
+    use HasFactory;
 
     /**
      * The attributes that are mass assignable.
@@ -16,7 +15,6 @@ class Expense extends Model
      * @var list<string>
      */
     protected $fillable = [
-        'villa_id',
         'category',
         'amount',
         'description',
