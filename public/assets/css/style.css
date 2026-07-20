@@ -828,6 +828,11 @@ h1 { font-size: clamp(30px, 3.5vw, 42px); margin: 4px 0 8px; font-weight: 700; l
 .command-panel { overflow: hidden; color: var(--text); background: var(--surface); border: 1px solid var(--line); border-radius: 8px; box-shadow: 0 28px 80px rgba(15,23,42,.24); }
 .command-head { min-height: 88px; display: grid; grid-template-columns: 42px minmax(0,1fr) auto 44px; align-items: center; gap: 12px; padding: 0 28px; border-bottom: 1px solid var(--line); }
 .command-head > i { color: #4b4658; font-size: 28px; }
+/* The search <input> is wrapped in a <form> so Enter submits a real GET
+   request; display:contents keeps the form itself out of the grid so the
+   input still lands in the same grid-template-columns track (and the RTL
+   grid-column override below still applies to it directly). */
+.command-search-form { display: contents; }
 .command-head input { width: 100%; border: 0; outline: 0; background: transparent; color: var(--text); font-size: 24px; font-weight: 700; }
 .command-head input::placeholder { color: #a2a0aa; opacity: 1; }
 .command-head span { color: #a2a0aa; font-size: 20px; font-weight: 800; }

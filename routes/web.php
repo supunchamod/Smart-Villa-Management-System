@@ -10,6 +10,7 @@ use App\Http\Controllers\PageController;
 use App\Http\Controllers\ProfitController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\RoomController;
+use App\Http\Controllers\SearchController;
 use App\Http\Controllers\SettingsController;
 use App\Http\Controllers\TeamController;
 use Illuminate\Support\Facades\Route;
@@ -32,6 +33,11 @@ Route::middleware('auth')->group(function () {
 
     Route::get('/customers', [CustomerController::class, 'index'])->name('customers.index');
     Route::get('/customers/details', [CustomerController::class, 'show'])->name('customers.show');
+
+    // Global topbar search - spans bookings, rooms, and (permission-gated)
+    // financial records, so it sits outside any single feature's
+    // can:<permission> group.
+    Route::get('/global-search', [SearchController::class, 'index'])->name('search');
 
     Route::resource('rooms', RoomController::class)->except('show');
     Route::patch('/rooms/{room}/toggle-status', [RoomController::class, 'toggleStatus'])->name('rooms.toggle-status');

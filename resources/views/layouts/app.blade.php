@@ -54,7 +54,9 @@
       <div class="modal-content command-panel">
         <div class="command-head">
           <i class="bi bi-search"></i>
-          <input type="search" data-command-search-input placeholder="Search [CTRL + K]" aria-label="Search pages">
+          <form method="GET" action="{{ route('search') }}" class="command-search-form">
+            <input type="search" name="query" value="{{ request('query') }}" data-command-search-input placeholder="Search bookings, guests, rooms, transactions... [CTRL + K]" aria-label="Search bookings, guests, rooms, and transactions">
+          </form>
           <span>[esc]</span>
           <button type="button" data-bs-dismiss="modal" aria-label="Close"><i class="bi bi-x-lg"></i></button>
         </div>
