@@ -38,5 +38,10 @@ class DatabaseSeeder extends Seeder
                 'role' => 'owner',
             ]
         );
+
+        // Sales-demo rooms, bookings, and expenses - see DemoDataSeeder for
+        // details. Safe to re-run: it only clears out the demo data it
+        // manages, never a blanket truncate.
+        $this->call(DemoDataSeeder::class);
     }
 }
