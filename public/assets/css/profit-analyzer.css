@@ -104,6 +104,36 @@
 [data-theme="dark"] .pa .pagination .page-link { color: var(--pa-text); background: var(--pa-surface); }
 [data-theme="dark"] .pa .pagination .page-item.active .page-link { background: var(--pa-gold); border-color: var(--pa-gold); color: var(--pa-navy-ink); }
 
+/* Upcoming Bookings & Expected Revenue widget */
+.pa-accent-bar { display: block; width: 45px; border-top: 3px solid var(--pa-gold); margin-bottom: 12px; }
+.pa-eyebrow { display: block; margin-bottom: 6px; font-size: 11px; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; color: var(--pa-navy-ink); }
+[data-theme="dark"] .pa-eyebrow { color: var(--pa-gold); }
+.pa-section-title { margin: 0 0 4px; font-size: 18px; font-weight: 800; letter-spacing: -.01em; color: var(--pa-navy-ink); }
+[data-theme="dark"] .pa-section-title { color: var(--pa-text); }
+.pa-section-sub { margin: 0 0 18px; font-size: 12.5px; color: var(--pa-muted); }
+
+.pa-upcoming-list { display: flex; flex-direction: column; }
+.pa-upcoming-card { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px; border-radius: 10px; background: #fafafa; border-left: 4px solid var(--pa-navy); transition: all .3s ease; }
+[data-theme="dark"] .pa-upcoming-card { background: var(--pa-bg); }
+.pa-upcoming-card:hover { border-left-color: var(--pa-gold); box-shadow: 0 10px 24px rgba(0, 45, 98, .12); transform: translateX(2px); }
+
+.pa-upcoming-date { flex: 0 0 auto; min-width: 60px; text-align: center; padding: 6px 8px; border-radius: 10px; background: var(--pa-navy); color: #fff; }
+.pa-upcoming-date-day { display: block; font-size: 14px; font-weight: 800; color: var(--pa-gold); }
+.pa-upcoming-date-month { display: block; font-size: 10px; letter-spacing: 1px; text-transform: uppercase; }
+
+.pa-upcoming-body { flex: 1 1 auto; min-width: 0; }
+.pa-upcoming-title { display: block; margin-bottom: 2px; font-size: 14px; font-weight: 700; color: var(--pa-navy-ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+[data-theme="dark"] .pa-upcoming-title { color: var(--pa-text); }
+.pa-upcoming-meta { display: block; font-size: 12px; color: #666; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+[data-theme="dark"] .pa-upcoming-meta { color: var(--pa-muted); }
+
+.pa-upcoming-revenue { flex: 0 0 auto; font-weight: 800; padding: 5px 10px; border-radius: 8px; background: var(--pa-gold-soft); color: var(--pa-navy-ink); font-size: 13px; border: 1px dashed var(--pa-gold); white-space: nowrap; }
+[data-theme="dark"] .pa-upcoming-revenue { color: var(--pa-text); }
+
+.pa-upcoming-cta { display: block; width: 100%; margin-top: 8px; padding: 10px; border: 2px solid var(--pa-gold); border-radius: 8px; background: transparent; color: var(--pa-navy-ink); font-size: 11px; font-weight: 800; letter-spacing: 1px; text-transform: uppercase; text-align: center; text-decoration: none; transition: background .2s ease, color .2s ease; }
+.pa-upcoming-cta:hover { background: var(--pa-gold); color: var(--pa-navy-ink); text-decoration: none; }
+[data-theme="dark"] .pa-upcoming-cta { color: var(--pa-text); }
+
 /* Mobile ledger cards, shown only below md alongside the desktop table's
    d-none d-md-block wrapper. */
 .pa-ledger-list { display: flex; flex-direction: column; gap: 12px; }

@@ -119,10 +119,10 @@
     </div>
   </div>
 
-  {{-- Bottom row: revenue ledger & financial logs --}}
+  {{-- Bottom row: revenue ledger & financial logs, plus upcoming bookings --}}
   <div class="row">
-    <div class="col-12 mb-4">
-      <div class="pa-panel">
+    <div class="col-lg-8 mb-4">
+      <div class="pa-panel h-100">
         <div class="pa-panel-head">
           <div><h2>Revenue Ledger &amp; Financial Logs</h2><p>{{ $rangeLabel }} &middot; bookings, check-ins &amp; service revenue with allocated cost &amp; margin</p></div>
         </div>
@@ -200,6 +200,38 @@
         @if ($ledger->hasPages())
           <div class="mt-3">{{ $ledger->links() }}</div>
         @endif
+      </div>
+    </div>
+
+    <div class="col-12 col-lg-4 mb-4">
+      <div class="pa-panel h-100 d-flex flex-column justify-content-between">
+        <div>
+          <span class="pa-accent-bar" aria-hidden="true"></span>
+          <span class="pa-eyebrow">Expected Revenue</span>
+          <h2 class="pa-section-title">Upcoming Bookings</h2>
+          <p class="pa-section-sub">Next scheduled check-ins &amp; forecasted revenue</p>
+
+          <div class="pa-upcoming-list">
+            @forelse ($upcomingBookings as $booking)
+              @php $nights = max(1, $booking->check_in->diffInDays($booking->check_out)); @endphp
+              <div class="pa-upcoming-card mb-3">
+                <div class="pa-upcoming-date">
+                  <span class="pa-upcoming-date-day">{{ $booking->check_in->format('d') }}</span>
+                  <span class="pa-upcoming-date-month">{{ $booking->check_in->format('M') }}</span>
+                </div>
+                <div class="pa-upcoming-body">
+                  <strong class="pa-upcoming-title">{{ $booking->room->name_or_number }}</strong>
+                  <small class="pa-upcoming-meta">Guest: {{ $booking->customer_name }} &bull; {{ $nights }} Night{{ $nights === 1 ? '' : 's' }}</small>
+                </div>
+                <span class="pa-upcoming-revenue">{{ $globalSettings->currency }} {{ number_format($booking->total_amount, 0) }}</span>
+              </div>
+            @empty
+              <p class="pa-empty">No upcoming check-ins scheduled.</p>
+            @endforelse
+          </div>
+        </div>
+
+        <a href="{{ route('calendar') }}" class="pa-upcoming-cta">View Booking Calendar &rarr;</a>
       </div>
     </div>
   </div>

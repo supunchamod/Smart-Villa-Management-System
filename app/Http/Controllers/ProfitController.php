@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Booking;
 use App\Models\Expense;
 use App\Support\IncomeLedger;
 use Carbon\Carbon;
@@ -31,6 +32,8 @@ class ProfitController extends Controller
     private const LEDGER_PER_PAGE = 12;
 
     private const TREND_BUCKETS = 12;
+
+    private const UPCOMING_BOOKINGS_LIMIT = 4;
 
     /**
      * Villa Cabana's Profit Analyzer: top-line revenue/expense/profit
@@ -82,6 +85,16 @@ class ProfitController extends Controller
         $ledgerRows = $this->buildLedger($rangeIncomeEvents, $totalRevenue, $totalExpenses);
         $ledger = $this->paginateLedger($ledgerRows, $request);
 
+        // Independent of the summary range above, same reasoning as the
+        // trend chart - "what's coming up" shouldn't disappear just because
+        // the manager is looking at "Today" or a past custom range.
+        $upcomingBookings = Booking::with('room')
+            ->where('status', 'confirmed')
+            ->whereDate('check_in', '>=', now()->toDateString())
+            ->orderBy('check_in')
+            ->limit(self::UPCOMING_BOOKINGS_LIMIT)
+            ->get();
+
         return view('profit.index', [
             'range' => $range,
             'rangeLabel' => $rangeLabel,
@@ -102,6 +115,7 @@ class ProfitController extends Controller
             'monthlyRevenue' => $monthlyRevenue,
             'monthlyNetProfit' => $monthlyNetProfit,
             'ledger' => $ledger,
+            'upcomingBookings' => $upcomingBookings,
         ]);
     }
 
