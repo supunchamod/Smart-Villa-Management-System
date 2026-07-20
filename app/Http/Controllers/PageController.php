@@ -2,13 +2,16 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Booking;
 use Illuminate\View\View;
 
 class PageController extends Controller
 {
     public function calendar(): View
     {
-        return view('calendar');
+        return view('calendar', [
+            'upcomingBookings' => Booking::with('room')->upcoming()->limit(4)->get(),
+        ]);
     }
 
     public function projects(): View

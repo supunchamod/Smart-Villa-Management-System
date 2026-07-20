@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -50,6 +51,18 @@ class Booking extends Model
     public function room(): BelongsTo
     {
         return $this->belongsTo(Room::class);
+    }
+
+    /**
+     * Confirmed bookings with a check-in still ahead of today, soonest
+     * first - the "what's coming up" query shared by the calendar's agenda
+     * list and the Profit Analyzer's upcoming-bookings widget.
+     */
+    public function scopeUpcoming(Builder $query): Builder
+    {
+        return $query->where('status', 'confirmed')
+            ->whereDate('check_in', '>=', now()->toDateString())
+            ->orderBy('check_in');
     }
 
     /**

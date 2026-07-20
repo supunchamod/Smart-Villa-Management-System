@@ -674,14 +674,14 @@
     return `${yyyy}-${mm}-${dd}T${time}`;
   };
   const calendarEvents = [
-    { title: 'Sprint Planning', start: calendarIsoAt(5, '10:00:00'), color: '#5278ff' },
-    { title: 'Design Sync', start: calendarIsoAt(8, '09:00:00'), color: '#2fa84f' },
-    { title: 'Invoice Review', start: calendarIsoAt(12, '11:30:00'), color: '#f6a642' },
-    { title: 'Product Demo', start: calendarIsoAt(16, '14:00:00'), color: '#8a1df2' },
-    { title: 'Roadmap Review', start: calendarIsoAt(20, '13:00:00'), color: '#5278ff' },
-    { title: 'Release Launch', start: calendarIsoAt(24, '09:30:00'), color: '#2fa84f' },
-    { title: 'Board Update', start: calendarIsoAt(28, '16:30:00'), color: '#dc2626' },
-    { title: 'Customer Workshop', start: calendarIsoAt(calendarToday.getDate(), '12:00:00'), color: '#2fb6d0' }
+    { title: 'Cabana A - Reserved', start: calendarIsoAt(5, '10:00:00'), color: '#5278ff' },
+    { title: 'Villa Suite Check-in', start: calendarIsoAt(8, '09:00:00'), color: '#2fa84f' },
+    { title: 'Advance Payment Due', start: calendarIsoAt(12, '11:30:00'), color: '#f6a642' },
+    { title: 'Full Venue Event', start: calendarIsoAt(16, '14:00:00'), color: '#8a1df2' },
+    { title: 'Cabana B - Reserved', start: calendarIsoAt(20, '13:00:00'), color: '#5278ff' },
+    { title: 'Deluxe Suite Check-out', start: calendarIsoAt(24, '09:30:00'), color: '#2fa84f' },
+    { title: 'Final Settlement Due', start: calendarIsoAt(28, '16:30:00'), color: '#dc2626' },
+    { title: 'Guest Arrival Today', start: calendarIsoAt(calendarToday.getDate(), '12:00:00'), color: '#2fb6d0' }
   ];
   const renderFallbackCalendar = (mount) => {
     if (!mount) return;
