@@ -1,0 +1,58 @@
+/* Villa Cabana Calendar - premium Navy/Gold treatment for the calendar
+   toolbar, the FullCalendar grid, and the Upcoming agenda list. Scoped
+   entirely under .vc so it never leaks into other pages that reuse
+   .panel/.calendar-toolbar/etc. */
+.vc {
+  --vc-navy: #002d62;
+  --vc-navy-2: #01397d;
+  --vc-gold: #e8b22d;
+  --vc-gold-soft: rgba(232, 178, 45, .14);
+}
+[data-theme="dark"] .vc {
+  --vc-navy: #6f97cf;
+  --vc-gold: #f3c94f;
+}
+
+/* Section header */
+.vc-accent-bar { display: block; width: 45px; border-top: 3px solid var(--vc-gold); margin-bottom: 12px; }
+.vc-badge { display: block; margin-bottom: 6px; font-size: 11px; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; color: var(--vc-navy); }
+/* .calendar-toolbar h2 { margin: 4px 0; font-weight: 700/900; letter-spacing: -.035em } already exists in
+   style.css with (class + type) specificity, so .vc-title alone can't win the cascade - scope it
+   through the parent class instead of relying on source order. */
+.calendar-toolbar .vc-title { margin: 0 0 6px; font-size: clamp(22px, 2.6vw, 27px); font-weight: 800; letter-spacing: -.01em; color: var(--vc-navy); font-family: "Plus Jakarta Sans", Inter, sans-serif; }
+
+/* Panels: rounded, premium corners on top of the base .panel look */
+.vc .panel { border-radius: 12px; }
+
+/* FullCalendar toolbar/grid recolored to the corporate identity */
+.vc .calendar-library-panel .fc,
+.vc .calendar-library-panel .fc .fc-button { font-family: "Plus Jakarta Sans", Inter, ui-sans-serif, system-ui, sans-serif; }
+.vc .calendar-library-panel .fc .fc-toolbar-title { color: var(--vc-navy); }
+.vc .calendar-library-panel .fc .fc-button { font-weight: 700; }
+.vc .calendar-library-panel .fc .fc-button:hover,
+.vc .calendar-library-panel .fc .fc-button:focus { border-color: rgba(0, 45, 98, .35); background: rgba(0, 45, 98, .08); color: var(--vc-navy); box-shadow: none; }
+.vc .calendar-library-panel .fc .fc-button-primary:not(:disabled).fc-button-active,
+.vc .calendar-library-panel .fc .fc-button-primary:not(:disabled):active { border-color: var(--vc-navy); background: var(--vc-navy); color: #fff; }
+.vc .calendar-library-panel .fc .fc-day-today { background: var(--vc-gold-soft) !important; }
+.vc .fallback-calendar-toolbar h3 { font-family: "Plus Jakarta Sans", Inter, sans-serif; color: var(--vc-navy); }
+.vc .fallback-calendar-day.today { border-color: var(--vc-gold); box-shadow: inset 0 0 0 1px var(--vc-gold); background: var(--vc-gold-soft); }
+
+/* Upcoming events agenda list */
+.vc-agenda-list { display: flex; flex-direction: column; }
+.vc-agenda-card { background: #fafafa; border-left: 4px solid var(--vc-navy); transition: all .3s ease; }
+[data-theme="dark"] .vc-agenda-card { background: var(--surface-2); }
+.vc-agenda-card:hover { border-left-color: var(--vc-gold); box-shadow: 0 10px 24px rgba(0, 45, 98, .12); transform: translateX(2px); }
+
+.vc-agenda-date { background: var(--vc-navy); color: #fff; min-width: 55px; flex: 0 0 auto; }
+.vc-agenda-date-num { font-size: 14px; color: var(--vc-gold); }
+.vc-agenda-date-month { font-size: 10px; letter-spacing: 1px; }
+
+.vc-agenda-content { min-width: 0; }
+.vc-agenda-title { display: block; font-size: 14px; font-weight: 700; color: var(--vc-navy); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.vc-agenda-meta { display: block; color: var(--muted); font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.vc-agenda-footer-link { display: flex; align-items: center; justify-content: center; gap: 6px; margin-top: 18px; padding: 12px; border-radius: 10px; background: var(--vc-navy); color: #fff; font-size: 13px; font-weight: 700; text-decoration: none; }
+.vc-agenda-footer-link:hover { background: var(--vc-navy-2); color: var(--vc-gold); }
+
+.shadow-xs { box-shadow: 0 2px 6px rgba(15, 23, 42, .06); }
+[data-theme="dark"] .shadow-xs { box-shadow: 0 2px 6px rgba(0, 0, 0, .3); }
