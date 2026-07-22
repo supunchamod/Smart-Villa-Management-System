@@ -81,8 +81,7 @@
     <div class="col-lg-8 mb-4">
       <div
         class="pa-panel"
-        x-data="trendChart(@json($weeklyLabels), @json($weeklyRevenue), @json($weeklyNetProfit), @json($monthlyLabels), @json($monthlyRevenue), @json($monthlyNetProfit), @js($granularity))"
-        x-init="render()"
+        x-data='trendChart(@json($weeklyLabels), @json($weeklyRevenue), @json($weeklyNetProfit), @json($monthlyLabels), @json($monthlyRevenue), @json($monthlyNetProfit), @json($granularity))'
       >
         <div class="pa-panel-head">
           <div><h2>Revenue vs Net Profit Timeline</h2><p>Trailing 12 periods of history, independent of the date-range filter above</p></div>
@@ -97,8 +96,7 @@
     <div class="col-lg-4 mb-4">
       <div
         class="pa-panel"
-        x-data="expenseDonut(@json($expenseBreakdown->pluck('category')), @json($expenseBreakdown->pluck('amount')), @json($donutPalette))"
-        x-init="render()"
+        x-data='expenseDonut(@json($expenseBreakdown->pluck('category')), @json($expenseBreakdown->pluck('amount')), @json($donutPalette))'
       >
         <div class="pa-panel-head"><div><h2>Expense Distribution</h2><p>Where the villa spends the most in {{ $rangeLabel }}</p></div></div>
         @if ($expenseBreakdown->isEmpty())
@@ -240,15 +238,18 @@
 
 @push('scripts')
 <script>
-    function trendChart(weeklyLabels, weeklyRevenue, weeklyNetProfit, monthlyLabels, monthlyRevenue, monthlyNetProfit, initialUnit) {
-        return {
+    document.addEventListener('alpine:init', () => {
+        Alpine.data('trendChart', (weeklyLabels, weeklyRevenue, weeklyNetProfit, monthlyLabels, monthlyRevenue, monthlyNetProfit, initialUnit) => ({
             chart: null,
             unit: initialUnit,
             datasets: {
                 weekly: { labels: weeklyLabels, revenue: weeklyRevenue, netProfit: weeklyNetProfit },
                 monthly: { labels: monthlyLabels, revenue: monthlyRevenue, netProfit: monthlyNetProfit },
             },
-            render() {
+            init() {
+                this.renderChart();
+            },
+            renderChart() {
                 const data = this.datasets[this.unit];
                 this.chart = new Chart(this.$refs.canvas.getContext('2d'), {
                     type: 'line',
@@ -304,13 +305,14 @@
                 this.chart.data.datasets[1].data = data.netProfit;
                 this.chart.update();
             },
-        };
-    }
+        }));
 
-    function expenseDonut(labels, data, palette) {
-        return {
+        Alpine.data('expenseDonut', (labels, data, palette) => ({
             chart: null,
-            render() {
+            init() {
+                this.renderChart();
+            },
+            renderChart() {
                 if (!labels.length) return;
 
                 this.chart = new Chart(this.$refs.canvas.getContext('2d'), {
@@ -331,7 +333,7 @@
                     },
                 });
             },
-        };
-    }
+        }));
+    });
 </script>
 @endpush
