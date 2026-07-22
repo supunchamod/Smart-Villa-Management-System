@@ -30,7 +30,7 @@
         <div class="balance-stat"><span>Confirmed Bookings</span><strong>{{ $confirmedBookings }}</strong><small>Currently confirmed</small></div>
         <div class="balance-stat"><span>Total Rooms</span><strong>{{ $totalRooms }}</strong><small>Villa inventory</small></div>
       </div>
-      <div x-data="dashboardChart(@json($chartLabels), @json($chartIncome), @json($chartExpenses))" x-init="render()">
+      <div x-data='dashboardChart(@json($chartLabels), @json($chartIncome), @json($chartExpenses))'>
         <canvas class="chart-md" x-ref="canvas"></canvas>
       </div>
     </div>
@@ -313,10 +313,13 @@
 
 @push('scripts')
 <script>
-    function dashboardChart(labels, income, expenses) {
-        return {
+    document.addEventListener('alpine:init', () => {
+        Alpine.data('dashboardChart', (labels, income, expenses) => ({
             chart: null,
-            render() {
+            init() {
+                this.renderChart();
+            },
+            renderChart() {
                 this.chart = new Chart(this.$refs.canvas.getContext('2d'), {
                     type: 'bar',
                     data: {
@@ -340,7 +343,7 @@
                     }
                 });
             }
-        };
-    }
+        }));
+    });
 </script>
 @endpush
