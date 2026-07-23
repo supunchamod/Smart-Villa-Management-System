@@ -41,21 +41,15 @@
                   </div>
                 </template>
 
-                <template x-if="status === 'SCAN_QR_CODE' || status === 'STARTING'">
-                  <div>
-                    <p class="mb-3">Scan this QR code with WhatsApp on your phone (<strong>Linked Devices &rarr; Link a Device</strong>) to connect.</p>
-                    <template x-if="qr">
-                      <img :src="qr" alt="WhatsApp QR code" style="width:240px;height:240px;border:1px solid #e5e7eb;border-radius:12px;padding:8px;">
-                    </template>
-                    <template x-if="!qr">
-                      <div class="d-flex flex-column align-items-center gap-2" style="width:240px;height:240px;margin:0 auto;justify-content:center;">
-                        <span class="spinner-border text-primary" role="status" aria-hidden="true"></span>
-                        <small class="text-muted">Waiting for QR code&hellip;</small>
-                      </div>
-                    </template>
-                    <p class="text-muted small mt-3 mb-0">This page refreshes automatically every few seconds &mdash; no need to reload.</p>
+                <div id="qr-code-container" x-show="status === 'SCAN_QR_CODE' || status === 'STARTING'" style="display: none;">
+                  <p class="mb-3">Scan this QR code with WhatsApp on your phone (<strong>Linked Devices &rarr; Link a Device</strong>) to connect.</p>
+                  <img id="qr-code-img" :src="qr" x-show="qr" alt="WhatsApp QR code" style="width:240px;height:240px;border:1px solid #e5e7eb;border-radius:12px;padding:8px;">
+                  <div x-show="!qr" class="d-flex flex-column align-items-center gap-2" style="width:240px;height:240px;margin:0 auto;justify-content:center;">
+                    <span class="spinner-border text-primary" role="status" aria-hidden="true"></span>
+                    <small class="text-muted">Waiting for QR code&hellip;</small>
                   </div>
-                </template>
+                  <p class="text-muted small mt-3 mb-0">This page refreshes automatically every few seconds &mdash; no need to reload.</p>
+                </div>
 
                 <template x-if="status !== 'WORKING' && status !== 'SCAN_QR_CODE' && status !== 'STARTING'">
                   <div>
