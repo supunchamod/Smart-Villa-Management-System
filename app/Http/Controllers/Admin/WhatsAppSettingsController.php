@@ -46,18 +46,20 @@ class WhatsAppSettingsController extends Controller
     }
 
     /**
-     * Fetches the session status and, only while a QR scan is actually
-     * needed, the QR code image - there's no reason to ask WAHA for a QR
-     * when the session is already connected or stopped outright.
+     * Fetches the session status - auto-starting the session on WAHA's
+     * side if it's missing or stopped, via WhatsAppService::getSessionStatus()
+     * - and, only while a QR scan is actually needed, the QR code image.
+     * This is what both index() and status() poll, so the page never gets
+     * stuck showing "STOPPED": it either shows the QR right away or picks
+     * it up on the next poll a few seconds later.
      */
     private function currentState(): array
     {
-        $session = $this->whatsapp->getSessionStatus();
-        $status = $session['status'] ?? 'STOPPED';
+        $status = $this->whatsapp->getSessionStatus() ?? 'STOPPED';
 
         return [
             'status' => $status,
-            'qr' => $status === 'SCAN_QR_CODE' ? $this->qrDataUri() : null,
+            'qr' => in_array($status, ['SCAN_QR_CODE', 'STARTING'], true) ? $this->qrDataUri() : null,
         ];
     }
 

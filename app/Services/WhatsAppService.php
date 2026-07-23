@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use Illuminate\Http\Client\PendingRequest;
+use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
@@ -25,11 +26,26 @@ class WhatsAppService
     }
 
     /**
-     * Get the current WhatsApp session status (e.g. WORKING, SCAN_QR_CODE, STOPPED).
+     * Get the current WhatsApp session status (WORKING, SCAN_QR_CODE,
+     * STARTING, etc). If the session doesn't exist yet (404) or has been
+     * left STOPPED, it's started automatically so callers never have to
+     * handle a "no session" state themselves - they either get a real
+     * status back or null if WAHA itself is unreachable.
      */
-    public function getSessionStatus(): ?array
+    public function getSessionStatus(): ?string
     {
         $response = $this->client()->get("/api/sessions/{$this->session}");
+
+        $needsStart = $response->status() === 404
+            || ($response->successful() && $response->json('status') === 'STOPPED');
+
+        if ($needsStart) {
+            $this->startSession();
+
+            sleep(2);
+
+            $response = $this->client()->get("/api/sessions/{$this->session}");
+        }
 
         if ($response->failed()) {
             Log::error('WAHA: failed to fetch session status', [
@@ -41,14 +57,28 @@ class WhatsAppService
             return null;
         }
 
-        return $response->json();
+        return $response->json('status');
     }
 
     /**
      * Retrieve the Base64 QR code image used to authenticate the session.
+     * Ensures the session actually exists and isn't stopped first (via
+     * getSessionStatus(), which auto-starts it if needed) since WAHA
+     * has nothing to return a QR code for otherwise.
      */
     public function getQrCode(): ?string
     {
+        $status = $this->getSessionStatus();
+
+        if ($status === null) {
+            return null;
+        }
+
+        if ($status === 'WORKING') {
+            // Already connected - there's no QR code to scan.
+            return null;
+        }
+
         $response = $this->client()->get("/api/sessions/{$this->session}/auth/qr");
 
         if ($response->failed()) {
@@ -61,7 +91,54 @@ class WhatsAppService
             return null;
         }
 
-        return $response->json('value') ?? $response->body();
+        return $this->extractQrValue($response);
+    }
+
+    /**
+     * Normalizes the QR endpoint's response into a bare Base64 string,
+     * regardless of whether WAHA answered with a JSON payload
+     * ({"value": "..."} or {"mimetype": ..., "data": "..."}) or a raw
+     * image/png body.
+     */
+    private function extractQrValue(Response $response): ?string
+    {
+        $contentType = (string) $response->header('Content-Type');
+
+        if (str_contains($contentType, 'application/json')) {
+            $value = $response->json('value') ?? $response->json('data');
+
+            return $value !== null ? (string) $value : null;
+        }
+
+        if (str_starts_with($contentType, 'image/')) {
+            return base64_encode($response->body());
+        }
+
+        $value = $response->json('value') ?? $response->json('data');
+
+        return $value !== null ? (string) $value : ($response->body() ?: null);
+    }
+
+    /**
+     * Creates (or restarts) the named session on the WAHA instance.
+     */
+    private function startSession(): bool
+    {
+        $response = $this->client()->post('/api/sessions/start', [
+            'name' => $this->session,
+        ]);
+
+        if ($response->failed()) {
+            Log::error('WAHA: failed to start session', [
+                'session' => $this->session,
+                'status' => $response->status(),
+                'body' => $response->body(),
+            ]);
+
+            return false;
+        }
+
+        return true;
     }
 
     /**

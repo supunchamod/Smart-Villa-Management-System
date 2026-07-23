@@ -41,7 +41,7 @@
                   </div>
                 </template>
 
-                <template x-if="status === 'SCAN_QR_CODE'">
+                <template x-if="status === 'SCAN_QR_CODE' || status === 'STARTING'">
                   <div>
                     <p class="mb-3">Scan this QR code with WhatsApp on your phone (<strong>Linked Devices &rarr; Link a Device</strong>) to connect.</p>
                     <template x-if="qr">
@@ -57,7 +57,7 @@
                   </div>
                 </template>
 
-                <template x-if="status !== 'WORKING' && status !== 'SCAN_QR_CODE'">
+                <template x-if="status !== 'WORKING' && status !== 'SCAN_QR_CODE' && status !== 'STARTING'">
                   <div>
                     <i class="bi bi-exclamation-triangle-fill text-warning" style="font-size:3rem;"></i>
                     <p class="mt-3 mb-0">WhatsApp session is <strong x-text="status"></strong>. Waiting for it to start&hellip;</p>
@@ -100,12 +100,12 @@
             },
             get badgeClass() {
                 if (this.status === 'WORKING') return 'won';
-                if (this.status === 'SCAN_QR_CODE') return 'pending';
+                if (this.status === 'SCAN_QR_CODE' || this.status === 'STARTING') return 'pending';
                 return 'stuck';
             },
             get dotColor() {
                 if (this.status === 'WORKING') return '#2fa84f';
-                if (this.status === 'SCAN_QR_CODE') return '#b45309';
+                if (this.status === 'SCAN_QR_CODE' || this.status === 'STARTING') return '#b45309';
                 return '#dc2626';
             },
             startPolling() {
