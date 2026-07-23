@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Jobs\SendBookingWhatsAppJob;
+use App\Jobs\SendPostCheckoutReviewWhatsAppJob;
 use App\Models\Booking;
 use App\Models\Room;
 use Barryvdh\DomPDF\Facade\Pdf;
@@ -150,8 +151,10 @@ class BookingController extends Controller
         ]);
 
         // The booking is now marked as paid in full - send the final
-        // invoice over WhatsApp.
+        // invoice immediately, and queue a review request for an hour
+        // from now, once the guest has actually had time to leave.
         SendBookingWhatsAppJob::dispatch($booking);
+        SendPostCheckoutReviewWhatsAppJob::dispatch($booking)->delay(now()->addHour());
 
         if ($request->wantsJson()) {
             return response()->json([

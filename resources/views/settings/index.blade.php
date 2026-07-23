@@ -59,6 +59,12 @@
             <textarea class="form-control @error('address') is-invalid @enderror" name="address" rows="3">{{ old('address', $globalSettings->address) }}</textarea>
             @error('address')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror
           </div>
+          <div class="col-12">
+            <label class="form-label">Google Maps link</label>
+            <input class="form-control @error('google_maps_link') is-invalid @enderror" type="url" name="google_maps_link" value="{{ old('google_maps_link', $globalSettings->google_maps_link) }}" placeholder="https://maps.google.com/...">
+            <small class="text-muted">Shared with guests in the check-in day WhatsApp message.</small>
+            @error('google_maps_link')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror
+          </div>
           <div class="col-12"><button class="btn btn-primary" type="submit">Save Changes</button></div>
         </form></div></div><div class="col-xl-4"><div class="panel"><div class="panel-head"><div><h2>Activity Timeline</h2><p>Live operational events</p></div></div><div class="timeline"><div class="timeline-item"><span></span><div><strong>New enterprise lead assigned to CRM pipeline</strong><small>2 min ago</small></div></div><div class="timeline-item"><span></span><div><strong>Invoice #DS-1024 was paid successfully</strong><small>18 min ago</small></div></div><div class="timeline-item"><span></span><div><strong>Inventory alert triggered for Pro License</strong><small>43 min ago</small></div></div><div class="timeline-item"><span></span><div><strong>Q2 executive report generated</strong><small>1 hr ago</small></div></div></div></div></div></div>
 
@@ -91,6 +97,12 @@
                   <label class="form-label">Public WhatsApp number</label>
                   <input class="form-control @error('public_whatsapp_number') is-invalid @enderror" name="public_whatsapp_number" value="{{ old('public_whatsapp_number', $globalSettings->public_whatsapp_number) }}" placeholder="+94 77 123 4567">
                   @error('public_whatsapp_number')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label">Review link</label>
+                  <input class="form-control @error('review_link') is-invalid @enderror" type="url" name="review_link" value="{{ old('review_link', $globalSettings->review_link) }}" placeholder="https://g.page/r/.../review">
+                  <small class="text-muted">Sent to guests an hour after checkout.</small>
+                  @error('review_link')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror
                 </div>
                 <div class="col-12">
                   <label class="form-label">Hero subtitle / tagline</label>

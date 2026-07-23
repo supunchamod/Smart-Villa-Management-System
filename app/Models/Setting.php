@@ -19,6 +19,7 @@ class Setting extends Model
         'villa_name',
         'villa_logo',
         'address',
+        'google_maps_link',
         'phone_number',
         'email',
         'currency',
@@ -27,6 +28,7 @@ class Setting extends Model
         'website_hero_title',
         'website_hero_subtitle',
         'public_whatsapp_number',
+        'review_link',
         'half_board_rate',
         'full_board_rate',
     ];

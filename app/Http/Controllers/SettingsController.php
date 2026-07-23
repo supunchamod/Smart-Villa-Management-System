@@ -55,6 +55,7 @@ class SettingsController extends Controller
                 'website_hero_title' => ['nullable', 'string', 'max:255'],
                 'website_hero_subtitle' => ['nullable', 'string', 'max:500'],
                 'public_whatsapp_number' => ['nullable', 'string', 'max:30'],
+                'review_link' => ['nullable', 'url', 'max:2048'],
             ]);
 
             $settings->fill($validated)->save();
@@ -65,6 +66,7 @@ class SettingsController extends Controller
         $validated = $request->validate([
             'villa_name' => ['required', 'string', 'max:255'],
             'address' => ['nullable', 'string', 'max:255'],
+            'google_maps_link' => ['nullable', 'url', 'max:2048'],
             'phone_number' => ['nullable', 'string', 'max:30'],
             'email' => ['nullable', 'email', 'max:255'],
             'currency' => ['required', 'string', 'max:8'],

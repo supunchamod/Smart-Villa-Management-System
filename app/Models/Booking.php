@@ -37,6 +37,9 @@ class Booking extends Model
         'bbq_addon',
         'safari_jeep_addon',
         'outdoor_dining_preference',
+        'reminder_sent_at',
+        'checkin_info_sent_at',
+        'review_request_sent_at',
     ];
 
     /**
@@ -57,6 +60,9 @@ class Booking extends Model
             'bbq_addon' => 'boolean',
             'safari_jeep_addon' => 'boolean',
             'outdoor_dining_preference' => 'boolean',
+            'reminder_sent_at' => 'datetime',
+            'checkin_info_sent_at' => 'datetime',
+            'review_request_sent_at' => 'datetime',
         ];
     }
 

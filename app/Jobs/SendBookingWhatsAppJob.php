@@ -18,6 +18,15 @@ class SendBookingWhatsAppJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
+    /**
+     * Booking statuses that mean the stay is complete and paid in full,
+     * so the "final" stage (final invoice + "Paid in Full" caption)
+     * applies. Booking::status never actually stores 'completed' today
+     * (only 'checked_out'), but the check tolerates it too in case that
+     * naming is ever adopted.
+     */
+    private const FINAL_STAGE_STATUSES = ['completed', 'checked_out'];
+
     public int $tries = 3;
 
     public int $backoff = 30;
@@ -51,7 +60,9 @@ class SendBookingWhatsAppJob implements ShouldQueue
             return;
         }
 
-        $invoicePath = $this->resolveInvoicePath($booking);
+        $stage = in_array($booking->status, self::FINAL_STAGE_STATUSES, true) ? 'final' : 'confirmation';
+
+        $invoicePath = $this->resolveInvoicePath($booking, $stage);
 
         if (! $invoicePath) {
             Log::error('SendBookingWhatsAppJob: failed to generate invoice PDF', ['booking_id' => $booking->id]);
@@ -63,7 +74,7 @@ class SendBookingWhatsAppJob implements ShouldQueue
             $booking->customer_phone,
             $invoicePath,
             basename($invoicePath),
-            $this->caption($booking)
+            $this->caption($booking, $stage)
         );
 
         if (! $sent) {
@@ -76,18 +87,23 @@ class SendBookingWhatsAppJob implements ShouldQueue
 
     /**
      * Returns the absolute local path to the booking's invoice PDF under
-     * storage/app/public/invoices, generating and caching it there first
-     * if it doesn't exist yet. A checked-out booking gets its final
-     * invoice; anything else gets the confirmation invoice, matching the
-     * two stages BookingController already streams for manual downloads.
+     * storage/app/public/invoices, generating it there first if needed.
+     * The confirmation and final invoices are always different files
+     * (invoice-confirmation-{id}.pdf vs invoice-final-{id}.pdf), so
+     * there's never a mix-up between stages - but the final invoice is
+     * always regenerated fresh rather than reusing a cached file, since
+     * it reflects checkout-time data (settlement amount, payment method)
+     * that can change between when it was first generated and a later
+     * resend. The confirmation invoice is safe to cache, since nothing
+     * about it changes once it exists.
      */
-    private function resolveInvoicePath(Booking $booking): ?string
+    private function resolveInvoicePath(Booking $booking, string $stage): ?string
     {
-        $stage = $booking->status === 'checked_out' ? 'final' : 'confirmation';
         $relativePath = "invoices/invoice-{$stage}-{$booking->id}.pdf";
+        $forceRegenerate = $stage === 'final';
 
         try {
-            if (! Storage::disk('public')->exists($relativePath)) {
+            if ($forceRegenerate || ! Storage::disk('public')->exists($relativePath)) {
                 $pdf = Pdf::loadView('invoices.pdf', ['booking' => $booking, 'stage' => $stage])
                     ->setPaper('a4', 'portrait');
 
@@ -108,11 +124,11 @@ class SendBookingWhatsAppJob implements ShouldQueue
     /**
      * The WhatsApp caption sent alongside the invoice PDF.
      */
-    private function caption(Booking $booking): string
+    private function caption(Booking $booking, string $stage): string
     {
         $settings = Setting::current();
         $currency = $settings->currency ?: 'LKR';
-        $isFinal = $booking->status === 'checked_out';
+        $isFinal = $stage === 'final';
 
         $lines = [
             "🌿 *{$settings->villa_name}*",
