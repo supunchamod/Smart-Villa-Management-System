@@ -153,7 +153,7 @@ class WhatsAppService
      */
     public function sendTextMessage(string $phone, string $message): bool
     {
-        $chatId = $this->sanitizePhoneNumber($phone);
+        $chatId = $this->formatPhoneNumber($phone);
 
         $response = $this->client()->post('/api/sendText', [
             'session' => $this->session,
@@ -189,7 +189,7 @@ class WhatsAppService
             return false;
         }
 
-        $chatId = $this->sanitizePhoneNumber($phone);
+        $chatId = $this->formatPhoneNumber($phone);
         $mimeType = mime_content_type($filePath) ?: 'application/octet-stream';
         $base64 = base64_encode(file_get_contents($filePath));
 
@@ -220,17 +220,28 @@ class WhatsAppService
     }
 
     /**
-     * Normalize a local Sri Lankan phone number (07XXXXXXXX or 7XXXXXXXX)
-     * into the WAHA chat id format: 947XXXXXXXX@c.us.
+     * Format a raw phone number into WAHA's chatId format
+     * (94XXXXXXXXX@c.us):
+     *   - trims whitespace and strips a leading '+'
+     *   - strips everything else that isn't a digit (spaces, dashes,
+     *     parentheses, etc.)
+     *   - a local Sri Lankan number starting with '0' (e.g. 0781655306)
+     *     has the '0' replaced with the '94' country code
+     *   - anything else not already carrying the '94' country code gets
+     *     it prepended (e.g. 781655306 -> 94781655306)
      */
-    public function sanitizePhoneNumber(string $phone): string
+    public function formatPhoneNumber(string $phone): string
     {
+        $phone = trim($phone);
+
+        if (str_starts_with($phone, '+')) {
+            $phone = substr($phone, 1);
+        }
+
         $digits = preg_replace('/\D/', '', $phone);
 
         if (str_starts_with($digits, '0')) {
             $digits = '94'.substr($digits, 1);
-        } elseif (str_starts_with($digits, '7') && strlen($digits) === 9) {
-            $digits = '94'.$digits;
         } elseif (! str_starts_with($digits, '94')) {
             $digits = '94'.$digits;
         }
