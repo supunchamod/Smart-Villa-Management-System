@@ -48,11 +48,11 @@ class PublicBookingController extends Controller
     {
         $settings = $this->resolveSettings($slug);
 
-        // Only cabana types the owner has both activated and linked to a
-        // real bookable Room ever reach the public page - an unlinked one
-        // has nowhere for a resulting booking's room_id to point to.
+        // Every active cabana type is shown - LandingPageController keeps
+        // a bookable Room in sync behind the scenes for each one, so there
+        // is no separate "linked" state an owner needs to remember to set
+        // before a cabana type will actually appear here.
         $cabanaTypes = CabanaType::where('is_active', true)
-            ->whereNotNull('room_id')
             ->with('pricingTiers')
             ->orderBy('name')
             ->get();
@@ -109,7 +109,7 @@ class PublicBookingController extends Controller
             'id' => $cabanaType->id,
             'name' => $cabanaType->name,
             'description' => $cabanaType->description,
-            'image_url' => $cabanaType->image_url,
+            'image_url' => $cabanaType->image_url ? asset($cabanaType->image_url) : null,
             'max_capacity' => $cabanaType->max_capacity,
             'tiers' => $cabanaType->pricingTiers->map(fn (CabanaPricingTier $tier) => [
                 'min_pax' => $tier->min_pax,
@@ -169,11 +169,14 @@ class PublicBookingController extends Controller
         ]);
 
         $cabanaType = CabanaType::where('is_active', true)
-            ->whereNotNull('room_id')
             ->with('pricingTiers')
             ->find($validated['cabana_type_id']);
 
-        abort_if($cabanaType === null, 404);
+        // room_id is always set by LandingPageController when a cabana
+        // type is saved, but this is the one place a missing link would
+        // actually break something (Booking.room_id is required), so it's
+        // worth guarding here too rather than trusting that invariant blindly.
+        abort_if($cabanaType === null || $cabanaType->room_id === null, 404);
 
         $adults = (int) $validated['adults'];
         $children = (int) ($validated['children'] ?? 0);

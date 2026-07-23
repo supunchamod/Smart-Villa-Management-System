@@ -79,7 +79,7 @@
           @foreach ($cabanaTypes as $cabanaType)
             <div class="col-12 col-md-6 col-lg-4">
               <div class="pv-room-card" :class="{ 'pv-room-selected': selectedCabanaTypeId === {{ $cabanaType->id }} }">
-                <div class="pv-room-photo" @if ($cabanaType->image_url) style="background-image: url({{ $cabanaType->image_url }})" @endif>
+                <div class="pv-room-photo" @if ($cabanaType->image_url) style="background-image: url({{ asset($cabanaType->image_url) }})" @endif>
                   @unless ($cabanaType->image_url)
                     <span class="pv-room-photo-fallback"><i class="bi bi-image"></i></span>
                   @endunless

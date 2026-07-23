@@ -18,7 +18,7 @@
           <div class="col-xl-10">
             <div class="panel">
               <div class="panel-head"><div><h2>Edit Cabana Type</h2><p>{{ $cabanaType->name }}</p></div></div>
-              <form method="POST" action="{{ route('landing-page.cabana-types.update', $cabanaType) }}">
+              <form method="POST" action="{{ route('landing-page.cabana-types.update', $cabanaType) }}" enctype="multipart/form-data">
                 @csrf
                 @method('PUT')
                 @include('admin.landing-page._cabana_type_form')

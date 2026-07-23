@@ -15,20 +15,15 @@
     @error('max_capacity')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror
   </div>
   <div class="col-md-6">
-    <label class="form-label">Image URL <small class="text-muted">(optional)</small></label>
-    <input class="form-control @error('image_url') is-invalid @enderror" type="url" name="image_url" value="{{ old('image_url', $cabanaType->image_url ?? '') }}" placeholder="https://...">
-    @error('image_url')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror
-  </div>
-  <div class="col-md-6">
-    <label class="form-label">Linked room <small class="text-muted">(the bookable inventory record this cabana maps to)</small></label>
-    <select class="form-select @error('room_id') is-invalid @enderror" name="room_id">
-      <option value="">Not linked yet</option>
-      @foreach ($rooms as $room)
-        <option value="{{ $room->id }}" @selected(old('room_id', $cabanaType->room_id ?? '') == $room->id)>{{ $room->name_or_number }}</option>
-      @endforeach
-    </select>
-    @error('room_id')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror
-    <div class="form-text">A cabana type only appears on the public page once it's linked to a room and marked active.</div>
+    <label class="form-label">Cabana image <small class="text-muted">(optional - JPG, PNG or WEBP, up to 4MB)</small></label>
+    <input class="form-control @error('image') is-invalid @enderror" type="file" name="image" accept="image/jpeg,image/png,image/webp">
+    @error('image')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror
+    @if (isset($cabanaType) && $cabanaType->image_url)
+      <div class="d-flex align-items-center gap-2 mt-2">
+        <img src="{{ asset($cabanaType->image_url) }}" alt="{{ $cabanaType->name }}" style="width:64px;height:64px;object-fit:cover;border-radius:8px;">
+        <small class="text-muted">Current image - upload a new file to replace it.</small>
+      </div>
+    @endif
   </div>
   <div class="col-12">
     <label class="form-label">Description</label>

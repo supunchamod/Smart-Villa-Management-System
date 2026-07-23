@@ -18,7 +18,7 @@
           <div class="col-xl-10">
             <div class="panel">
               <div class="panel-head"><div><h2>Add Cabana Type</h2><p>Create a new cabana product for the public booking page</p></div></div>
-              <form method="POST" action="{{ route('landing-page.cabana-types.store') }}">
+              <form method="POST" action="{{ route('landing-page.cabana-types.store') }}" enctype="multipart/form-data">
                 @csrf
                 @include('admin.landing-page._cabana_type_form')
               </form>

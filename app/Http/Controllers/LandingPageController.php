@@ -7,6 +7,8 @@ use App\Models\LandingPageMenu;
 use App\Models\Room;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\File;
+use Illuminate\Support\Str;
 use Illuminate\View\View;
 
 class LandingPageController extends Controller
@@ -29,6 +31,12 @@ class LandingPageController extends Controller
     private const MEAL_TYPES = ['breakfast', 'lunch', 'dinner'];
 
     /**
+     * Where uploaded cabana images live, relative to the public/ directory
+     * (rendered via asset() in the views).
+     */
+    private const IMAGE_DIRECTORY = 'assets/images/cabanas';
+
+    /**
      * The Landing Page manager: cabana types (with their pricing tiers)
      * and the meal menu items, all editable from one page.
      */
@@ -48,13 +56,24 @@ class LandingPageController extends Controller
     {
         return view('admin.landing-page.create', [
             'tierBrackets' => self::TIER_BRACKETS,
-            'rooms' => Room::orderBy('name_or_number')->get(),
         ]);
     }
 
     public function storeCabanaType(Request $request): RedirectResponse
     {
         [$attributes, $tiers] = $this->validateCabanaType($request);
+
+        if ($request->hasFile('image')) {
+            $attributes['image_url'] = $this->storeImage($request);
+        }
+
+        // A cabana type needs a real bookable Room behind it, since a
+        // resulting booking always needs a room_id to point to. Previously
+        // this required the admin to manually link an existing room - an
+        // easy step to miss, which silently left a cabana type invisible
+        // on the public page (it was filtered out until linked). Now one
+        // is created and kept in sync automatically instead.
+        $attributes['room_id'] = $this->syncBackingRoom(null, $attributes, $tiers)->id;
 
         $cabanaType = CabanaType::create($attributes);
         $cabanaType->pricingTiers()->createMany($tiers);
@@ -70,13 +89,21 @@ class LandingPageController extends Controller
         return view('admin.landing-page.edit', [
             'cabanaType' => $cabanaType->load('pricingTiers'),
             'tierBrackets' => self::TIER_BRACKETS,
-            'rooms' => Room::orderBy('name_or_number')->get(),
         ]);
     }
 
     public function updateCabanaType(Request $request, CabanaType $cabanaType): RedirectResponse
     {
         [$attributes, $tiers] = $this->validateCabanaType($request);
+
+        if ($request->hasFile('image')) {
+            $this->deleteImage($cabanaType->image_url);
+            $attributes['image_url'] = $this->storeImage($request);
+        }
+
+        // Self-healing: a cabana type saved before this fix (or otherwise
+        // missing its backing room) gets one created here too.
+        $attributes['room_id'] = $this->syncBackingRoom($cabanaType->room, $attributes, $tiers)->id;
 
         $cabanaType->update($attributes);
 
@@ -92,6 +119,7 @@ class LandingPageController extends Controller
 
     public function destroyCabanaType(CabanaType $cabanaType): RedirectResponse
     {
+        $this->deleteImage($cabanaType->image_url);
         $cabanaType->delete();
 
         return redirect()->route('landing-page.index')->with('status', 'Cabana type deleted successfully.');
@@ -124,10 +152,9 @@ class LandingPageController extends Controller
     {
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
-            'image_url' => ['nullable', 'url', 'max:2048'],
+            'image' => ['nullable', 'image', 'mimes:jpeg,png,jpg,webp', 'max:4096'],
             'description' => ['nullable', 'string', 'max:2000'],
             'max_capacity' => ['required', 'integer', 'min:1', 'max:20'],
-            'room_id' => ['nullable', 'integer', 'exists:rooms,id'],
             'is_active' => ['nullable', 'boolean'],
             'tiers' => ['array'],
             'tiers.*.cabana_only_price' => ['nullable', 'numeric', 'min:0'],
@@ -137,11 +164,14 @@ class LandingPageController extends Controller
 
         $attributes = [
             'name' => $validated['name'],
-            'image_url' => $validated['image_url'] ?? null,
             'description' => $validated['description'] ?? null,
             'max_capacity' => $validated['max_capacity'],
-            'room_id' => $validated['room_id'] ?? null,
-            'is_active' => $request->boolean('is_active'),
+            // Defaults to true whenever the field is missing from the
+            // request entirely (not just unchecked) - the checkbox is
+            // always rendered checked by default, but this keeps a
+            // programmatic submission that omits it from silently
+            // creating an inactive, invisible cabana type.
+            'is_active' => $request->has('is_active') ? $request->boolean('is_active') : true,
         ];
 
         $tiers = $this->parsePricingTiers($validated['tiers'] ?? []);
@@ -182,5 +212,92 @@ class LandingPageController extends Controller
         }
 
         return $tiers;
+    }
+
+    /**
+     * Moves an uploaded cabana image into public/assets/images/cabanas and
+     * returns the relative web path stored on the model (rendered via
+     * asset() in the views) - a UUID filename avoids any collision with
+     * the original upload's name.
+     */
+    private function storeImage(Request $request): string
+    {
+        $file = $request->file('image');
+        $filename = Str::uuid().'.'.$file->getClientOriginalExtension();
+
+        $file->move(public_path(self::IMAGE_DIRECTORY), $filename);
+
+        return self::IMAGE_DIRECTORY.'/'.$filename;
+    }
+
+    /**
+     * Removes a previously uploaded cabana image from disk, if it exists.
+     * Silently does nothing for a null/blank path or a file that's already
+     * gone, since the caller doesn't need to distinguish those cases.
+     */
+    private function deleteImage(?string $imageUrl): void
+    {
+        if (! $imageUrl) {
+            return;
+        }
+
+        $path = public_path($imageUrl);
+
+        if (File::exists($path)) {
+            File::delete($path);
+        }
+    }
+
+    /**
+     * Keeps a bookable Room in sync with its CabanaType, creating one the
+     * first time a cabana type is saved (or if one is unexpectedly
+     * missing). Room stays the record bookings actually point to and its
+     * name/capacity/rate mirror the cabana type so internal Room-based
+     * views (dashboard, calendar, bookings list) show something sensible -
+     * but CabanaPricingTier stays the pricing source of truth for the
+     * public page. status is only set on creation, never overwritten on
+     * later syncs, so a "maintenance" toggle set from the Rooms admin page
+     * isn't silently undone by editing the cabana type.
+     *
+     * @param  array<string, mixed>  $attributes
+     * @param  list<array<string, mixed>>  $tiers
+     */
+    private function syncBackingRoom(?Room $room, array $attributes, array $tiers): Room
+    {
+        $roomAttributes = [
+            'name_or_number' => $attributes['name'],
+            'type' => $attributes['name'],
+            'price_per_night' => $this->estimateNightlyRate($tiers),
+            'capacity' => $attributes['max_capacity'],
+        ];
+
+        if ($room) {
+            $room->update($roomAttributes);
+
+            return $room;
+        }
+
+        return Room::create([...$roomAttributes, 'status' => 'available']);
+    }
+
+    /**
+     * A representative flat rate for the backing Room record - used only
+     * by internal Room-based views, never by the public page's pricing
+     * (which always reads CabanaPricingTier directly). The lowest price
+     * configured across every tier and board type, or 0 if none are set yet.
+     *
+     * @param  list<array<string, mixed>>  $tiers
+     */
+    private function estimateNightlyRate(array $tiers): float
+    {
+        $prices = collect($tiers)
+            ->flatMap(fn (array $tier) => [
+                $tier['cabana_only_price'],
+                $tier['half_board_price'],
+                $tier['full_board_price'],
+            ])
+            ->filter(fn ($price) => $price !== null);
+
+        return $prices->isNotEmpty() ? (float) $prices->min() : 0.0;
     }
 }

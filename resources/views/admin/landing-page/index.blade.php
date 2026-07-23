@@ -30,7 +30,7 @@
                     <tr>
                       <th>Cabana</th>
                       <th>Max Capacity</th>
-                      <th>Linked Room</th>
+                      <th>Room Record</th>
                       <th>Pricing Tiers</th>
                       <th>Status</th>
                       <th>Actions</th>
@@ -42,7 +42,7 @@
                         <td>
                           <div class="d-flex align-items-center gap-2">
                             @if ($cabanaType->image_url)
-                              <img src="{{ $cabanaType->image_url }}" alt="{{ $cabanaType->name }}" style="width:44px;height:44px;object-fit:cover;border-radius:8px;">
+                              <img src="{{ asset($cabanaType->image_url) }}" alt="{{ $cabanaType->name }}" style="width:44px;height:44px;object-fit:cover;border-radius:8px;">
                             @endif
                             <strong>{{ $cabanaType->name }}</strong>
                           </div>
@@ -50,9 +50,9 @@
                         <td>{{ $cabanaType->max_capacity }} guests</td>
                         <td>
                           @if ($cabanaType->room)
-                            {{ $cabanaType->room->name_or_number }}
+                            <small class="text-muted">{{ $cabanaType->room->name_or_number }}</small>
                           @else
-                            <span class="text-muted small">Not linked - won't appear on the public page</span>
+                            <span class="text-muted small">No room record yet - save this cabana type again to create one</span>
                           @endif
                         </td>
                         <td>
