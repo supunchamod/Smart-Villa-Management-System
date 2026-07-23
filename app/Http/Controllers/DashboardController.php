@@ -5,8 +5,10 @@ namespace App\Http\Controllers;
 use App\Models\Booking;
 use App\Models\Expense;
 use App\Models\Room;
+use App\Models\Setting;
 use App\Models\User;
 use App\Support\IncomeLedger;
+use Illuminate\Support\Str;
 use Illuminate\View\View;
 
 class DashboardController extends Controller
@@ -27,6 +29,10 @@ class DashboardController extends Controller
 
         $totalBookings = Booking::count();
         $confirmedBookings = Booking::where('status', 'confirmed')->count();
+        $pendingBookingsCount = Booking::where('status', 'pending')->count();
+
+        $villaSlug = Str::slug(Setting::current()->villa_name);
+        $publicVillaUrl = $villaSlug !== '' ? url('/v/'.$villaSlug) : null;
 
         $totalRooms = Room::count();
         $availableRooms = Room::where('status', 'available')->count();
@@ -132,6 +138,8 @@ class DashboardController extends Controller
             'tomorrow' => $tomorrow,
             'totalBookings' => $totalBookings,
             'confirmedBookings' => $confirmedBookings,
+            'pendingBookingsCount' => $pendingBookingsCount,
+            'publicVillaUrl' => $publicVillaUrl,
             'totalRooms' => $totalRooms,
             'availableRooms' => $availableRooms,
             'maintenanceRooms' => $maintenanceRooms,

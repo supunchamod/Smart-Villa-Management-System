@@ -21,12 +21,18 @@
         @endif
         <div class="row g-4">
           <div class="col-12">
-            <div class="panel" x-data="{ tab: 'all' }">
+            <div class="panel" x-data="{ tab: '{{ in_array(request('tab'), ['all', 'pending', 'active', 'completed', 'cancelled'], true) ? request('tab') : 'all' }}' }">
               <div class="panel-head"><div><h2>Bookings</h2><p>Reservations across all rooms and cabanas</p></div></div>
 
               <div class="booking-tabs" role="tablist" aria-label="Filter bookings by status">
                 <button type="button" class="booking-tab" role="tab" :class="{ active: tab === 'all' }" :aria-selected="tab === 'all'" @click="tab = 'all'">All Bookings</button>
-                <button type="button" class="booking-tab" role="tab" :class="{ active: tab === 'active' }" :aria-selected="tab === 'active'" @click="tab = 'active'">Active / Pending</button>
+                <button type="button" class="booking-tab" role="tab" :class="{ active: tab === 'pending' }" :aria-selected="tab === 'pending'" @click="tab = 'pending'">
+                  Pending Requests
+                  @if ($pendingBookingsCount > 0)
+                    <span class="pubsite-quick-badge" style="position:static; margin-left:6px;">{{ $pendingBookingsCount }}</span>
+                  @endif
+                </button>
+                <button type="button" class="booking-tab" role="tab" :class="{ active: tab === 'active' }" :aria-selected="tab === 'active'" @click="tab = 'active'">Active</button>
                 <button type="button" class="booking-tab" role="tab" :class="{ active: tab === 'completed' }" :aria-selected="tab === 'completed'" @click="tab = 'completed'">Completed</button>
                 <button type="button" class="booking-tab" role="tab" :class="{ active: tab === 'cancelled' }" :aria-selected="tab === 'cancelled'" @click="tab = 'cancelled'">Cancelled</button>
               </div>
@@ -50,7 +56,7 @@
                     <tbody>
                       @forelse ($bookings as $booking)
                         @php
-                          $tabKey = ['checked_out' => 'completed', 'cancelled' => 'cancelled'][$booking->status] ?? 'active';
+                          $tabKey = ['pending' => 'pending', 'checked_out' => 'completed', 'cancelled' => 'cancelled'][$booking->status] ?? 'active';
                           $badge = ['pending' => 'pending', 'confirmed' => 'new', 'checked_out' => 'won', 'cancelled' => 'stuck'][$booking->status] ?? 'new';
                         @endphp
                         <tr x-show="tab === 'all' || tab === '{{ $tabKey }}'">
@@ -65,7 +71,17 @@
                             <span class="deal-badge {{ $badge }}">{{ ucfirst(str_replace('_', ' ', $booking->status)) }}</span>
                           </td>
                           <td>
-                            <div class="d-flex gap-2">
+                            <div class="d-flex gap-2 flex-wrap">
+                              @if ($booking->status === 'pending')
+                                <form method="POST" action="{{ route('bookings.confirm', $booking) }}">
+                                  @csrf
+                                  <button class="btn btn-sm btn-success" type="submit"><i class="bi bi-check-lg"></i> Accept &amp; Confirm</button>
+                                </form>
+                                <form method="POST" action="{{ route('bookings.decline', $booking) }}" onsubmit="return confirm('Decline this booking request?');">
+                                  @csrf
+                                  <button class="btn btn-sm btn-outline-danger" type="submit"><i class="bi bi-x-lg"></i> Decline</button>
+                                </form>
+                              @endif
                               <a class="btn btn-sm btn-light" href="{{ route('bookings.show', $booking) }}" aria-label="View booking"><i class="bi bi-eye"></i></a>
                               <a class="btn btn-sm btn-light" href="{{ route('bookings.edit', $booking) }}" aria-label="Edit booking"><i class="bi bi-pencil"></i></a>
                               @if ($booking->status !== 'cancelled')
@@ -115,7 +131,18 @@
                         <span>Balance <strong>{{ number_format($booking->remaining_balance, 2) }}</strong></span>
                       </div>
 
-                      @if ($booking->status === 'confirmed')
+                      @if ($booking->status === 'pending')
+                        <div class="booking-request-actions">
+                          <form method="POST" action="{{ route('bookings.confirm', $booking) }}">
+                            @csrf
+                            <button type="submit" class="mdash-action-btn mdash-action-btn-success"><i class="bi bi-check-lg"></i> Accept &amp; Confirm</button>
+                          </form>
+                          <form method="POST" action="{{ route('bookings.decline', $booking) }}" onsubmit="return confirm('Decline this booking request?');">
+                            @csrf
+                            <button type="submit" class="mdash-action-btn mdash-action-btn-outline-danger"><i class="bi bi-x-lg"></i> Decline</button>
+                          </form>
+                        </div>
+                      @elseif ($booking->status === 'confirmed')
                         <a
                           href="{{ route('bookings.invoice.confirmation', $booking) }}"
                           class="mdash-action-btn mdash-action-btn-primary"

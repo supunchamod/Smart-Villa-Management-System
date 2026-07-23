@@ -14,6 +14,36 @@
           </nav>
         </div>
         <h2 class="visually-hidden">Overview</h2>
+
+        @if ($publicVillaUrl)
+          <div class="panel pubsite-panel" x-data='publicLinkWidget(@json($publicVillaUrl))'>
+            <div class="panel-head">
+              <div><h2>Public Booking Website</h2><p>Share your direct-booking page so guests can book instantly</p></div>
+            </div>
+            <div class="pubsite-row">
+              <div class="pubsite-link-box"><i class="bi bi-globe2"></i><span x-text="url"></span></div>
+              <div class="pubsite-actions">
+                <button type="button" class="btn btn-sm btn-light" @click="copy()">
+                  <i class="bi" :class="copied ? 'bi-check2' : 'bi-clipboard'"></i>
+                  <span x-text="copied ? 'Copied!' : 'Copy Link'"></span>
+                </button>
+                <a class="btn btn-sm btn-light" :href="url" target="_blank" rel="noopener"><i class="bi bi-box-arrow-up-right"></i> Preview Landing Page</a>
+                <a class="btn btn-sm btn-whatsapp" :href="whatsappUrl" target="_blank" rel="noopener"><i class="bi bi-whatsapp"></i> Share via WhatsApp</a>
+              </div>
+            </div>
+          </div>
+        @endif
+
+        @if ($pendingBookingsCount > 0)
+          <div class="pubsite-pending-alert">
+            <i class="bi bi-bell-fill"></i>
+            <span><strong>{{ $pendingBookingsCount }}</strong> new online booking {{ $pendingBookingsCount === 1 ? 'request' : 'requests' }} awaiting review</span>
+            @can('manage_bookings')
+              <a href="{{ route('bookings.index', ['tab' => 'pending']) }}" class="btn btn-sm btn-primary">Review Requests</a>
+            @endcan
+          </div>
+        @endif
+
         <div class="crm-kpi-grid">
           <div class="crm-kpi-card metric-primary"><div><span>Confirmed Bookings</span><h3>{{ $confirmedBookings }}</h3></div><i class="bi bi-journal-check bg-primary-soft"></i></div>
           <div class="crm-kpi-card metric-success"><div><span>Available Rooms</span><h3>{{ $availableRooms }}</h3></div><i class="bi bi-door-open bg-success-soft"></i></div>
@@ -171,6 +201,31 @@
           <h2>Hello, {{ $ownerFirstName }}</h2>
         </div>
 
+        @if ($publicVillaUrl)
+          <div class="pubsite-mobile-card" x-data='publicLinkWidget(@json($publicVillaUrl))'>
+            <div class="pubsite-mobile-head"><i class="bi bi-globe2"></i> Public Booking Website</div>
+            <div class="pubsite-mobile-link" x-text="url"></div>
+            <div class="pubsite-mobile-actions">
+              <button type="button" @click="copy()">
+                <i class="bi" :class="copied ? 'bi-check2' : 'bi-clipboard'"></i>
+                <span x-text="copied ? 'Copied!' : 'Copy Link'"></span>
+              </button>
+              <a :href="url" target="_blank" rel="noopener"><i class="bi bi-box-arrow-up-right"></i> Preview</a>
+              <a :href="whatsappUrl" target="_blank" rel="noopener" class="wa"><i class="bi bi-whatsapp"></i> Share</a>
+            </div>
+          </div>
+        @endif
+
+        @can('manage_bookings')
+          @if ($pendingBookingsCount > 0)
+            <a href="{{ route('bookings.index', ['tab' => 'pending']) }}" class="pubsite-mobile-alert">
+              <i class="bi bi-bell-fill"></i>
+              <span>{{ $pendingBookingsCount }} pending booking {{ $pendingBookingsCount === 1 ? 'request' : 'requests' }} awaiting review</span>
+              <i class="bi bi-chevron-right"></i>
+            </a>
+          @endif
+        @endcan
+
         <div class="mdash-hero">
           <div class="mdash-hero-top">
             <span class="mdash-hero-eyebrow"><i class="bi bi-houses"></i> Villa Status Today</span>
@@ -189,7 +244,10 @@
 
         <div class="mdash-quick-grid">
           @can('manage_bookings')
-            <a href="{{ route('bookings.index') }}" class="mdash-quick-card mdash-quick-blue">
+            <a href="{{ route('bookings.index') }}" class="mdash-quick-card mdash-quick-blue" style="position: relative;">
+              @if ($pendingBookingsCount > 0)
+                <span class="pubsite-quick-badge">{{ $pendingBookingsCount }}</span>
+              @endif
               <span class="mdash-quick-icon"><i class="bi bi-calendar-check"></i></span>
               <span>Manage Bookings</span>
             </a>
@@ -314,6 +372,21 @@
 @push('scripts')
 <script>
     document.addEventListener('alpine:init', () => {
+        Alpine.data('publicLinkWidget', (url) => ({
+            url,
+            copied: false,
+            get whatsappUrl() {
+                const message = 'Book your stay direct and save - check out our villa here: ' + this.url;
+                return 'https://wa.me/?text=' + encodeURIComponent(message);
+            },
+            copy() {
+                navigator.clipboard.writeText(this.url).then(() => {
+                    this.copied = true;
+                    setTimeout(() => { this.copied = false; }, 2000);
+                });
+            },
+        }));
+
         Alpine.data('dashboardChart', (labels, income, expenses) => ({
             chart: null,
             init() {

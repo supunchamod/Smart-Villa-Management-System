@@ -59,6 +59,8 @@ Route::middleware('auth')->group(function () {
         Route::get('/api/bookings', [BookingController::class, 'calendarFeed'])->name('bookings.calendar');
         Route::resource('bookings', BookingController::class);
         Route::post('/bookings/{booking}/checkout', [BookingController::class, 'checkout'])->name('bookings.checkout');
+        Route::post('/bookings/{booking}/confirm', [BookingController::class, 'confirm'])->name('bookings.confirm');
+        Route::post('/bookings/{booking}/decline', [BookingController::class, 'decline'])->name('bookings.decline');
         Route::get('/bookings/{booking}/invoice/confirmation', [BookingController::class, 'confirmationInvoice'])->name('bookings.invoice.confirmation');
         Route::get('/bookings/{booking}/invoice/final', [BookingController::class, 'finalInvoice'])->name('bookings.invoice.final');
     });

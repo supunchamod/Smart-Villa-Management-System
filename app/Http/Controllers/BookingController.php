@@ -33,6 +33,7 @@ class BookingController extends Controller
     {
         return view('bookings.index', [
             'bookings' => Booking::with('room')->latest('check_in')->paginate(10),
+            'pendingBookingsCount' => Booking::where('status', 'pending')->count(),
         ]);
     }
 
@@ -132,6 +133,58 @@ class BookingController extends Controller
 
         return redirect()->route('bookings.show', $booking)
             ->with('status', 'Booking checked out successfully. The final invoice is ready to download.');
+    }
+
+    /**
+     * Accept a pending online booking request, moving it to 'confirmed'.
+     * Also callable via AJAX for inline quick-action buttons.
+     */
+    public function confirm(Request $request, Booking $booking): RedirectResponse|JsonResponse
+    {
+        if ($booking->status !== 'pending') {
+            if ($request->wantsJson()) {
+                return response()->json(['message' => 'Only pending requests can be confirmed.'], 422);
+            }
+
+            return back()->with('error', 'Only pending requests can be confirmed.');
+        }
+
+        $booking->update(['status' => 'confirmed']);
+
+        if ($request->wantsJson()) {
+            return response()->json([
+                'status' => $booking->status,
+                'message' => 'Booking confirmed successfully.',
+            ]);
+        }
+
+        return back()->with('status', 'Booking confirmed successfully.');
+    }
+
+    /**
+     * Decline a pending online booking request, moving it to 'cancelled'
+     * rather than deleting it, so there's still a record of the enquiry.
+     */
+    public function decline(Request $request, Booking $booking): RedirectResponse|JsonResponse
+    {
+        if ($booking->status !== 'pending') {
+            if ($request->wantsJson()) {
+                return response()->json(['message' => 'Only pending requests can be declined.'], 422);
+            }
+
+            return back()->with('error', 'Only pending requests can be declined.');
+        }
+
+        $booking->update(['status' => 'cancelled']);
+
+        if ($request->wantsJson()) {
+            return response()->json([
+                'status' => $booking->status,
+                'message' => 'Booking declined.',
+            ]);
+        }
+
+        return back()->with('status', 'Booking declined.');
     }
 
     /**
