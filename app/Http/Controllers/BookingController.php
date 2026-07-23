@@ -30,6 +30,10 @@ class BookingController extends Controller
     /**
      * Display a listing of the villa's bookings.
      *
+     * Sorted by newest-created first (not by check_in date) so a booking
+     * just added or submitted always lands at the top of the table,
+     * regardless of how far out its stay is.
+     *
      * The quick-filter bar's counts are always computed across every
      * booking (not just the current page), so they stay accurate
      * regardless of which page or filter tab is currently showing.
@@ -39,7 +43,7 @@ class BookingController extends Controller
         $today = today();
 
         return view('bookings.index', [
-            'bookings' => Booking::with('room')->latest('check_in')->paginate(10),
+            'bookings' => Booking::with('room')->latest()->paginate(10),
             'pendingBookingsCount' => Booking::where('status', 'pending')->count(),
             'todayCheckInsCount' => Booking::where('status', 'confirmed')->whereDate('check_in', $today)->count(),
             'todayCheckOutsCount' => Booking::where('status', 'confirmed')->whereDate('check_out', $today)->count(),
