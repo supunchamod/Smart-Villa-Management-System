@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'File Manager | Dashora Admin Dashboard')
+@section('title', 'File Manager | '.$globalSettings->villa_name.' Admin Dashboard')
 
 @section('content')
         <div class="page-title">

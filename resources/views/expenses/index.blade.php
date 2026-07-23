@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Expenses | Dashora Admin Dashboard')
+@section('title', 'Expenses | '.$globalSettings->villa_name.' Admin Dashboard')
 
 @section('content')
 <div x-data="expenseManager()">

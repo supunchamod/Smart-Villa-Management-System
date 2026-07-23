@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Calendar | Dashora Admin Dashboard')
+@section('title', 'Calendar | '.$globalSettings->villa_name.' Admin Dashboard')
 
 @push('styles')
 <link rel="stylesheet" href="{{ asset('assets/css/villa-calendar.css') }}">
@@ -32,7 +32,7 @@
     <div class="col-xl-9">
         <div class="panel calendar-library-panel h-100">
             <!-- Dynamic Mounting Target for JS FullCalendar / Custom Calendar -->
-            <div id="dashoraCalendar" data-calendar-mount data-events-url="{{ route('bookings.calendar') }}">
+            <div id="bookingsCalendar" data-calendar-mount data-events-url="{{ route('bookings.calendar') }}">
                 <div class="fallback-calendar">
                     <div class="fallback-calendar-toolbar">
                         <button class="btn btn-light btn-sm" type="button" disabled><i class="bi bi-chevron-left"></i></button>

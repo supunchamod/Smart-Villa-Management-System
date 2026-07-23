@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>@yield('title', 'Dashora Admin Dashboard')</title>
-  <meta name="description" content="Dashora premium responsive HTML admin dashboard template.">
+  <title>@yield('title', $globalSettings->villa_name.' Admin Dashboard')</title>
+  <meta name="description" content="{{ $globalSettings->villa_name }} admin dashboard.">
   <link rel="icon" type="image/svg+xml" href="{{ asset('assets/img/favicon.svg') }}">
   <link rel="shortcut icon" href="{{ asset('assets/img/favicon.svg') }}">
   <link href="{{ asset('assets/vendor/bootstrap/css/bootstrap.min.css') }}" rel="stylesheet">

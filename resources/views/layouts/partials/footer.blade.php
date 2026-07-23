@@ -3,6 +3,8 @@
         <nav aria-label="Footer navigation">
           <a href="index.html">Home</a>
           <a href="faq.html">FAQ</a>
-          <a href="mailto:support@dashora.com">Support</a>
+          @if ($globalSettings->email)
+            <a href="mailto:{{ $globalSettings->email }}">Support</a>
+          @endif
         </nav>
       </footer>

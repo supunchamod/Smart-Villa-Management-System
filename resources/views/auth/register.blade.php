@@ -1,11 +1,11 @@
 @extends('layouts.auth')
 
-@section('title', 'Register | Dashora Admin Dashboard')
+@section('title', 'Register | '.$globalSettings->villa_name.' Admin Dashboard')
 
 @section('content')
   <main class="auth-page auth-cover-page">
     <section class="auth-cover-visual">
-      <a class="brand auth-brand" href="index.html"><span class="brand-mark">D</span><div><strong>Dashora</strong><small>Admin Suite</small></div></a>
+      <a class="brand auth-brand" href="index.html"><span class="brand-mark">{{ strtoupper(substr($globalSettings->villa_name, 0, 1)) }}</span><div><strong>{{ $globalSettings->villa_name }}</strong><small>Admin Suite</small></div></a>
       <div class="auth-device">
         <div class="auth-device-top"><span></span><span></span><span></span></div>
         <div class="auth-device-body">
@@ -13,12 +13,12 @@
           <div class="auth-device-screen"><div class="auth-chart"></div><div class="auth-bars"><i></i><i></i><i></i><i></i></div><div class="auth-mini-grid"><span></span><span></span><span></span></div></div>
         </div>
       </div>
-      <div class="auth-cover-copy"><span class="eyebrow">Premium Admin Template</span><h2>Build polished SaaS dashboards faster.</h2><p>Dashora includes responsive layouts, RTL support, dark mode, charts, tables, forms, auth pages, and utility screens.</p></div>
+      <div class="auth-cover-copy"><span class="eyebrow">Villa Management</span><h2>Everything your villa needs, in one place.</h2><p>Manage bookings, guests, invoices, and your public booking page for {{ $globalSettings->villa_name }} - all from one dashboard.</p></div>
     </section>
     <section class="auth-form-panel">
       <div class="auth-form-wrap">
-        <a class="brand auth-form-brand" href="index.html"><span class="brand-mark">D</span><div><strong>Dashora</strong><small>Admin Suite</small></div></a>
-        <h1>Start your Dashora workspace</h1>
+        <a class="brand auth-form-brand" href="index.html"><span class="brand-mark">{{ strtoupper(substr($globalSettings->villa_name, 0, 1)) }}</span><div><strong>{{ $globalSettings->villa_name }}</strong><small>Admin Suite</small></div></a>
+        <h1>Start your {{ $globalSettings->villa_name }} workspace</h1>
         <p>Create your account and open the full admin workspace.</p>
         <form method="POST" action="{{ route('register') }}">
           @csrf

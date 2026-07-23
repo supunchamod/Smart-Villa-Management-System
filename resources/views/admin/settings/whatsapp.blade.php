@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'WhatsApp | Dashora Admin Dashboard')
+@section('title', 'WhatsApp | '.$globalSettings->villa_name.' Admin Dashboard')
 
 @section('content')
 <div x-data="whatsappSettings(@js($status), @js($qr))" x-init="startPolling()">

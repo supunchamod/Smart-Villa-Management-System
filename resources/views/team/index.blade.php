@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Team | Dashora Admin Dashboard')
+@section('title', 'Team | '.$globalSettings->villa_name.' Admin Dashboard')
 
 @section('content')
 <div x-data="teamManager()">

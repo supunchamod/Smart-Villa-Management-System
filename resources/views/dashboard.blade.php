@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Villa Cabana Management Dashboard | Dashora Admin Dashboard')
+@section('title', 'Villa Cabana Management Dashboard | '.$globalSettings->villa_name.' Admin Dashboard')
 
 @section('content')
       <div class="d-none d-md-block">

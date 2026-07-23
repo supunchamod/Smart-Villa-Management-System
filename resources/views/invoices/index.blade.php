@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Invoice List | Dashora Admin Dashboard')
+@section('title', 'Invoice List | '.$globalSettings->villa_name.' Admin Dashboard')
 
 @section('content')
         <div class="page-title">

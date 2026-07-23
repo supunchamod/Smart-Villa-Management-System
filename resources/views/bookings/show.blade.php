@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Booking Details | Dashora Admin Dashboard')
+@section('title', 'Booking Details | '.$globalSettings->villa_name.' Admin Dashboard')
 
 @section('content')
         <div class="page-title">

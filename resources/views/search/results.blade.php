@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Search Results | Dashora Admin Dashboard')
+@section('title', 'Search Results | '.$globalSettings->villa_name.' Admin Dashboard')
 
 @push('styles')
 <link rel="stylesheet" href="{{ asset('assets/css/search-results.css') }}">
