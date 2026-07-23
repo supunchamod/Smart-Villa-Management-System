@@ -48,16 +48,13 @@
     </div>
   </div>
 
-  {{-- Booking success / WhatsApp confirmation --}}
+  {{-- Booking success notification --}}
   @if (session('bookingSubmitted'))
     <div class="pv-container" id="booking-confirmation">
       <div class="pv-confirmation">
         <div class="pv-confirmation-icon"><i class="bi bi-check-lg"></i></div>
         <h3>Enquiry received - Reference {{ session('bookingReference') }}</h3>
-        <p>We've saved your request as a pending booking. Tap below to send your booking summary straight to the villa on WhatsApp for instant confirmation.</p>
-        <a href="{{ session('whatsappUrl') }}" class="pv-whatsapp-btn" target="_blank" rel="noopener">
-          <i class="bi bi-whatsapp"></i> Notify the Villa on WhatsApp
-        </a>
+        <p>Thank you! Your enquiry has been sent. We will contact you shortly via WhatsApp.</p>
       </div>
     </div>
   @endif

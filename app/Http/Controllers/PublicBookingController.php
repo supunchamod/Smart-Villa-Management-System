@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Jobs\SendOwnerEnquiryWhatsAppJob;
 use App\Models\Booking;
 use App\Models\CabanaPricingTier;
 use App\Models\CabanaType;
@@ -143,9 +144,9 @@ class PublicBookingController extends Controller
     /**
      * Submits a direct-booking enquiry from the public page. Creates a
      * 'pending' booking (never auto-confirmed - the owner reviews and
-     * confirms it from the admin bookings list) and hands back a WhatsApp
-     * deep link pre-filled with the booking summary for instant owner
-     * notification, since there's no other real-time alerting here.
+     * confirms it from the admin bookings list) and dispatches a
+     * background job that alerts the owner over WhatsApp, since there's
+     * no other real-time alerting here.
      */
     public function store(Request $request, string $slug): RedirectResponse
     {
@@ -230,14 +231,12 @@ class PublicBookingController extends Controller
         ]);
 
         $reference = 'INQ-'.str_pad((string) $booking->id, 6, '0', STR_PAD_LEFT);
-        $whatsappUrl = $this->buildWhatsAppUrl(
-            $settings, $booking, $cabanaType, $boardType, $selectedMenuItems, $nights, $adults, $children, $nightlyRate, $total, $reference
-        );
+
+        SendOwnerEnquiryWhatsAppJob::dispatch($booking);
 
         return redirect(route('public.villa', $slug).'#booking-confirmation')
             ->with('bookingSubmitted', true)
-            ->with('bookingReference', $reference)
-            ->with('whatsappUrl', $whatsappUrl);
+            ->with('bookingReference', $reference);
     }
 
     /**
@@ -280,66 +279,5 @@ class PublicBookingController extends Controller
         }
 
         return $selected;
-    }
-
-    /**
-     * @param  array<string, string>  $menuItems
-     */
-    private function buildWhatsAppUrl(
-        Setting $settings,
-        Booking $booking,
-        CabanaType $cabanaType,
-        string $boardType,
-        array $menuItems,
-        int $nights,
-        int $adults,
-        int $children,
-        float $nightlyRate,
-        float $total,
-        string $reference
-    ): string {
-        $guests = $adults + $children;
-
-        $lines = [
-            "New Booking Enquiry - {$settings->villa_name}",
-            '',
-            "Reference: {$reference}",
-            "Cabana: {$cabanaType->name} ({$guests} Pax)",
-            'Board Type: '.self::BOARD_TYPE_LABELS[$boardType],
-            "Rate: {$settings->currency} ".number_format($nightlyRate, 2).'/night',
-            'Check-in: '.$booking->check_in->format('d M Y'),
-            'Check-out: '.$booking->check_out->format('d M Y')." ({$nights} ".Str::plural('night', $nights).')',
-            "Guests: {$adults} Adult".($adults === 1 ? '' : 's').($children > 0 ? ", {$children} Child".($children === 1 ? '' : 'ren') : ''),
-        ];
-
-        if ($menuItems !== []) {
-            $lines[] = '';
-            foreach ($menuItems as $meal => $choice) {
-                $lines[] = ucfirst($meal).": {$choice}";
-            }
-        }
-
-        $addons = array_filter([
-            $booking->bbq_addon ? 'BBQ & Campfire Experience' : null,
-            $booking->safari_jeep_addon ? 'Safari Jeep Arrangement' : null,
-            $booking->outdoor_dining_preference ? 'Outdoor Dining Preference' : null,
-        ]);
-
-        if ($addons !== []) {
-            $lines[] = '';
-            $lines[] = 'Add-ons Requested: '.implode(', ', $addons);
-        }
-
-        $lines[] = '';
-        $lines[] = "Estimated Total: {$settings->currency} ".number_format($total, 2);
-        $lines[] = '';
-        $lines[] = "Guest: {$booking->customer_name}";
-        $lines[] = "Phone: {$booking->customer_phone}";
-        $lines[] = '';
-        $lines[] = 'Please confirm availability and next steps. Thank you!';
-
-        $phone = preg_replace('/\D+/', '', (string) ($settings->public_whatsapp_number ?: $settings->phone_number)) ?: '';
-
-        return 'https://wa.me/'.$phone.'?text='.rawurlencode(implode("\n", $lines));
     }
 }

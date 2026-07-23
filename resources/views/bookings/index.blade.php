@@ -21,7 +21,7 @@
         @endif
         <div class="row g-4">
           <div class="col-12">
-            <div class="panel" x-data="{ tab: '{{ in_array(request('tab'), ['all', 'pending', 'active', 'completed', 'cancelled', 'today_checkins', 'today_checkouts', 'balance_due'], true) ? request('tab') : 'all' }}' }">
+            <div class="panel" x-data="bookingsPanel('{{ in_array(request('tab'), ['all', 'pending', 'active', 'completed', 'cancelled', 'today_checkins', 'today_checkouts', 'balance_due'], true) ? request('tab') : 'all' }}')">
               <div class="panel-head"><div><h2>Bookings</h2><p>Reservations across all rooms and cabanas</p></div></div>
 
               <div class="booking-tabs" role="tablist" aria-label="Filter bookings by status">
@@ -80,16 +80,7 @@
                           if ($booking->status === 'confirmed' && $booking->check_out->isSameDay($today)) $rowTabs[] = 'today_checkouts';
                           if ($booking->status === 'confirmed' && (float) $booking->advance_payment < (float) $booking->total_amount) $rowTabs[] = 'balance_due';
                           $badge = ['pending' => 'pending', 'confirmed' => 'new', 'checked_out' => 'won', 'cancelled' => 'stuck'][$booking->status] ?? 'new';
-                          $waPhoneDigits = preg_replace('/\D+/', '', (string) $booking->customer_phone);
-                          $waUrl = $waPhoneDigits ? 'https://wa.me/'.$waPhoneDigits.'?text='.rawurlencode(
-                              "Hi {$booking->customer_name}, this is {$globalSettings->villa_name} confirming your booking:\n\n"
-                              ."Room: {$booking->room->name_or_number}\n"
-                              ."Check-in: {$booking->check_in->format('d M Y')}\n"
-                              ."Check-out: {$booking->check_out->format('d M Y')}\n"
-                              ."Total: {$globalSettings->currency} ".number_format($booking->total_amount, 2)."\n"
-                              ."Balance Due: {$globalSettings->currency} ".number_format($booking->remaining_balance, 2)."\n\n"
-                              ."Thank you for choosing us!"
-                          ) : null;
+                          $canSendWhatsApp = $booking->customer_phone && in_array($booking->status, ['confirmed', 'checked_out'], true);
                         @endphp
                         <tr x-show="@json($rowTabs).includes(tab)">
                           <td><strong>{{ $booking->customer_name }}</strong></td>
@@ -123,8 +114,8 @@
                                 <a class="btn btn-sm btn-outline-primary" href="{{ route($booking->status === 'checked_out' ? 'bookings.invoice.final' : 'bookings.invoice.confirmation', $booking) }}" target="_blank" rel="noopener" data-bs-toggle="tooltip" title="Download Invoice / Confirmation PDF" aria-label="Download invoice"><i class="bi bi-file-earmark-pdf"></i></a>
                               @endif
 
-                              @if ($waUrl)
-                                <a class="btn btn-sm btn-outline-success" href="{{ $waUrl }}" target="_blank" rel="noopener" data-bs-toggle="tooltip" title="Resend via WhatsApp" aria-label="Resend via WhatsApp"><i class="bi bi-whatsapp"></i></a>
+                              @if ($canSendWhatsApp)
+                                <button type="button" class="btn btn-sm btn-outline-success" data-bs-toggle="tooltip" title="Resend via WhatsApp" aria-label="Resend via WhatsApp" @click="sendWhatsApp({{ $booking->id }}, '{{ route('bookings.send-whatsapp', $booking) }}')" :disabled="sendingWhatsApp[{{ $booking->id }}]"><i class="bi bi-whatsapp"></i></button>
                               @endif
 
                               <button type="button" class="btn btn-sm btn-light" data-bs-toggle="modal" data-bs-target="#quickViewModal{{ $booking->id }}" aria-label="Quick view"><i class="bi bi-eye"></i></button>
@@ -164,16 +155,7 @@
                       if ($booking->status === 'confirmed' && $booking->check_out->isSameDay($today)) $rowTabs[] = 'today_checkouts';
                       if ($booking->status === 'confirmed' && (float) $booking->advance_payment < (float) $booking->total_amount) $rowTabs[] = 'balance_due';
                       $badge = ['pending' => 'pending', 'confirmed' => 'new', 'checked_out' => 'won', 'cancelled' => 'stuck'][$booking->status] ?? 'new';
-                      $waPhoneDigits = preg_replace('/\D+/', '', (string) $booking->customer_phone);
-                      $waUrl = $waPhoneDigits ? 'https://wa.me/'.$waPhoneDigits.'?text='.rawurlencode(
-                          "Hi {$booking->customer_name}, this is {$globalSettings->villa_name} confirming your booking:\n\n"
-                          ."Room: {$booking->room->name_or_number}\n"
-                          ."Check-in: {$booking->check_in->format('d M Y')}\n"
-                          ."Check-out: {$booking->check_out->format('d M Y')}\n"
-                          ."Total: {$globalSettings->currency} ".number_format($booking->total_amount, 2)."\n"
-                          ."Balance Due: {$globalSettings->currency} ".number_format($booking->remaining_balance, 2)."\n\n"
-                          ."Thank you for choosing us!"
-                      ) : null;
+                      $canSendWhatsApp = $booking->customer_phone && in_array($booking->status, ['confirmed', 'checked_out'], true);
                     @endphp
                     <div class="mdash-booking-card stacked" x-show="@json($rowTabs).includes(tab)">
                       <div class="mdash-card-top">
@@ -216,8 +198,8 @@
                           data-bs-target="#checkoutModal{{ $booking->id }}"
                         ><i class="bi bi-box-arrow-right"></i> {{ $booking->remaining_balance > 0 ? 'Collect Balance & Checkout' : 'Checkout' }}</button>
 
-                        @if ($waUrl)
-                          <a href="{{ $waUrl }}" class="mdash-action-btn mdash-action-btn-whatsapp" target="_blank" rel="noopener"><i class="bi bi-whatsapp"></i> Resend via WhatsApp</a>
+                        @if ($canSendWhatsApp)
+                          <button type="button" class="mdash-action-btn mdash-action-btn-whatsapp" @click="sendWhatsApp({{ $booking->id }}, '{{ route('bookings.send-whatsapp', $booking) }}')" :disabled="sendingWhatsApp[{{ $booking->id }}]"><i class="bi bi-whatsapp"></i> <span x-text="sendingWhatsApp[{{ $booking->id }}] ? 'Sending…' : 'Resend via WhatsApp'"></span></button>
                         @endif
                       @elseif ($booking->status === 'checked_out')
                         <a
@@ -227,8 +209,8 @@
                           rel="noopener"
                         ><i class="bi bi-file-earmark-check"></i> Download Final Invoice PDF</a>
 
-                        @if ($waUrl)
-                          <a href="{{ $waUrl }}" class="mdash-action-btn mdash-action-btn-whatsapp" target="_blank" rel="noopener"><i class="bi bi-whatsapp"></i> Resend via WhatsApp</a>
+                        @if ($canSendWhatsApp)
+                          <button type="button" class="mdash-action-btn mdash-action-btn-whatsapp" @click="sendWhatsApp({{ $booking->id }}, '{{ route('bookings.send-whatsapp', $booking) }}')" :disabled="sendingWhatsApp[{{ $booking->id }}]"><i class="bi bi-whatsapp"></i> <span x-text="sendingWhatsApp[{{ $booking->id }}] ? 'Sending…' : 'Resend via WhatsApp'"></span></button>
                         @endif
                       @endif
 
@@ -339,3 +321,41 @@
           </div>
         @endforeach
 @endsection
+
+@push('scripts')
+<script>
+    function bookingsPanel(initialTab) {
+        return {
+            tab: initialTab,
+            sendingWhatsApp: {},
+            async sendWhatsApp(bookingId, url) {
+                if (this.sendingWhatsApp[bookingId]) return;
+                this.sendingWhatsApp[bookingId] = true;
+                try {
+                    const response = await fetch(url, {
+                        method: 'POST',
+                        headers: {
+                            'Accept': 'application/json',
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                        },
+                    });
+                    const data = await response.json();
+                    this.showToast(data.message || (data.success ? 'WhatsApp dispatch initiated' : 'Failed to send WhatsApp message.'));
+                } catch (error) {
+                    console.error('Failed to dispatch WhatsApp message', error);
+                    this.showToast('Failed to send WhatsApp message. Please try again.');
+                } finally {
+                    this.sendingWhatsApp[bookingId] = false;
+                }
+            },
+            showToast(message) {
+                const toastEl = document.getElementById('actionToast');
+                if (!toastEl || !window.bootstrap) return;
+                const body = toastEl.querySelector('.toast-body');
+                if (body) body.textContent = message;
+                bootstrap.Toast.getOrCreateInstance(toastEl).show();
+            },
+        };
+    }
+</script>
+@endpush
