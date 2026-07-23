@@ -58,10 +58,11 @@ class WhatsAppSettingsController extends Controller
     private function currentState(): array
     {
         $status = $this->whatsapp->getSessionStatus() ?? 'STOPPED';
+        $qr = $status === 'SCAN_QR_CODE' ? $this->whatsapp->getQrCode() : null;
 
         return [
             'status' => $status,
-            'qr' => in_array($status, ['SCAN_QR_CODE', 'STARTING'], true) ? $this->whatsapp->getQrCode() : null,
+            'qr' => $qr,
         ];
     }
 }

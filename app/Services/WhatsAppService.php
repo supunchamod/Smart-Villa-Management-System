@@ -65,13 +65,12 @@ class WhatsAppService
      * getSessionStatus(), which auto-starts it if needed) since WAHA has
      * nothing to return a QR code for otherwise.
      *
-     * Uses rawClient() rather than client() for the actual request -
-     * client() always sends `Accept: application/json`, which makes the
-     * NOWEB engine wrap the QR in a JSON payload instead of returning it
-     * as a plain image; base64-encoding that JSON string produces
-     * something that *looks* like a data URI but isn't a valid PNG.
-     * Asking for `Accept: image/png` instead gets the raw binary body,
-     * which is what's actually being base64-encoded below.
+     * This hits /api/{session}/auth/qr - the auth endpoints live directly
+     * under /api/{session}/..., unlike session management itself
+     * (/api/sessions/{session}) - with an explicit x-api-key header
+     * (falling back to WAHA's own "secret" quickstart default when none
+     * is configured) and Accept: image/png so the NOWEB engine returns
+     * the QR as a raw binary image rather than wrapping it in JSON.
      */
     public function getQrCode(): ?string
     {
@@ -86,9 +85,15 @@ class WhatsAppService
             return null;
         }
 
-        $response = $this->rawClient()->get("/api/sessions/{$this->session}/auth/qr");
+        $response = Http::baseUrl($this->baseUrl)
+            ->timeout($this->timeout)
+            ->withHeaders([
+                'x-api-key' => $this->apiKey ?: 'secret',
+                'Accept' => 'image/png',
+            ])
+            ->get("/api/{$this->session}/auth/qr");
 
-        if (! $response->successful()) {
+        if ($response->status() !== 200) {
             Log::error('WAHA: failed to fetch QR code', [
                 'session' => $this->session,
                 'status' => $response->status(),
@@ -239,22 +244,9 @@ class WhatsAppService
      */
     protected function client(): PendingRequest
     {
-        return $this->baseClient()->acceptJson();
-    }
-
-    /**
-     * Same base client, but without forcing `Accept: application/json` -
-     * for the one endpoint (the QR image) that needs to come back as raw
-     * binary instead of a JSON-wrapped value.
-     */
-    protected function rawClient(): PendingRequest
-    {
-        return $this->baseClient()->withHeaders(['Accept' => 'image/png']);
-    }
-
-    private function baseClient(): PendingRequest
-    {
-        $client = Http::baseUrl($this->baseUrl)->timeout($this->timeout);
+        $client = Http::baseUrl($this->baseUrl)
+            ->timeout($this->timeout)
+            ->acceptJson();
 
         if (! empty($this->apiKey)) {
             $client = $client->withHeaders(['X-Api-Key' => $this->apiKey]);
