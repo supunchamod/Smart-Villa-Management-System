@@ -95,6 +95,8 @@ class RoomController extends Controller
             'name_or_number' => ['required', 'string', 'max:255'],
             'type' => ['required', 'string', 'max:255'],
             'price_per_night' => ['required', 'numeric', 'min:0'],
+            'capacity' => ['required', 'integer', 'min:1', 'max:20'],
+            'photo_url' => ['nullable', 'url', 'max:2048'],
             'status' => ['required', 'in:available,maintenance'],
         ]);
     }

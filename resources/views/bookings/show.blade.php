@@ -48,7 +48,7 @@
                 <div class="col-md-6">
                   <small class="text-muted d-block">Status</small>
                   @php
-                    $badge = ['confirmed' => 'new', 'checked_out' => 'won', 'cancelled' => 'stuck'][$booking->status] ?? 'new';
+                    $badge = ['pending' => 'pending', 'confirmed' => 'new', 'checked_out' => 'won', 'cancelled' => 'stuck'][$booking->status] ?? 'new';
                   @endphp
                   <span class="deal-badge {{ $badge }}">{{ ucfirst(str_replace('_', ' ', $booking->status)) }}</span>
                 </div>

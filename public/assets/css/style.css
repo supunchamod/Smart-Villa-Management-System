@@ -932,6 +932,7 @@ h1 { font-size: clamp(30px, 3.5vw, 42px); margin: 4px 0 8px; font-weight: 700; l
 .deal-badge.won { color: #2fa84f; background: #eaf8ee; }
 .deal-badge.new { color: #5278ff; background: #eef3ff; }
 .deal-badge.stuck { color: #dc2626; background: #fff0ee; }
+.deal-badge.pending { color: #b45309; background: #fff7e6; }
 .crm-widget { min-height: 100%; }
 .crm-task-list { display: grid; gap: 10px; }
 .crm-task { display: flex; gap: 12px; padding: 12px; border: 1px solid var(--line); border-radius: 8px; background: #f7f9fc; }

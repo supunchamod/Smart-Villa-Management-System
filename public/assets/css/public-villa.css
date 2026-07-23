@@ -1,0 +1,138 @@
+/* Villa Cabana - public direct-booking landing page. Fully self-contained:
+   does not extend or touch the admin dashboard's style.css, so nothing
+   here can affect the authenticated app. */
+:root {
+  --pv-navy: #002d62;
+  --pv-navy-2: #01397d;
+  --pv-navy-ink: #041c3a;
+  --pv-gold: #e8b22d;
+  --pv-gold-2: #f3c94f;
+  --pv-gold-soft: rgba(232, 178, 45, .14);
+  --pv-bg: #f6f7fb;
+  --pv-surface: #ffffff;
+  --pv-line: #e6e9f2;
+  --pv-muted: #64748b;
+  --pv-text: #101c30;
+  --pv-shadow: 0 20px 50px rgba(0, 45, 98, .10);
+  --pv-radius: 20px;
+}
+
+* { box-sizing: border-box; }
+.pv-body { margin: 0; background: var(--pv-bg); color: var(--pv-text); font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; line-height: 1.6; -webkit-font-smoothing: antialiased; padding-bottom: 0; }
+.pv-body.pv-has-sticky-bar { padding-bottom: 84px; }
+
+.pv-container { width: 100%; max-width: 1160px; margin: 0 auto; padding: 0 20px; }
+
+/* Hero */
+.pv-hero { position: relative; overflow: hidden; padding: 72px 0 64px; color: #fff; background: linear-gradient(160deg, var(--pv-navy) 0%, var(--pv-navy-2) 55%, #024a8f 100%); }
+.pv-hero::after { content: ""; position: absolute; inset: -20% -10% auto auto; width: 420px; height: 420px; border-radius: 50%; background: radial-gradient(circle, rgba(232,178,45,.22), transparent 70%); }
+.pv-hero-inner { position: relative; }
+.pv-hero-logo { display: inline-flex; align-items: center; gap: 10px; margin-bottom: 22px; font-weight: 800; font-size: 15px; letter-spacing: .02em; }
+.pv-hero-logo img { width: 40px; height: 40px; border-radius: 12px; object-fit: cover; background: rgba(255,255,255,.12); }
+.pv-hero-logo-fallback { display: grid; place-items: center; width: 40px; height: 40px; border-radius: 12px; background: var(--pv-gold-soft); color: var(--pv-gold); font-weight: 800; }
+.pv-hero-eyebrow { display: inline-flex; align-items: center; gap: 8px; margin-bottom: 14px; padding: 6px 14px; border-radius: 999px; background: rgba(255,255,255,.12); font-size: 11.5px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; }
+.pv-hero-title { margin: 0 0 14px; font-size: clamp(30px, 6vw, 52px); font-weight: 800; letter-spacing: -.02em; font-family: "Plus Jakarta Sans", Inter, sans-serif; }
+.pv-hero-tagline { max-width: 560px; margin: 0 0 28px; font-size: clamp(15px, 2vw, 18px); color: rgba(255,255,255,.85); }
+.pv-hero-specs { display: flex; flex-wrap: wrap; gap: 10px; }
+.pv-spec-chip { display: inline-flex; align-items: center; gap: 8px; padding: 10px 16px; border-radius: 999px; background: rgba(255,255,255,.10); border: 1px solid rgba(255,255,255,.16); font-size: 13px; font-weight: 700; }
+.pv-spec-chip i { color: var(--pv-gold); font-size: 15px; }
+
+/* Section shell */
+.pv-section { padding: 56px 0; }
+.pv-section-head { max-width: 640px; margin: 0 auto 32px; text-align: center; }
+.pv-accent-bar { display: inline-block; width: 45px; border-top: 3px solid var(--pv-gold); margin-bottom: 14px; }
+.pv-eyebrow { display: block; margin-bottom: 8px; font-size: 12px; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; color: var(--pv-navy); }
+.pv-section-title { margin: 0 0 8px; font-size: clamp(24px, 4vw, 34px); font-weight: 800; letter-spacing: -.01em; color: var(--pv-navy-ink); font-family: "Plus Jakarta Sans", Inter, sans-serif; }
+.pv-section-sub { margin: 0; color: var(--pv-muted); font-size: 15px; }
+
+/* Trust badges */
+.pv-trust-row { display: flex; flex-wrap: wrap; justify-content: center; gap: 14px; padding: 22px 0; }
+.pv-trust-item { display: inline-flex; align-items: center; gap: 10px; padding: 12px 18px; border-radius: 14px; background: var(--pv-surface); border: 1px solid var(--pv-line); font-size: 13.5px; font-weight: 700; color: var(--pv-navy-ink); box-shadow: var(--pv-shadow); }
+.pv-trust-item i { color: var(--pv-gold); font-size: 18px; }
+
+/* Cabana cards */
+.pv-room-card { height: 100%; display: flex; flex-direction: column; border-radius: var(--pv-radius); background: var(--pv-surface); border: 2px solid var(--pv-line); box-shadow: var(--pv-shadow); overflow: hidden; transition: border-color .2s ease, transform .2s ease; }
+.pv-room-card.pv-room-selected { border-color: var(--pv-gold); transform: translateY(-3px); }
+.pv-room-photo { position: relative; height: 190px; background: linear-gradient(150deg, var(--pv-navy), var(--pv-navy-2)); background-size: cover; background-position: center; display: flex; align-items: flex-end; }
+.pv-room-photo-fallback { display: grid; place-items: center; width: 100%; height: 100%; color: rgba(255,255,255,.5); font-size: 42px; }
+.pv-room-rate-badge { position: absolute; top: 14px; right: 14px; padding: 6px 12px; border-radius: 999px; background: var(--pv-gold); color: var(--pv-navy-ink); font-size: 12.5px; font-weight: 800; box-shadow: 0 6px 16px rgba(0,0,0,.18); }
+.pv-room-body { padding: 20px; display: flex; flex-direction: column; gap: 10px; flex: 1 1 auto; }
+.pv-room-name { margin: 0; font-size: 17px; font-weight: 800; color: var(--pv-navy-ink); }
+.pv-room-type { font-size: 12.5px; font-weight: 700; color: var(--pv-muted); text-transform: uppercase; letter-spacing: .04em; }
+.pv-room-meta { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--pv-muted); }
+.pv-room-price-row { margin-top: auto; display: flex; align-items: baseline; justify-content: space-between; padding-top: 12px; border-top: 1px dashed var(--pv-line); }
+.pv-room-price { font-size: 20px; font-weight: 800; color: var(--pv-navy); }
+.pv-room-price small { font-size: 12px; font-weight: 600; color: var(--pv-muted); }
+.pv-select-btn { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; min-height: 48px; padding: 12px; border: 0; border-radius: 12px; background: var(--pv-navy); color: #fff; font-weight: 800; font-size: 14px; cursor: pointer; transition: background .2s ease; }
+.pv-select-btn:hover { background: var(--pv-navy-2); color: #fff; }
+.pv-select-btn.pv-select-btn-active { background: var(--pv-gold); color: var(--pv-navy-ink); }
+.pv-empty-state { text-align: center; padding: 40px; color: var(--pv-muted); }
+
+/* Booking calculator */
+.pv-calc-panel { border-radius: var(--pv-radius); background: var(--pv-surface); border: 1px solid var(--pv-line); box-shadow: var(--pv-shadow); padding: 26px; }
+.pv-calc-panel h3 { margin: 0 0 4px; font-size: 16px; font-weight: 800; color: var(--pv-navy-ink); }
+.pv-calc-panel .pv-calc-sub { margin: 0 0 18px; font-size: 12.5px; color: var(--pv-muted); }
+.pv-form-label { display: block; margin-bottom: 6px; font-size: 12.5px; font-weight: 700; color: var(--pv-navy-ink); }
+.pv-input, .pv-select { width: 100%; padding: 12px 14px; border-radius: 12px; border: 1px solid var(--pv-line); background: var(--pv-bg); font-size: 14px; color: var(--pv-text); min-height: 48px; }
+.pv-input:focus, .pv-select:focus { outline: 2px solid var(--pv-gold); outline-offset: 1px; border-color: var(--pv-gold); }
+
+.pv-board-grid { display: grid; grid-template-columns: 1fr; gap: 10px; }
+@media (min-width: 576px) { .pv-board-grid { grid-template-columns: repeat(3, 1fr); } }
+.pv-board-option { position: relative; }
+.pv-board-option input { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; margin: 0; }
+.pv-board-card { display: flex; flex-direction: column; gap: 4px; min-height: 76px; padding: 14px; border-radius: 14px; border: 2px solid var(--pv-line); background: var(--pv-bg); transition: border-color .15s ease, background .15s ease; }
+.pv-board-option input:checked + .pv-board-card { border-color: var(--pv-gold); background: var(--pv-gold-soft); }
+.pv-board-card strong { font-size: 13.5px; font-weight: 800; color: var(--pv-navy-ink); }
+.pv-board-card small { font-size: 11.5px; color: var(--pv-muted); }
+
+.pv-menu-block { margin-top: 16px; padding-top: 16px; border-top: 1px dashed var(--pv-line); }
+.pv-menu-title { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; font-size: 13px; font-weight: 800; color: var(--pv-navy-ink); text-transform: capitalize; }
+.pv-menu-title i { color: var(--pv-gold); }
+.pv-menu-pills { display: flex; flex-wrap: wrap; gap: 8px; }
+.pv-menu-pill { position: relative; }
+.pv-menu-pill input { position: absolute; inset: 0; opacity: 0; cursor: pointer; margin: 0; }
+.pv-menu-pill-label { display: inline-flex; align-items: center; min-height: 40px; padding: 8px 14px; border-radius: 999px; border: 1.5px solid var(--pv-line); background: var(--pv-surface); font-size: 12.5px; font-weight: 700; color: var(--pv-muted); transition: all .15s ease; }
+.pv-menu-pill input:checked + .pv-menu-pill-label { border-color: var(--pv-navy); background: var(--pv-navy); color: #fff; }
+
+.pv-guest-warning { display: flex; align-items: center; gap: 8px; margin-top: 10px; padding: 10px 14px; border-radius: 10px; background: rgba(220,38,38,.08); color: #dc2626; font-size: 12.5px; font-weight: 700; }
+
+.pv-summary-panel { border-radius: var(--pv-radius); background: linear-gradient(165deg, var(--pv-navy), var(--pv-navy-2)); color: #fff; box-shadow: var(--pv-shadow); padding: 26px; position: sticky; top: 24px; }
+.pv-summary-panel h3 { margin: 0 0 18px; font-size: 16px; font-weight: 800; }
+.pv-summary-row { display: flex; align-items: center; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,.14); font-size: 13.5px; }
+.pv-summary-row:last-of-type { border-bottom: 0; }
+.pv-summary-row span:first-child { color: rgba(255,255,255,.7); }
+.pv-summary-total { display: flex; align-items: baseline; justify-content: space-between; margin-top: 16px; padding-top: 16px; border-top: 2px solid rgba(255,255,255,.2); }
+.pv-summary-total strong { font-size: 26px; font-weight: 800; color: var(--pv-gold); }
+.pv-summary-total span { font-size: 12.5px; font-weight: 700; color: rgba(255,255,255,.75); text-transform: uppercase; letter-spacing: .06em; }
+.pv-book-btn { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; min-height: 52px; margin-top: 18px; padding: 14px; border: 0; border-radius: 14px; background: var(--pv-gold); color: var(--pv-navy-ink); font-weight: 800; font-size: 15px; cursor: pointer; transition: filter .15s ease; }
+.pv-book-btn:hover { filter: brightness(1.05); }
+.pv-book-btn:disabled { opacity: .6; cursor: progress; }
+.pv-summary-note { margin: 10px 0 0; font-size: 11.5px; color: rgba(255,255,255,.65); text-align: center; }
+
+/* Mobile sticky bar */
+.pv-sticky-bar { display: none; }
+@media (max-width: 767.98px) {
+  .pv-sticky-bar { display: flex; align-items: center; justify-content: space-between; gap: 12px; position: fixed; left: 0; right: 0; bottom: 0; z-index: 40; padding: 14px 16px calc(14px + env(safe-area-inset-bottom)); background: var(--pv-navy); color: #fff; box-shadow: 0 -10px 30px rgba(0,0,0,.18); }
+  .pv-sticky-bar-total strong { display: block; font-size: 18px; font-weight: 800; color: var(--pv-gold); }
+  .pv-sticky-bar-total span { font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: rgba(255,255,255,.7); }
+  .pv-sticky-bar .pv-book-btn { width: auto; min-width: 150px; margin-top: 0; }
+  .pv-summary-panel { position: static; }
+}
+
+/* Confirmation banner */
+.pv-confirmation { border-radius: var(--pv-radius); background: var(--pv-surface); border: 2px solid var(--pv-gold); box-shadow: var(--pv-shadow); padding: 28px; text-align: center; margin-bottom: 32px; }
+.pv-confirmation-icon { display: grid; place-items: center; width: 60px; height: 60px; margin: 0 auto 14px; border-radius: 50%; background: rgba(15,157,120,.12); color: #0f9d78; font-size: 28px; }
+.pv-confirmation h3 { margin: 0 0 6px; font-size: 19px; font-weight: 800; color: var(--pv-navy-ink); }
+.pv-confirmation p { margin: 0 0 18px; color: var(--pv-muted); font-size: 14px; }
+.pv-whatsapp-btn { display: inline-flex; align-items: center; gap: 10px; padding: 14px 26px; border-radius: 14px; background: #25d366; color: #fff; font-weight: 800; font-size: 14.5px; text-decoration: none; }
+.pv-whatsapp-btn:hover { color: #fff; filter: brightness(1.05); }
+
+/* Footer */
+.pv-footer { padding: 32px 0 40px; text-align: center; color: var(--pv-muted); font-size: 13px; }
+.pv-footer strong { color: var(--pv-navy-ink); }
+
+@media (max-width: 575.98px) {
+  .pv-hero { padding: 52px 0 44px; }
+  .pv-section { padding: 40px 0; }
+  .pv-calc-panel, .pv-summary-panel { padding: 20px; }
+}

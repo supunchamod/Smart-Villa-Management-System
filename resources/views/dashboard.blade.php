@@ -70,7 +70,7 @@
           <tbody>
             @forelse ($activeBookings as $booking)
               @php
-                $statusBadge = ['confirmed' => 'new', 'checked_out' => 'won', 'cancelled' => 'stuck'][$booking->status] ?? 'new';
+                $statusBadge = ['pending' => 'pending', 'confirmed' => 'new', 'checked_out' => 'won', 'cancelled' => 'stuck'][$booking->status] ?? 'new';
                 $statusLabel = ['confirmed' => 'Confirmed', 'checked_out' => 'Completed', 'cancelled' => 'Cancelled'][$booking->status] ?? ucfirst($booking->status);
               @endphp
               <tr>

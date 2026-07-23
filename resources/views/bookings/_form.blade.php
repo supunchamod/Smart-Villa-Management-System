@@ -17,7 +17,7 @@
     <div class="col-md-6">
       <label class="form-label">Status</label>
       <select class="form-select @error('status') is-invalid @enderror" name="status">
-        @foreach (['confirmed' => 'Confirmed', 'checked_out' => 'Checked out', 'cancelled' => 'Cancelled'] as $value => $label)
+        @foreach (['pending' => 'Pending', 'confirmed' => 'Confirmed', 'checked_out' => 'Checked out', 'cancelled' => 'Cancelled'] as $value => $label)
           <option value="{{ $value }}" @selected(old('status', $booking->status) === $value)>{{ $label }}</option>
         @endforeach
       </select>

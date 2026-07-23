@@ -20,6 +20,7 @@ class BookingController extends Controller
      * the FullCalendar feed always agree.
      */
     private const STATUS_COLORS = [
+        'pending' => '#f6a642',
         'confirmed' => '#5278ff',
         'checked_out' => '#2fa84f',
         'cancelled' => '#dc2626',
@@ -207,7 +208,7 @@ class BookingController extends Controller
             'check_out' => ['required', 'date', 'after:check_in'],
             'total_amount' => ['required', 'numeric', 'min:0'],
             'advance_payment' => ['required', 'numeric', 'min:0', 'lte:total_amount'],
-            'status' => [Rule::in(['confirmed', 'checked_out', 'cancelled'])],
+            'status' => [Rule::in(['pending', 'confirmed', 'checked_out', 'cancelled'])],
         ]);
 
         $validated['status'] = $validated['status'] ?? 'confirmed';

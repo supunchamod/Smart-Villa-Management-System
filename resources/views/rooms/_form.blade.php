@@ -15,6 +15,16 @@
     @error('price_per_night')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror
   </div>
   <div class="col-md-6">
+    <label class="form-label">Guest capacity</label>
+    <input class="form-control @error('capacity') is-invalid @enderror" type="number" step="1" min="1" max="20" name="capacity" value="{{ old('capacity', $room->capacity ?? 2) }}" placeholder="2">
+    @error('capacity')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror
+  </div>
+  <div class="col-md-6">
+    <label class="form-label">Photo URL <small class="text-muted">(optional, for the public booking page)</small></label>
+    <input class="form-control @error('photo_url') is-invalid @enderror" type="url" name="photo_url" value="{{ old('photo_url', $room->photo_url ?? '') }}" placeholder="https://...">
+    @error('photo_url')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror
+  </div>
+  <div class="col-md-6">
     <label class="form-label">Status</label>
     <select class="form-select @error('status') is-invalid @enderror" name="status">
       @foreach (['available' => 'Available', 'maintenance' => 'Maintenance'] as $value => $label)

@@ -53,12 +53,12 @@ class DemoDataSeeder extends Seeder
      * naturally produces for a few of these rooms around "today".
      */
     private const ROOMS = [
-        ['name_or_number' => 'Luxury Ocean-View Cabana A', 'type' => 'Ocean-View Cabana', 'price_per_night' => 45000, 'status' => 'available'],
-        ['name_or_number' => 'Premium Garden Cabana B', 'type' => 'Garden Cabana', 'price_per_night' => 35000, 'status' => 'available'],
-        ['name_or_number' => 'Deluxe Family Villa Suite', 'type' => 'Family Villa Suite', 'price_per_night' => 65000, 'status' => 'available'],
-        ['name_or_number' => 'Standard Honeymoon Cabana C', 'type' => 'Honeymoon Cabana', 'price_per_night' => 38000, 'status' => 'available'],
-        ['name_or_number' => 'Premium Lakeside Cabana D', 'type' => 'Lakeside Cabana', 'price_per_night' => 42000, 'status' => 'available'],
-        ['name_or_number' => 'Eco-Wooden Cabana E', 'type' => 'Eco-Wooden Cabana', 'price_per_night' => 28000, 'status' => 'maintenance'],
+        ['name_or_number' => 'Luxury Ocean-View Cabana A', 'type' => 'Ocean-View Cabana', 'price_per_night' => 45000, 'capacity' => 3, 'status' => 'available'],
+        ['name_or_number' => 'Premium Garden Cabana B', 'type' => 'Garden Cabana', 'price_per_night' => 35000, 'capacity' => 2, 'status' => 'available'],
+        ['name_or_number' => 'Deluxe Family Villa Suite', 'type' => 'Family Villa Suite', 'price_per_night' => 65000, 'capacity' => 6, 'status' => 'available'],
+        ['name_or_number' => 'Standard Honeymoon Cabana C', 'type' => 'Honeymoon Cabana', 'price_per_night' => 38000, 'capacity' => 2, 'status' => 'available'],
+        ['name_or_number' => 'Premium Lakeside Cabana D', 'type' => 'Lakeside Cabana', 'price_per_night' => 42000, 'capacity' => 4, 'status' => 'available'],
+        ['name_or_number' => 'Eco-Wooden Cabana E', 'type' => 'Eco-Wooden Cabana', 'price_per_night' => 28000, 'capacity' => 2, 'status' => 'maintenance'],
     ];
 
     /**

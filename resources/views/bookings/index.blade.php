@@ -51,7 +51,7 @@
                       @forelse ($bookings as $booking)
                         @php
                           $tabKey = ['checked_out' => 'completed', 'cancelled' => 'cancelled'][$booking->status] ?? 'active';
-                          $badge = ['confirmed' => 'new', 'checked_out' => 'won', 'cancelled' => 'stuck'][$booking->status] ?? 'new';
+                          $badge = ['pending' => 'pending', 'confirmed' => 'new', 'checked_out' => 'won', 'cancelled' => 'stuck'][$booking->status] ?? 'new';
                         @endphp
                         <tr x-show="tab === 'all' || tab === '{{ $tabKey }}'">
                           <td><strong>{{ $booking->customer_name }}</strong></td>
@@ -92,7 +92,7 @@
                   @forelse ($bookings as $booking)
                     @php
                       $tabKey = ['checked_out' => 'completed', 'cancelled' => 'cancelled'][$booking->status] ?? 'active';
-                      $badge = ['confirmed' => 'new', 'checked_out' => 'won', 'cancelled' => 'stuck'][$booking->status] ?? 'new';
+                      $badge = ['pending' => 'pending', 'confirmed' => 'new', 'checked_out' => 'won', 'cancelled' => 'stuck'][$booking->status] ?? 'new';
                     @endphp
                     <div
                       class="mdash-booking-card stacked"

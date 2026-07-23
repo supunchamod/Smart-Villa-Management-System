@@ -29,6 +29,10 @@ class Booking extends Model
         'final_settlement_amount',
         'status',
         'checked_out_at',
+        'board_type',
+        'selected_menu_items',
+        'guests_adults',
+        'guests_children',
     ];
 
     /**
@@ -45,6 +49,7 @@ class Booking extends Model
             'advance_payment' => 'decimal:2',
             'final_settlement_amount' => 'decimal:2',
             'checked_out_at' => 'datetime',
+            'selected_menu_items' => 'array',
         ];
     }
 

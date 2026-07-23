@@ -8,6 +8,7 @@ use App\Http\Controllers\IncomeController;
 use App\Http\Controllers\InvoiceController;
 use App\Http\Controllers\PageController;
 use App\Http\Controllers\ProfitController;
+use App\Http\Controllers\PublicBookingController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\RoomController;
 use App\Http\Controllers\SearchController;
@@ -16,6 +17,15 @@ use App\Http\Controllers\TeamController;
 use Illuminate\Support\Facades\Route;
 
 Route::redirect('/', '/dashboard');
+
+// Public, unauthenticated direct-booking landing page - no auth middleware,
+// since guests browsing the villa's public link are never logged in. The
+// POST is rate-limited since it's a public form with no other spam
+// protection.
+Route::get('/v/{slug}', [PublicBookingController::class, 'show'])->name('public.villa');
+Route::post('/v/{slug}/book', [PublicBookingController::class, 'store'])
+    ->middleware('throttle:20,1')
+    ->name('public.villa.book');
 
 Route::middleware('auth')->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');

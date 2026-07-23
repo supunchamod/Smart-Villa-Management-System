@@ -58,7 +58,7 @@
             <tbody>
               @foreach ($bookings as $booking)
                 @php
-                  $badge = ['confirmed' => 'new', 'checked_out' => 'won', 'cancelled' => 'stuck'][$booking->status] ?? 'new';
+                  $badge = ['pending' => 'pending', 'confirmed' => 'new', 'checked_out' => 'won', 'cancelled' => 'stuck'][$booking->status] ?? 'new';
                 @endphp
                 <tr>
                   <td><a href="{{ route('bookings.show', $booking) }}" class="sr-link">BKG-{{ str_pad($booking->id, 6, '0', STR_PAD_LEFT) }}</a></td>
