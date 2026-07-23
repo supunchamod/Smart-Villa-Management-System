@@ -97,15 +97,11 @@
                   <textarea class="form-control @error('website_hero_subtitle') is-invalid @enderror" name="website_hero_subtitle" rows="2" placeholder="A private cabana escape on Sri Lanka's coast...">{{ old('website_hero_subtitle', $globalSettings->website_hero_subtitle) }}</textarea>
                   @error('website_hero_subtitle')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror
                 </div>
-                <div class="col-md-6">
-                  <label class="form-label">Half Board rate <small class="text-muted">({{ $globalSettings->currency }} per guest / night)</small></label>
-                  <input class="form-control @error('half_board_rate') is-invalid @enderror" type="number" step="0.01" min="0" name="half_board_rate" value="{{ old('half_board_rate', $globalSettings->half_board_rate) }}" placeholder="3500.00">
-                  @error('half_board_rate')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror
-                </div>
-                <div class="col-md-6">
-                  <label class="form-label">Full Board rate <small class="text-muted">({{ $globalSettings->currency }} per guest / night)</small></label>
-                  <input class="form-control @error('full_board_rate') is-invalid @enderror" type="number" step="0.01" min="0" name="full_board_rate" value="{{ old('full_board_rate', $globalSettings->full_board_rate) }}" placeholder="6000.00">
-                  @error('full_board_rate')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror
+                <div class="col-12">
+                  <div class="alert alert-light border mb-0 d-flex align-items-center justify-content-between gap-3">
+                    <span><i class="bi bi-info-circle"></i> Cabana types, pax pricing tiers, and meal menu options now live in <strong>Landing Page</strong>.</span>
+                    <a class="btn btn-sm btn-light" href="{{ route('landing-page.index') }}">Open Landing Page</a>
+                  </div>
                 </div>
                 <div class="col-12"><button class="btn btn-primary" type="submit">Save Website Settings</button></div>
               </form>

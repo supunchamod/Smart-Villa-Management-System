@@ -30,6 +30,10 @@ class SettingsController extends Controller
      * actually renders - otherwise saving the website section alone would
      * fail validation on required general fields (like villa_name) it
      * never included.
+     *
+     * Cabana pricing (previously a single villa-wide half/full board rate
+     * here) has moved entirely to the Landing Page section's per-cabana,
+     * per-pax-tier pricing - see LandingPageController.
      */
     public function update(Request $request): RedirectResponse
     {
@@ -42,8 +46,6 @@ class SettingsController extends Controller
                 'website_hero_title' => ['nullable', 'string', 'max:255'],
                 'website_hero_subtitle' => ['nullable', 'string', 'max:500'],
                 'public_whatsapp_number' => ['nullable', 'string', 'max:30'],
-                'half_board_rate' => ['nullable', 'numeric', 'min:0'],
-                'full_board_rate' => ['nullable', 'numeric', 'min:0'],
             ]);
 
             $settings->fill($validated)->save();

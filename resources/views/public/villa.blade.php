@@ -6,8 +6,9 @@
 @section('content')
 <div
   x-data='villaBooking(
-    @json($roomsForCalculator),
-    @json($boardTypes),
+    @json($cabanaTypesForCalculator),
+    @json($boardTypeLabels),
+    @json($boardTypeMeals),
     @json($menuOptions),
     @json($settings->currency),
     @json($oldBookingInput)
@@ -68,55 +69,65 @@
         <span class="pv-accent-bar" aria-hidden="true"></span>
         <span class="pv-eyebrow">Choose Your Stay</span>
         <h2 class="pv-section-title">Cabanas &amp; Villa Suites</h2>
-        <p class="pv-section-sub">Every room is available to book instantly below - select one to start your booking &amp; meal plan.</p>
+        <p class="pv-section-sub">Every cabana below is available to book instantly - select one to start your booking &amp; meal plan.</p>
       </div>
 
-      @if ($rooms->isEmpty())
+      @if ($cabanaTypes->isEmpty())
         <p class="pv-empty-state">No cabanas are available to book right now - please check back soon.</p>
       @else
         <div class="row g-4">
-          @foreach ($rooms as $room)
+          @foreach ($cabanaTypes as $cabanaType)
             <div class="col-12 col-md-6 col-lg-4">
-              <div class="pv-room-card" x-data='{ photoIndex: 0, photos: @json($room->photos) }' :class="{ 'pv-room-selected': selectedRoomId === {{ $room->id }} }">
-                <div class="pv-room-photo" :style="photos.length ? ('background-image: url(' + photos[photoIndex] + ')') : ''">
-                  <template x-if="!photos.length">
+              <div class="pv-room-card" :class="{ 'pv-room-selected': selectedCabanaTypeId === {{ $cabanaType->id }} }">
+                <div class="pv-room-photo" @if ($cabanaType->image_url) style="background-image: url({{ $cabanaType->image_url }})" @endif>
+                  @unless ($cabanaType->image_url)
                     <span class="pv-room-photo-fallback"><i class="bi bi-image"></i></span>
-                  </template>
-                  <template x-if="photos.length > 1">
-                    <div class="pv-room-photo-nav">
-                      <button type="button" class="pv-room-photo-arrow" @click.stop="photoIndex = (photoIndex - 1 + photos.length) % photos.length" aria-label="Previous photo"><i class="bi bi-chevron-left"></i></button>
-                      <div class="pv-room-photo-dots">
-                        <template x-for="(photo, idx) in photos" :key="idx">
-                          <span class="pv-room-photo-dot" :class="{ active: idx === photoIndex }" @click.stop="photoIndex = idx"></span>
-                        </template>
-                      </div>
-                      <button type="button" class="pv-room-photo-arrow" @click.stop="photoIndex = (photoIndex + 1) % photos.length" aria-label="Next photo"><i class="bi bi-chevron-right"></i></button>
-                    </div>
-                  </template>
-                  <span class="pv-room-rate-badge">{{ $settings->currency }} {{ number_format($room->starting_rate, 0) }}{{ $room->pricing_tiers ? '+' : '' }}/night</span>
+                  @endunless
+                  @if ($cabanaType->starting_rate !== null)
+                    <span class="pv-room-rate-badge">{{ $settings->currency }} {{ number_format($cabanaType->starting_rate, 0) }}+/night</span>
+                  @endif
                 </div>
                 <div class="pv-room-body">
-                  <span class="pv-room-type">{{ $room->type }}</span>
-                  <h3 class="pv-room-name">{{ $room->name_or_number }}</h3>
-                  <span class="pv-room-meta"><i class="bi bi-people"></i> Sleeps up to {{ $room->capacity }} guests</span>
-                  @if ($room->pricing_tiers)
+                  <h3 class="pv-room-name">{{ $cabanaType->name }}</h3>
+                  @if ($cabanaType->description)
+                    <p class="pv-room-meta">{{ $cabanaType->description }}</p>
+                  @endif
+                  <span class="pv-room-meta"><i class="bi bi-people"></i> Sleeps up to {{ $cabanaType->max_capacity }} guests</span>
+                  @if ($cabanaType->pricingTiers->isNotEmpty())
                     <ul class="pv-tier-list">
-                      @foreach (collect($room->pricing_tiers)->sortKeys() as $maxPax => $rate)
-                        <li><span>Up to {{ $maxPax }} Pax</span><strong>{{ $settings->currency }} {{ number_format($rate, 0) }}</strong></li>
+                      @foreach ($cabanaType->pricingTiers as $tier)
+                        <li>
+                          <span>{{ $tier->min_pax === $tier->max_pax ? $tier->min_pax : $tier->min_pax.'-'.$tier->max_pax }} Pax</span>
+                          <strong>
+                            @if ($tier->cabana_only_price !== null)
+                              {{ $settings->currency }} {{ number_format($tier->cabana_only_price, 0) }}
+                            @elseif ($tier->half_board_price !== null)
+                              {{ $settings->currency }} {{ number_format($tier->half_board_price, 0) }}
+                            @else
+                              {{ $settings->currency }} {{ number_format($tier->full_board_price, 0) }}
+                            @endif
+                          </strong>
+                        </li>
                       @endforeach
                     </ul>
                   @endif
                   <div class="pv-room-price-row">
-                    <span class="pv-room-price">{{ $settings->currency }} {{ number_format($room->starting_rate, 0) }}<small>{{ $room->pricing_tiers ? ' starting / night' : ' / night' }}</small></span>
+                    <span class="pv-room-price">
+                      @if ($cabanaType->starting_rate !== null)
+                        {{ $settings->currency }} {{ number_format($cabanaType->starting_rate, 0) }}<small> starting / night</small>
+                      @else
+                        <small>Contact for pricing</small>
+                      @endif
+                    </span>
                   </div>
                   <button
                     type="button"
                     class="pv-select-btn"
-                    :class="{ 'pv-select-btn-active': selectedRoomId === {{ $room->id }} }"
-                    @click="selectRoom({{ $room->id }})"
+                    :class="{ 'pv-select-btn-active': selectedCabanaTypeId === {{ $cabanaType->id }} }"
+                    @click="selectCabana({{ $cabanaType->id }})"
                   >
-                    <i class="bi" :class="selectedRoomId === {{ $room->id }} ? 'bi-check-circle-fill' : 'bi-cursor-fill'"></i>
-                    <span x-text="selectedRoomId === {{ $room->id }} ? 'Selected' : 'Select Cabana'"></span>
+                    <i class="bi" :class="selectedCabanaTypeId === {{ $cabanaType->id }} ? 'bi-check-circle-fill' : 'bi-cursor-fill'"></i>
+                    <span x-text="selectedCabanaTypeId === {{ $cabanaType->id }} ? 'Selected' : 'Select Cabana'"></span>
                   </button>
                 </div>
               </div>
@@ -128,7 +139,7 @@
   </section>
 
   {{-- Booking & meal plan calculator --}}
-  @if ($rooms->isNotEmpty())
+  @if ($cabanaTypes->isNotEmpty())
     <section class="pv-section" id="booking-form" style="background: var(--pv-surface);">
       <div class="pv-container">
         <div class="pv-section-head">
@@ -140,7 +151,7 @@
 
         <form method="POST" action="{{ route('public.villa.book', $slug) }}" id="pv-booking-form">
           @csrf
-          <input type="hidden" name="room_id" :value="selectedRoomId">
+          <input type="hidden" name="cabana_type_id" :value="selectedCabanaTypeId">
           <input type="hidden" name="board_type" :value="boardType">
 
           @if ($errors->any())
@@ -158,7 +169,7 @@
             <div class="col-lg-7">
               <div class="pv-calc-panel">
                 <h3>Your Details &amp; Dates</h3>
-                <p class="pv-calc-sub">Selected cabana: <strong x-text="selectedRoom ? selectedRoom.name : 'Please select a cabana above'"></strong></p>
+                <p class="pv-calc-sub">Selected cabana: <strong x-text="selectedCabanaType ? selectedCabanaType.name : 'Please select a cabana above'"></strong></p>
 
                 <div class="row g-3 mb-2">
                   <div class="col-md-6">
@@ -194,23 +205,26 @@
                   </div>
                 </div>
 
-                <template x-if="selectedRoom && guests > selectedRoom.capacity">
-                  <p class="pv-guest-warning"><i class="bi bi-exclamation-triangle-fill"></i> <span x-text="selectedRoom.name + ' sleeps up to ' + selectedRoom.capacity + ' guests - please choose a larger cabana or reduce your guest count.'"></span></p>
+                <template x-if="selectedCabanaType && guests > selectedCabanaType.max_capacity">
+                  <p class="pv-guest-warning"><i class="bi bi-exclamation-triangle-fill"></i> <span x-text="selectedCabanaType.name + ' sleeps up to ' + selectedCabanaType.max_capacity + ' guests - please choose a larger cabana or reduce your guest count.'"></span></p>
                 </template>
 
                 <div class="pv-menu-block" style="border-top:0; margin-top: 20px; padding-top: 0;">
                   <label class="pv-form-label mb-2">Board Type</label>
                   <div class="pv-board-grid">
-                    <template x-for="(board, key) in boardTypes" :key="key">
-                      <label class="pv-board-option">
+                    <template x-for="(label, key) in boardTypeLabels" :key="key">
+                      <label class="pv-board-option" x-show="rateFor(selectedCabanaType, key, guests) !== null">
                         <input type="radio" x-model="boardType" :value="key">
                         <span class="pv-board-card">
-                          <strong x-text="board.label"></strong>
-                          <small x-text="board.supplement > 0 ? ('+ ' + currency + ' ' + formatNumber(board.supplement) + ' / guest / night') : 'No meal supplement'"></small>
+                          <strong x-text="label"></strong>
+                          <small x-text="currency + ' ' + formatNumber(rateFor(selectedCabanaType, key, guests)) + ' / night'"></small>
                         </span>
                       </label>
                     </template>
                   </div>
+                  <template x-if="selectedCabanaType && !boardTypeOptionsAvailable">
+                    <p class="pv-guest-warning"><i class="bi bi-exclamation-triangle-fill"></i> No board type is priced for <span x-text="guests"></span> guests on this cabana - please try a different guest count or contact the villa directly.</p>
+                  </template>
                 </div>
 
                 <template x-for="meal in includedMeals" :key="meal">
@@ -251,12 +265,11 @@
             <div class="col-lg-5">
               <div class="pv-summary-panel">
                 <h3>Your Estimated Total</h3>
-                <div class="pv-summary-row"><span>Cabana</span><span x-text="selectedRoom ? selectedRoom.name : '-'"></span></div>
+                <div class="pv-summary-row"><span>Cabana</span><span x-text="selectedCabanaType ? selectedCabanaType.name : '-'"></span></div>
+                <div class="pv-summary-row"><span>Board Type</span><span x-text="boardTypeLabels[boardType] || '-'"></span></div>
                 <div class="pv-summary-row"><span>Nights</span><span x-text="nights || '-'"></span></div>
                 <div class="pv-summary-row"><span>Guests</span><span x-text="guests + ' total (' + guests + ' Pax)'"></span></div>
-                <div class="pv-summary-row" x-show="selectedRoom && selectedRoom.pricing_tiers"><span>Rate for <span x-text="guests"></span> Pax</span><span x-text="currency + ' ' + formatNumber(nightlyRate) + ' / night'"></span></div>
-                <div class="pv-summary-row"><span>Room Total</span><span x-text="currency + ' ' + formatNumber(roomTotal)"></span></div>
-                <div class="pv-summary-row" x-show="mealTotal > 0"><span>Meal Plan</span><span x-text="currency + ' ' + formatNumber(mealTotal)"></span></div>
+                <div class="pv-summary-row" x-show="nightlyRate !== null"><span>Rate for <span x-text="guests"></span> Pax</span><span x-text="currency + ' ' + formatNumber(nightlyRate) + ' / night'"></span></div>
 
                 <div class="pv-summary-total">
                   <span>Total<br><small>Estimated</small></span>
@@ -299,17 +312,18 @@
 @push('scripts')
 <script>
     document.addEventListener('alpine:init', () => {
-        Alpine.data('villaBooking', (rooms, boardTypes, menuOptions, currency, oldInput) => ({
-            rooms,
-            boardTypes,
+        Alpine.data('villaBooking', (cabanaTypes, boardTypeLabels, boardTypeMeals, menuOptions, currency, oldInput) => ({
+            cabanaTypes,
+            boardTypeLabels,
+            boardTypeMeals,
             menuOptions,
             currency,
-            selectedRoomId: oldInput.room_id ? parseInt(oldInput.room_id, 10) : (rooms.length ? rooms[0].id : null),
+            selectedCabanaTypeId: oldInput.cabana_type_id ? parseInt(oldInput.cabana_type_id, 10) : (cabanaTypes.length ? cabanaTypes[0].id : null),
             checkIn: oldInput.check_in || '',
             checkOut: oldInput.check_out || '',
             adults: oldInput.adults ? parseInt(oldInput.adults, 10) : 2,
             children: oldInput.children ? parseInt(oldInput.children, 10) : 0,
-            boardType: oldInput.board_type || Object.keys(boardTypes)[0] || 'cabana_only',
+            boardType: oldInput.board_type || Object.keys(boardTypeLabels)[0] || 'cabana_only',
             menu: {},
             bbqAddon: Boolean(oldInput.bbq_addon),
             safariJeepAddon: Boolean(oldInput.safari_jeep_addon),
@@ -319,8 +333,8 @@
             get todayIso() {
                 return new Date().toISOString().slice(0, 10);
             },
-            get selectedRoom() {
-                return this.rooms.find((room) => room.id === this.selectedRoomId) || null;
+            get selectedCabanaType() {
+                return this.cabanaTypes.find((cabanaType) => cabanaType.id === this.selectedCabanaTypeId) || null;
             },
             get nights() {
                 if (!this.checkIn || !this.checkOut) return 0;
@@ -328,55 +342,67 @@
                 return diff > 0 ? diff : 0;
             },
             get includedMeals() {
-                return this.boardTypes[this.boardType]?.meals || [];
+                return this.boardTypeMeals[this.boardType] || [];
             },
             get guests() {
                 return Math.max(1, (parseInt(this.adults, 10) || 0) + (parseInt(this.children, 10) || 0));
             },
+            get boardTypeOptionsAvailable() {
+                return Object.keys(this.boardTypeLabels)
+                    .some((key) => this.rateFor(this.selectedCabanaType, key, this.guests) !== null);
+            },
             get nightlyRate() {
-                return this.selectedRoom ? this.rateForGuests(this.selectedRoom, this.guests) : 0;
-            },
-            get roomTotal() {
-                return this.nightlyRate * this.nights;
-            },
-            get mealTotal() {
-                const supplement = this.boardTypes[this.boardType]?.supplement || 0;
-                return supplement * this.guests * this.nights;
+                return this.rateFor(this.selectedCabanaType, this.boardType, this.guests);
             },
             get grandTotal() {
-                return this.roomTotal + this.mealTotal;
+                return this.nightlyRate !== null ? this.nightlyRate * this.nights : 0;
             },
             get canSubmit() {
-                return Boolean(this.selectedRoomId) && this.nights > 0;
+                return Boolean(this.selectedCabanaTypeId) && this.nights > 0 && this.nightlyRate !== null;
             },
-            selectRoom(id) {
-                this.selectedRoomId = id;
+            selectCabana(id) {
+                this.selectedCabanaTypeId = id;
+                this.ensureValidBoardType();
                 this.$nextTick(() => {
                     document.getElementById('booking-form')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
                 });
             },
             /**
-             * A room with no pricing_tiers just charges its flat
-             * price_per_night. A tiered room (e.g. up to 2/4/6/8 pax)
-             * charges the smallest tier's rate that still fits the guest
-             * count; above every tier, the top tier's rate applies.
+             * Finds the pricing bracket the guest count falls into and
+             * returns that bracket's rate for the given board type - null
+             * if that board type isn't priced for this cabana/bracket.
+             * Guest counts above every configured bracket fall back to the
+             * top bracket's rate rather than being refused here.
              */
-            rateForGuests(room, guests) {
-                if (!room.pricing_tiers) {
-                    return room.price_per_night;
+            rateFor(cabanaType, boardType, guests) {
+                if (!cabanaType || !cabanaType.tiers.length) {
+                    return null;
                 }
 
-                const maxPaxValues = Object.keys(room.pricing_tiers)
-                    .map((maxPax) => parseInt(maxPax, 10))
-                    .sort((a, b) => a - b);
+                const tier = cabanaType.tiers.find((tier) => guests >= tier.min_pax && guests <= tier.max_pax)
+                    || [...cabanaType.tiers].sort((a, b) => b.max_pax - a.max_pax)[0];
 
-                for (const maxPax of maxPaxValues) {
-                    if (guests <= maxPax) {
-                        return room.pricing_tiers[String(maxPax)];
-                    }
+                const price = tier[boardType + '_price'];
+
+                return price === null || price === undefined ? null : price;
+            },
+            /**
+             * If the selected board type stops being priced for the
+             * current cabana/guest count (e.g. the guest count just
+             * changed), switch to the first board type that still is,
+             * rather than leaving a stale, unavailable selection in place.
+             */
+            ensureValidBoardType() {
+                if (this.rateFor(this.selectedCabanaType, this.boardType, this.guests) !== null) {
+                    return;
                 }
 
-                return room.pricing_tiers[String(maxPaxValues[maxPaxValues.length - 1])];
+                const fallback = Object.keys(this.boardTypeLabels)
+                    .find((key) => this.rateFor(this.selectedCabanaType, key, this.guests) !== null);
+
+                if (fallback) {
+                    this.boardType = fallback;
+                }
             },
             formatNumber(value) {
                 return new Intl.NumberFormat('en-US', { maximumFractionDigits: 0 }).format(Math.round(value || 0));
@@ -385,6 +411,8 @@
                 document.getElementById('pv-booking-form')?.addEventListener('submit', () => {
                     this.submitting = true;
                 });
+                this.ensureValidBoardType();
+                this.$watch('guests', () => this.ensureValidBoardType());
             },
         }));
     });

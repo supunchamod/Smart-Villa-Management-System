@@ -16,6 +16,7 @@
           <a class="nav-link {{ request()->routeIs('bookings.create') ? 'active' : '' }}" href="{{ route('bookings.create') }}"><i class="bi bi-journal-plus"></i><span>Add Bookings</span></a>
           <a class="nav-link {{ request()->routeIs('bookings.*') && ! request()->routeIs('bookings.create') ? 'active' : '' }}" href="{{ route('bookings.index') }}"><i class="bi bi-journal-check"></i><span>Manage Bookings</span></a>
           <a class="nav-link {{ request()->routeIs('calendar') ? 'active' : '' }}" href="{{ route('calendar') }}"><i class="bi bi-calendar3"></i><span>Bookings Calendar</span></a>
+          <a class="nav-link {{ request()->routeIs('landing-page.*') ? 'active' : '' }}" href="{{ route('landing-page.index') }}"><i class="bi bi-easel"></i><span>Landing Page</span></a>
         @endcan
         @can('manage_expenses')
           <a class="nav-link {{ request()->routeIs('expenses.index') ? 'active' : '' }}" href="{{ route('expenses.index') }}"><i class="bi bi-receipt-cutoff"></i><span>Expenses</span></a>

@@ -6,6 +6,7 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ExpenseController;
 use App\Http\Controllers\IncomeController;
 use App\Http\Controllers\InvoiceController;
+use App\Http\Controllers\LandingPageController;
 use App\Http\Controllers\PageController;
 use App\Http\Controllers\ProfitController;
 use App\Http\Controllers\PublicBookingController;
@@ -63,6 +64,18 @@ Route::middleware('auth')->group(function () {
         Route::post('/bookings/{booking}/decline', [BookingController::class, 'decline'])->name('bookings.decline');
         Route::get('/bookings/{booking}/invoice/confirmation', [BookingController::class, 'confirmationInvoice'])->name('bookings.invoice.confirmation');
         Route::get('/bookings/{booking}/invoice/final', [BookingController::class, 'finalInvoice'])->name('bookings.invoice.final');
+
+        // The public booking page's content/pricing manager - grouped with
+        // bookings/calendar since it's the same "manage what guests can
+        // book" concern, kept separate from Settings' villa-branding form.
+        Route::get('/admin/landing-page', [LandingPageController::class, 'index'])->name('landing-page.index');
+        Route::get('/admin/landing-page/cabana-types/create', [LandingPageController::class, 'createCabanaType'])->name('landing-page.cabana-types.create');
+        Route::post('/admin/landing-page/cabana-types', [LandingPageController::class, 'storeCabanaType'])->name('landing-page.cabana-types.store');
+        Route::get('/admin/landing-page/cabana-types/{cabanaType}/edit', [LandingPageController::class, 'editCabanaType'])->name('landing-page.cabana-types.edit');
+        Route::put('/admin/landing-page/cabana-types/{cabanaType}', [LandingPageController::class, 'updateCabanaType'])->name('landing-page.cabana-types.update');
+        Route::delete('/admin/landing-page/cabana-types/{cabanaType}', [LandingPageController::class, 'destroyCabanaType'])->name('landing-page.cabana-types.destroy');
+        Route::post('/admin/landing-page/menu-items', [LandingPageController::class, 'storeMenuItem'])->name('landing-page.menu-items.store');
+        Route::delete('/admin/landing-page/menu-items/{menuItem}', [LandingPageController::class, 'destroyMenuItem'])->name('landing-page.menu-items.destroy');
     });
 
     Route::middleware('can:manage_expenses')->group(function () {

@@ -3,7 +3,9 @@
 namespace Database\Seeders;
 
 use App\Models\Booking;
+use App\Models\CabanaType;
 use App\Models\Expense;
+use App\Models\LandingPageMenu;
 use App\Models\Room;
 use Carbon\Carbon;
 use Illuminate\Database\Seeder;
@@ -130,6 +132,58 @@ class DemoDataSeeder extends Seeder
     ];
 
     /**
+     * The public Landing Page's cabana types, linked to the two Star Moon
+     * rooms above via room_name, with pax/board tier pricing per the
+     * Kalupahana rate structure. cabana_only_price figures come straight
+     * from the spec; half_board_price/full_board_price are demo
+     * placeholder rates (no exact figures were given for these) - a real
+     * owner sets their own from the Landing Page admin section.
+     */
+    private const CABANA_TYPES = [
+        [
+            'room_name' => 'Vintage Couple Cabana',
+            'name' => 'Vintage Couple Cabana',
+            'description' => "A cosy, romantic cabana for couples - perfect for anniversaries, honeymoons, and quiet getaways surrounded by Kalupahana's misty hills.",
+            'max_capacity' => 2,
+            'is_active' => true,
+            'tiers' => [
+                ['min_pax' => 1, 'max_pax' => 2, 'cabana_only_price' => 12500, 'half_board_price' => 16000, 'full_board_price' => 19000],
+            ],
+        ],
+        [
+            'room_name' => 'Family Two-Story Cabana',
+            'name' => 'Family Two-Story Cabana',
+            'description' => 'A spacious two-storey cabana built for families and groups, with room to spread out and relax together.',
+            'max_capacity' => 8,
+            'is_active' => true,
+            'tiers' => [
+                ['min_pax' => 1, 'max_pax' => 2, 'cabana_only_price' => 12500, 'half_board_price' => 16000, 'full_board_price' => 19000],
+                ['min_pax' => 3, 'max_pax' => 4, 'cabana_only_price' => 15000, 'half_board_price' => 19500, 'full_board_price' => 23000],
+                ['min_pax' => 5, 'max_pax' => 6, 'cabana_only_price' => 20000, 'half_board_price' => 26000, 'full_board_price' => 31000],
+                ['min_pax' => 7, 'max_pax' => 8, 'cabana_only_price' => 25000, 'half_board_price' => 33000, 'full_board_price' => 39000],
+            ],
+        ],
+    ];
+
+    /**
+     * Selectable menu items per meal sitting for the Landing Page admin's
+     * Meal Menu Options manager.
+     */
+    private const MENU_ITEMS = [
+        ['meal_type' => 'breakfast', 'item_name' => 'Continental Breakfast'],
+        ['meal_type' => 'breakfast', 'item_name' => 'Sri Lankan Rice & Curry Breakfast'],
+        ['meal_type' => 'breakfast', 'item_name' => 'Kids Specials'],
+        ['meal_type' => 'lunch', 'item_name' => 'Sri Lankan Rice & Curry'],
+        ['meal_type' => 'lunch', 'item_name' => 'Seafood Platter'],
+        ['meal_type' => 'lunch', 'item_name' => 'BBQ Lunch'],
+        ['meal_type' => 'lunch', 'item_name' => 'Kids Specials'],
+        ['meal_type' => 'dinner', 'item_name' => 'Sri Lankan Rice & Curry'],
+        ['meal_type' => 'dinner', 'item_name' => 'Seafood Platter'],
+        ['meal_type' => 'dinner', 'item_name' => 'BBQ Dinner'],
+        ['meal_type' => 'dinner', 'item_name' => 'Kids Specials'],
+    ];
+
+    /**
      * Category name choice matters: ProfitController classifies "direct/
      * variable" costs by matching these keywords - housekeeping, laundry,
      * food, beverage, f&b, fnb, dining, kitchen, inventory, supplies,
@@ -158,8 +212,38 @@ class DemoDataSeeder extends Seeder
             fn (array $room) => Room::firstOrCreate(['name_or_number' => $room['name_or_number']], $room)
         );
 
+        $this->seedLandingPage($rooms);
         $this->seedBookings($rooms);
         $this->seedExpenses();
+    }
+
+    /**
+     * @param  Collection<int, Room>  $rooms
+     */
+    private function seedLandingPage(Collection $rooms): void
+    {
+        $roomsByName = $rooms->keyBy('name_or_number');
+
+        foreach (self::CABANA_TYPES as $cabanaTypeData) {
+            $room = $roomsByName->get($cabanaTypeData['room_name']);
+
+            $cabanaType = CabanaType::updateOrCreate(
+                ['name' => $cabanaTypeData['name']],
+                [
+                    'room_id' => $room?->id,
+                    'description' => $cabanaTypeData['description'],
+                    'max_capacity' => $cabanaTypeData['max_capacity'],
+                    'is_active' => $cabanaTypeData['is_active'],
+                ]
+            );
+
+            $cabanaType->pricingTiers()->delete();
+            $cabanaType->pricingTiers()->createMany($cabanaTypeData['tiers']);
+        }
+
+        foreach (self::MENU_ITEMS as $item) {
+            LandingPageMenu::firstOrCreate($item);
+        }
     }
 
     /**
