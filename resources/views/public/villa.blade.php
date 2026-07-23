@@ -10,14 +10,7 @@
     @json($boardTypes),
     @json($menuOptions),
     @json($settings->currency),
-    @json([
-        "check_in" => old("check_in"),
-        "check_out" => old("check_out"),
-        "adults" => old("adults"),
-        "children" => old("children"),
-        "board_type" => old("board_type"),
-        "room_id" => old("room_id"),
-    ])
+    @json($oldBookingInput)
   )'
   class="pv-has-sticky-bar"
 >

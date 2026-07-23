@@ -54,7 +54,28 @@ class PublicBookingController extends Controller
             'roomsForCalculator' => $this->roomsForCalculator($rooms),
             'boardTypes' => $this->boardTypes($settings),
             'menuOptions' => self::MENU_OPTIONS,
+            'oldBookingInput' => $this->oldBookingInput(),
         ]);
+    }
+
+    /**
+     * Re-populates the Alpine booking calculator's fields from the previous
+     * submission after a validation failure. Built here (rather than an
+     * inline array literal inside @json() in the view) so the x-data
+     * attribute stays a flat list of variable references.
+     *
+     * @return array<string, mixed>
+     */
+    private function oldBookingInput(): array
+    {
+        return [
+            'check_in' => old('check_in'),
+            'check_out' => old('check_out'),
+            'adults' => old('adults'),
+            'children' => old('children'),
+            'board_type' => old('board_type'),
+            'room_id' => old('room_id'),
+        ];
     }
 
     /**
