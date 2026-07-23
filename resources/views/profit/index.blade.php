@@ -90,7 +90,9 @@
             <button type="button" :class="{ active: unit === 'monthly' }" @click="setUnit('monthly')">Monthly</button>
           </div>
         </div>
-        <canvas x-ref="canvas" style="width: 100%; height: 360px;"></canvas>
+        <div class="pa-chart-wrap">
+          <canvas x-ref="canvas"></canvas>
+        </div>
       </div>
     </div>
     <div class="col-lg-4 mb-4">
@@ -102,7 +104,9 @@
         @if ($expenseBreakdown->isEmpty())
           <p class="pa-empty">No expenses recorded for {{ $rangeLabel }}.</p>
         @else
-          <canvas x-ref="canvas" style="width: 100%; height: 220px;"></canvas>
+          <div class="pa-donut-wrap">
+            <canvas x-ref="canvas"></canvas>
+          </div>
           <ul class="pa-legend">
             @foreach ($expenseBreakdown as $i => $row)
               <li>
