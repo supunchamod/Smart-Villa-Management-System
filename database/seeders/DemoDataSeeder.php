@@ -62,6 +62,32 @@ class DemoDataSeeder extends Seeder
     ];
 
     /**
+     * The two real Star Moon Cabana - Kalupahana products shown on the
+     * public booking page (see PublicBookingController). Seeded separately
+     * from ROOMS/BOOKING_PLAN above (which stay untouched, index-for-index,
+     * so the rich Profit Analyzer/dashboard demo history keeps working)
+     * rather than folded into that array.
+     */
+    private const STAR_MOON_ROOMS = [
+        [
+            'name_or_number' => 'Vintage Couple Cabana',
+            'type' => 'Romantic Cabana',
+            'price_per_night' => 12500,
+            'pricing_tiers' => null,
+            'capacity' => 2,
+            'status' => 'available',
+        ],
+        [
+            'name_or_number' => 'Family Two-Story Cabana',
+            'type' => 'Family Cabana',
+            'price_per_night' => 12500,
+            'pricing_tiers' => ['2' => 12500, '4' => 15000, '6' => 20000, '8' => 25000],
+            'capacity' => 8,
+            'status' => 'available',
+        ],
+    ];
+
+    /**
      * [room index, guest index, check-in offset from today in days,
      * nights, advance-payment ratio, status]
      *
@@ -128,6 +154,10 @@ class DemoDataSeeder extends Seeder
     public function run(): void
     {
         $rooms = collect(self::ROOMS)->map(
+            fn (array $room) => Room::firstOrCreate(['name_or_number' => $room['name_or_number']], $room)
+        );
+
+        collect(self::STAR_MOON_ROOMS)->each(
             fn (array $room) => Room::firstOrCreate(['name_or_number' => $room['name_or_number']], $room)
         );
 

@@ -75,6 +75,9 @@ class PublicBookingController extends Controller
             'children' => old('children'),
             'board_type' => old('board_type'),
             'room_id' => old('room_id'),
+            'bbq_addon' => old('bbq_addon'),
+            'safari_jeep_addon' => old('safari_jeep_addon'),
+            'outdoor_dining_preference' => old('outdoor_dining_preference'),
         ];
     }
 
@@ -85,7 +88,7 @@ class PublicBookingController extends Controller
      * flat list of variable references.
      *
      * @param  \Illuminate\Support\Collection<int, Room>  $rooms
-     * @return list<array{id: int, name: string, type: string, price_per_night: float, capacity: int, photo_url: ?string}>
+     * @return list<array{id: int, name: string, type: string, price_per_night: float, pricing_tiers: ?array, capacity: int, photo_url: ?string, photos: list<string>}>
      */
     private function roomsForCalculator($rooms): array
     {
@@ -94,8 +97,10 @@ class PublicBookingController extends Controller
             'name' => $room->name_or_number,
             'type' => $room->type,
             'price_per_night' => (float) $room->price_per_night,
+            'pricing_tiers' => $room->pricing_tiers,
             'capacity' => $room->capacity,
             'photo_url' => $room->photo_url,
+            'photos' => $room->photos,
         ])->all();
     }
 
@@ -123,6 +128,9 @@ class PublicBookingController extends Controller
             'board_type' => ['required', Rule::in(array_keys($boardTypes))],
             'menu_items' => ['nullable', 'array'],
             'menu_items.*' => ['nullable', 'string', 'max:255'],
+            'bbq_addon' => ['nullable', 'boolean'],
+            'safari_jeep_addon' => ['nullable', 'boolean'],
+            'outdoor_dining_preference' => ['nullable', 'boolean'],
         ]);
 
         $room = Room::where('status', 'available')->findOrFail($validated['room_id']);
@@ -144,7 +152,8 @@ class PublicBookingController extends Controller
         $board = $boardTypes[$validated['board_type']];
         $selectedMenuItems = $this->sanitizeMenuItems($validated['menu_items'] ?? [], $board['meals']);
 
-        $roomTotal = round((float) $room->price_per_night * $nights, 2);
+        $nightlyRate = $room->rateForGuests($guests);
+        $roomTotal = round($nightlyRate * $nights, 2);
         $mealTotal = round($board['supplement'] * $guests * $nights, 2);
         $total = round($roomTotal + $mealTotal, 2);
 
@@ -162,11 +171,14 @@ class PublicBookingController extends Controller
             'selected_menu_items' => $selectedMenuItems,
             'guests_adults' => $adults,
             'guests_children' => $children,
+            'bbq_addon' => $request->boolean('bbq_addon'),
+            'safari_jeep_addon' => $request->boolean('safari_jeep_addon'),
+            'outdoor_dining_preference' => $request->boolean('outdoor_dining_preference'),
         ]);
 
         $reference = 'INQ-'.str_pad((string) $booking->id, 6, '0', STR_PAD_LEFT);
         $whatsappUrl = $this->buildWhatsAppUrl(
-            $settings, $booking, $room, $board, $selectedMenuItems, $nights, $adults, $children, $total, $reference
+            $settings, $booking, $room, $board, $selectedMenuItems, $nights, $adults, $children, $nightlyRate, $total, $reference
         );
 
         return redirect(route('public.villa', $slug).'#booking-confirmation')
@@ -249,14 +261,18 @@ class PublicBookingController extends Controller
         int $nights,
         int $adults,
         int $children,
+        float $nightlyRate,
         float $total,
         string $reference
     ): string {
+        $guests = $adults + $children;
+
         $lines = [
             "New Booking Enquiry - {$settings->villa_name}",
             '',
             "Reference: {$reference}",
-            "Cabana: {$room->name_or_number}",
+            "Cabana: {$room->name_or_number} ({$guests} Pax)",
+            "Rate: {$settings->currency} ".number_format($nightlyRate, 2).'/night',
             'Check-in: '.$booking->check_in->format('d M Y'),
             'Check-out: '.$booking->check_out->format('d M Y')." ({$nights} ".Str::plural('night', $nights).')',
             "Guests: {$adults} Adult".($adults === 1 ? '' : 's').($children > 0 ? ", {$children} Child".($children === 1 ? '' : 'ren') : ''),
@@ -266,6 +282,17 @@ class PublicBookingController extends Controller
 
         foreach ($menuItems as $meal => $choice) {
             $lines[] = ucfirst($meal).": {$choice}";
+        }
+
+        $addons = array_filter([
+            $booking->bbq_addon ? 'BBQ & Campfire Experience' : null,
+            $booking->safari_jeep_addon ? 'Safari Jeep Arrangement' : null,
+            $booking->outdoor_dining_preference ? 'Outdoor Dining Preference' : null,
+        ]);
+
+        if ($addons !== []) {
+            $lines[] = '';
+            $lines[] = 'Add-ons Requested: '.implode(', ', $addons);
         }
 
         $lines[] = '';

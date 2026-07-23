@@ -33,6 +33,9 @@ class Booking extends Model
         'selected_menu_items',
         'guests_adults',
         'guests_children',
+        'bbq_addon',
+        'safari_jeep_addon',
+        'outdoor_dining_preference',
     ];
 
     /**
@@ -50,6 +53,9 @@ class Booking extends Model
             'final_settlement_amount' => 'decimal:2',
             'checked_out_at' => 'datetime',
             'selected_menu_items' => 'array',
+            'bbq_addon' => 'boolean',
+            'safari_jeep_addon' => 'boolean',
+            'outdoor_dining_preference' => 'boolean',
         ];
     }
 

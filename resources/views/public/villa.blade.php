@@ -29,10 +29,12 @@
       <h1 class="pv-hero-title">{{ $settings->website_hero_title ?: $settings->villa_name }}</h1>
       <p class="pv-hero-tagline">{{ $settings->website_hero_subtitle ?: "A private cabana escape on Sri Lanka's coast - handpicked rooms, a personalised meal plan, and the best rate you'll find anywhere, guaranteed direct." }}</p>
       <div class="pv-hero-specs">
-        <span class="pv-spec-chip"><i class="bi bi-wifi"></i> Free WiFi</span>
-        <span class="pv-spec-chip"><i class="bi bi-water"></i> Private Pool</span>
-        <span class="pv-spec-chip"><i class="bi bi-snow2"></i> Air Conditioning</span>
-        <span class="pv-spec-chip"><i class="bi bi-sunset"></i> Ocean &amp; Jungle Views</span>
+        <span class="pv-spec-chip"><i class="bi bi-binoculars-fill"></i> Mountain Views</span>
+        <span class="pv-spec-chip"><i class="bi bi-cloud-fog2-fill"></i> Cool Air &amp; Misty Atmosphere</span>
+        <span class="pv-spec-chip"><i class="bi bi-cup-hot-fill"></i> Outdoor Dining</span>
+        <span class="pv-spec-chip"><i class="bi bi-wifi"></i> Free Wi-Fi</span>
+        <span class="pv-spec-chip"><i class="bi bi-droplet-half"></i> Hot Water</span>
+        <span class="pv-spec-chip"><i class="bi bi-p-circle-fill"></i> Free Parking</span>
       </div>
     </div>
   </header>
@@ -75,19 +77,37 @@
         <div class="row g-4">
           @foreach ($rooms as $room)
             <div class="col-12 col-md-6 col-lg-4">
-              <div class="pv-room-card" :class="{ 'pv-room-selected': selectedRoomId === {{ $room->id }} }">
-                <div class="pv-room-photo" @if ($room->photo_url) style="background-image: url({{ $room->photo_url }})" @endif>
-                  @unless ($room->photo_url)
+              <div class="pv-room-card" x-data='{ photoIndex: 0, photos: @json($room->photos) }' :class="{ 'pv-room-selected': selectedRoomId === {{ $room->id }} }">
+                <div class="pv-room-photo" :style="photos.length ? ('background-image: url(' + photos[photoIndex] + ')') : ''">
+                  <template x-if="!photos.length">
                     <span class="pv-room-photo-fallback"><i class="bi bi-image"></i></span>
-                  @endunless
-                  <span class="pv-room-rate-badge">{{ $settings->currency }} {{ number_format($room->price_per_night, 0) }}/night</span>
+                  </template>
+                  <template x-if="photos.length > 1">
+                    <div class="pv-room-photo-nav">
+                      <button type="button" class="pv-room-photo-arrow" @click.stop="photoIndex = (photoIndex - 1 + photos.length) % photos.length" aria-label="Previous photo"><i class="bi bi-chevron-left"></i></button>
+                      <div class="pv-room-photo-dots">
+                        <template x-for="(photo, idx) in photos" :key="idx">
+                          <span class="pv-room-photo-dot" :class="{ active: idx === photoIndex }" @click.stop="photoIndex = idx"></span>
+                        </template>
+                      </div>
+                      <button type="button" class="pv-room-photo-arrow" @click.stop="photoIndex = (photoIndex + 1) % photos.length" aria-label="Next photo"><i class="bi bi-chevron-right"></i></button>
+                    </div>
+                  </template>
+                  <span class="pv-room-rate-badge">{{ $settings->currency }} {{ number_format($room->starting_rate, 0) }}{{ $room->pricing_tiers ? '+' : '' }}/night</span>
                 </div>
                 <div class="pv-room-body">
                   <span class="pv-room-type">{{ $room->type }}</span>
                   <h3 class="pv-room-name">{{ $room->name_or_number }}</h3>
                   <span class="pv-room-meta"><i class="bi bi-people"></i> Sleeps up to {{ $room->capacity }} guests</span>
+                  @if ($room->pricing_tiers)
+                    <ul class="pv-tier-list">
+                      @foreach (collect($room->pricing_tiers)->sortKeys() as $maxPax => $rate)
+                        <li><span>Up to {{ $maxPax }} Pax</span><strong>{{ $settings->currency }} {{ number_format($rate, 0) }}</strong></li>
+                      @endforeach
+                    </ul>
+                  @endif
                   <div class="pv-room-price-row">
-                    <span class="pv-room-price">{{ $settings->currency }} {{ number_format($room->price_per_night, 0) }}<small> / night</small></span>
+                    <span class="pv-room-price">{{ $settings->currency }} {{ number_format($room->starting_rate, 0) }}<small>{{ $room->pricing_tiers ? ' starting / night' : ' / night' }}</small></span>
                   </div>
                   <button
                     type="button"
@@ -206,6 +226,25 @@
                     </div>
                   </div>
                 </template>
+
+                <div class="pv-menu-block">
+                  <label class="pv-form-label mb-2">Value Add-Ons &amp; Experience Options</label>
+                  <div class="pv-addon-grid">
+                    <label class="pv-addon-option">
+                      <input type="checkbox" name="bbq_addon" value="1" x-model="bbqAddon">
+                      <span class="pv-addon-card"><i class="bi bi-fire"></i> BBQ &amp; Campfire Experience Setup</span>
+                    </label>
+                    <label class="pv-addon-option">
+                      <input type="checkbox" name="safari_jeep_addon" value="1" x-model="safariJeepAddon">
+                      <span class="pv-addon-card"><i class="bi bi-truck-front-fill"></i> Safari Jeep Arrangement</span>
+                    </label>
+                    <label class="pv-addon-option">
+                      <input type="checkbox" name="outdoor_dining_preference" value="1" x-model="outdoorDiningPreference">
+                      <span class="pv-addon-card"><i class="bi bi-cup-hot-fill"></i> Outdoor Dining &amp; Fresh Food Preference</span>
+                    </label>
+                  </div>
+                  <p class="pv-summary-note" style="text-align:left; margin-top:8px;">These are requests only - the villa will confirm availability and any charges directly with you.</p>
+                </div>
               </div>
             </div>
 
@@ -214,7 +253,8 @@
                 <h3>Your Estimated Total</h3>
                 <div class="pv-summary-row"><span>Cabana</span><span x-text="selectedRoom ? selectedRoom.name : '-'"></span></div>
                 <div class="pv-summary-row"><span>Nights</span><span x-text="nights || '-'"></span></div>
-                <div class="pv-summary-row"><span>Guests</span><span x-text="guests + ' total'"></span></div>
+                <div class="pv-summary-row"><span>Guests</span><span x-text="guests + ' total (' + guests + ' Pax)'"></span></div>
+                <div class="pv-summary-row" x-show="selectedRoom && selectedRoom.pricing_tiers"><span>Rate for <span x-text="guests"></span> Pax</span><span x-text="currency + ' ' + formatNumber(nightlyRate) + ' / night'"></span></div>
                 <div class="pv-summary-row"><span>Room Total</span><span x-text="currency + ' ' + formatNumber(roomTotal)"></span></div>
                 <div class="pv-summary-row" x-show="mealTotal > 0"><span>Meal Plan</span><span x-text="currency + ' ' + formatNumber(mealTotal)"></span></div>
 
@@ -271,6 +311,9 @@
             children: oldInput.children ? parseInt(oldInput.children, 10) : 0,
             boardType: oldInput.board_type || Object.keys(boardTypes)[0] || 'cabana_only',
             menu: {},
+            bbqAddon: Boolean(oldInput.bbq_addon),
+            safariJeepAddon: Boolean(oldInput.safari_jeep_addon),
+            outdoorDiningPreference: Boolean(oldInput.outdoor_dining_preference),
             submitting: false,
 
             get todayIso() {
@@ -290,8 +333,11 @@
             get guests() {
                 return Math.max(1, (parseInt(this.adults, 10) || 0) + (parseInt(this.children, 10) || 0));
             },
+            get nightlyRate() {
+                return this.selectedRoom ? this.rateForGuests(this.selectedRoom, this.guests) : 0;
+            },
             get roomTotal() {
-                return this.selectedRoom ? this.selectedRoom.price_per_night * this.nights : 0;
+                return this.nightlyRate * this.nights;
             },
             get mealTotal() {
                 const supplement = this.boardTypes[this.boardType]?.supplement || 0;
@@ -308,6 +354,29 @@
                 this.$nextTick(() => {
                     document.getElementById('booking-form')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
                 });
+            },
+            /**
+             * A room with no pricing_tiers just charges its flat
+             * price_per_night. A tiered room (e.g. up to 2/4/6/8 pax)
+             * charges the smallest tier's rate that still fits the guest
+             * count; above every tier, the top tier's rate applies.
+             */
+            rateForGuests(room, guests) {
+                if (!room.pricing_tiers) {
+                    return room.price_per_night;
+                }
+
+                const maxPaxValues = Object.keys(room.pricing_tiers)
+                    .map((maxPax) => parseInt(maxPax, 10))
+                    .sort((a, b) => a - b);
+
+                for (const maxPax of maxPaxValues) {
+                    if (guests <= maxPax) {
+                        return room.pricing_tiers[String(maxPax)];
+                    }
+                }
+
+                return room.pricing_tiers[String(maxPaxValues[maxPaxValues.length - 1])];
             },
             formatNumber(value) {
                 return new Intl.NumberFormat('en-US', { maximumFractionDigits: 0 }).format(Math.round(value || 0));

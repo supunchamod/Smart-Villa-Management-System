@@ -56,6 +56,12 @@
 .pv-room-photo { position: relative; height: 190px; background: linear-gradient(150deg, var(--pv-navy), var(--pv-navy-2)); background-size: cover; background-position: center; display: flex; align-items: flex-end; }
 .pv-room-photo-fallback { display: grid; place-items: center; width: 100%; height: 100%; color: rgba(255,255,255,.5); font-size: 42px; }
 .pv-room-rate-badge { position: absolute; top: 14px; right: 14px; padding: 6px 12px; border-radius: 999px; background: var(--pv-gold); color: var(--pv-navy-ink); font-size: 12.5px; font-weight: 800; box-shadow: 0 6px 16px rgba(0,0,0,.18); }
+.pv-room-photo-nav { position: absolute; left: 0; right: 0; bottom: 0; display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 8px; background: linear-gradient(0deg, rgba(0,0,0,.5), transparent); }
+.pv-room-photo-arrow { display: grid; place-items: center; flex-shrink: 0; width: 26px; height: 26px; border: 0; border-radius: 50%; background: rgba(255,255,255,.85); color: var(--pv-navy-ink); font-size: 13px; cursor: pointer; }
+.pv-room-photo-arrow:hover { background: #fff; }
+.pv-room-photo-dots { display: flex; align-items: center; gap: 5px; }
+.pv-room-photo-dot { width: 7px; height: 7px; border-radius: 50%; background: rgba(255,255,255,.55); cursor: pointer; }
+.pv-room-photo-dot.active { background: var(--pv-gold); }
 .pv-room-body { padding: 20px; display: flex; flex-direction: column; gap: 10px; flex: 1 1 auto; }
 .pv-room-name { margin: 0; font-size: 17px; font-weight: 800; color: var(--pv-navy-ink); }
 .pv-room-type { font-size: 12.5px; font-weight: 700; color: var(--pv-muted); text-transform: uppercase; letter-spacing: .04em; }
@@ -63,6 +69,9 @@
 .pv-room-price-row { margin-top: auto; display: flex; align-items: baseline; justify-content: space-between; padding-top: 12px; border-top: 1px dashed var(--pv-line); }
 .pv-room-price { font-size: 20px; font-weight: 800; color: var(--pv-navy); }
 .pv-room-price small { font-size: 12px; font-weight: 600; color: var(--pv-muted); }
+.pv-tier-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; }
+.pv-tier-list li { display: flex; align-items: center; justify-content: space-between; font-size: 11.5px; color: var(--pv-muted); }
+.pv-tier-list li strong { color: var(--pv-navy-ink); font-weight: 800; }
 .pv-select-btn { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; min-height: 48px; padding: 12px; border: 0; border-radius: 12px; background: var(--pv-navy); color: #fff; font-weight: 800; font-size: 14px; cursor: pointer; transition: background .2s ease; }
 .pv-select-btn:hover { background: var(--pv-navy-2); color: #fff; }
 .pv-select-btn.pv-select-btn-active { background: var(--pv-gold); color: var(--pv-navy-ink); }
@@ -93,6 +102,14 @@
 .pv-menu-pill input { position: absolute; inset: 0; opacity: 0; cursor: pointer; margin: 0; }
 .pv-menu-pill-label { display: inline-flex; align-items: center; min-height: 40px; padding: 8px 14px; border-radius: 999px; border: 1.5px solid var(--pv-line); background: var(--pv-surface); font-size: 12.5px; font-weight: 700; color: var(--pv-muted); transition: all .15s ease; }
 .pv-menu-pill input:checked + .pv-menu-pill-label { border-color: var(--pv-navy); background: var(--pv-navy); color: #fff; }
+
+.pv-addon-grid { display: grid; grid-template-columns: 1fr; gap: 10px; }
+@media (min-width: 576px) { .pv-addon-grid { grid-template-columns: repeat(3, 1fr); } }
+.pv-addon-option { position: relative; }
+.pv-addon-option input { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; margin: 0; }
+.pv-addon-card { display: flex; align-items: center; gap: 10px; min-height: 56px; padding: 12px 14px; border-radius: 14px; border: 2px solid var(--pv-line); background: var(--pv-bg); font-size: 12.5px; font-weight: 700; color: var(--pv-navy-ink); transition: border-color .15s ease, background .15s ease; }
+.pv-addon-option input:checked + .pv-addon-card { border-color: var(--pv-gold); background: var(--pv-gold-soft); }
+.pv-addon-card i { color: var(--pv-gold); font-size: 17px; flex-shrink: 0; }
 
 .pv-guest-warning { display: flex; align-items: center; gap: 8px; margin-top: 10px; padding: 10px 14px; border-radius: 10px; background: rgba(220,38,38,.08); color: #dc2626; font-size: 12.5px; font-weight: 700; }
 

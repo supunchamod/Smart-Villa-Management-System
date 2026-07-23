@@ -20,15 +20,15 @@ class DatabaseSeeder extends Seeder
     public function run(): void
     {
         Setting::firstOrCreate([], [
-            'villa_name' => 'Ceylon Cabana & Villa',
+            'villa_name' => 'Star Moon Cabana',
             'villa_logo' => null,
-            'address' => '123, Galle Road, Hikkaduwa',
+            'address' => 'Kalupahana, Sri Lanka',
             'phone_number' => '+94771234567',
             'public_whatsapp_number' => '+94771234567',
-            'email' => 'info@ceylonvilla.com',
+            'email' => 'info@starmooncabana.com',
             'currency' => 'LKR',
-            'website_hero_title' => 'Ceylon Cabana & Villa',
-            'website_hero_subtitle' => "A private cabana escape on Sri Lanka's coast - handpicked rooms, a personalised meal plan, and the best rate you'll find anywhere, guaranteed direct.",
+            'website_hero_title' => 'Star Moon Cabana – Kalupahana',
+            'website_hero_subtitle' => 'Where Nature Meets Comfort',
             'half_board_rate' => 3500,
             'full_board_rate' => 6000,
         ]);

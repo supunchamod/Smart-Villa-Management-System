@@ -20,7 +20,7 @@
     @error('capacity')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror
   </div>
   <div class="col-md-6">
-    <label class="form-label">Photo URL <small class="text-muted">(optional, for the public booking page)</small></label>
+    <label class="form-label">Photo URL <small class="text-muted">(cover photo for the public booking page)</small></label>
     <input class="form-control @error('photo_url') is-invalid @enderror" type="url" name="photo_url" value="{{ old('photo_url', $room->photo_url ?? '') }}" placeholder="https://...">
     @error('photo_url')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror
   </div>
@@ -32,6 +32,24 @@
       @endforeach
     </select>
     @error('status')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror
+  </div>
+  <div class="col-12">
+    <label class="form-label">Additional gallery photo URLs <small class="text-muted">(optional, one per line - powers the photo slider on the public page)</small></label>
+    <textarea class="form-control @error('photo_urls_text') is-invalid @enderror" name="photo_urls_text" rows="3" placeholder="https://example.com/photo-2.jpg&#10;https://example.com/photo-3.jpg">{{ old('photo_urls_text', isset($room) && $room->photo_urls ? implode("\n", $room->photo_urls) : '') }}</textarea>
+    @error('photo_urls_text')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror
+  </div>
+  <div class="col-12">
+    <hr>
+    <label class="form-label">Tiered pax pricing <small class="text-muted">(optional - leave all blank to keep the flat "Price per night" above for every guest count)</small></label>
+    <div class="row g-3">
+      @foreach ([2 => '2 Pax (Couple)', 4 => '3-4 Pax', 6 => '5-6 Pax', 8 => '7-8 Pax'] as $maxPax => $label)
+        <div class="col-md-3">
+          <label class="form-label small">{{ $label }}</label>
+          <input class="form-control @error('tier_'.$maxPax) is-invalid @enderror" type="number" step="0.01" min="0" name="tier_{{ $maxPax }}" value="{{ old('tier_'.$maxPax, $room->pricing_tiers[$maxPax] ?? '') }}" placeholder="e.g. 12500.00">
+          @error('tier_'.$maxPax)<div class="invalid-feedback d-block">{{ $message }}</div>@enderror
+        </div>
+      @endforeach
+    </div>
   </div>
   <div class="col-12">
     <button class="btn btn-primary" type="submit">{{ isset($room) ? 'Save Changes' : 'Add Room' }}</button>
