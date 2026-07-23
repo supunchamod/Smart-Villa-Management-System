@@ -51,9 +51,31 @@ class PublicBookingController extends Controller
             'settings' => $settings,
             'slug' => $slug,
             'rooms' => $rooms,
+            'roomsForCalculator' => $this->roomsForCalculator($rooms),
             'boardTypes' => $this->boardTypes($settings),
             'menuOptions' => self::MENU_OPTIONS,
         ]);
+    }
+
+    /**
+     * Shapes the available rooms into the plain array the Alpine booking
+     * calculator needs. Kept out of the Blade view (rather than an inline
+     * arrow-function map inside @json()) so the x-data attribute stays a
+     * flat list of variable references.
+     *
+     * @param  \Illuminate\Support\Collection<int, Room>  $rooms
+     * @return list<array{id: int, name: string, type: string, price_per_night: float, capacity: int, photo_url: ?string}>
+     */
+    private function roomsForCalculator($rooms): array
+    {
+        return $rooms->map(fn (Room $room) => [
+            'id' => $room->id,
+            'name' => $room->name_or_number,
+            'type' => $room->type,
+            'price_per_night' => (float) $room->price_per_night,
+            'capacity' => $room->capacity,
+            'photo_url' => $room->photo_url,
+        ])->all();
     }
 
     /**

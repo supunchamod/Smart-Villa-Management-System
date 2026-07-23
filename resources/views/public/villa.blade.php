@@ -6,14 +6,7 @@
 @section('content')
 <div
   x-data='villaBooking(
-    @json($rooms->map(fn ($room) => [
-        "id" => $room->id,
-        "name" => $room->name_or_number,
-        "type" => $room->type,
-        "price_per_night" => (float) $room->price_per_night,
-        "capacity" => $room->capacity,
-        "photo_url" => $room->photo_url,
-    ])),
+    @json($roomsForCalculator),
     @json($boardTypes),
     @json($menuOptions),
     @json($settings->currency),
