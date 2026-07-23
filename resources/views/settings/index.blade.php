@@ -19,6 +19,7 @@
         @endif
         <form class="row g-3" method="POST" action="{{ route('settings.update') }}" enctype="multipart/form-data">
           @csrf
+          <input type="hidden" name="section" value="general">
           <div class="col-12">
             <label class="form-label">Villa logo</label>
             <div class="d-flex align-items-center gap-3 mb-2">
@@ -60,4 +61,55 @@
           </div>
           <div class="col-12"><button class="btn btn-primary" type="submit">Save Changes</button></div>
         </form></div></div><div class="col-xl-4"><div class="panel"><div class="panel-head"><div><h2>Activity Timeline</h2><p>Live operational events</p></div></div><div class="timeline"><div class="timeline-item"><span></span><div><strong>New enterprise lead assigned to CRM pipeline</strong><small>2 min ago</small></div></div><div class="timeline-item"><span></span><div><strong>Invoice #DS-1024 was paid successfully</strong><small>18 min ago</small></div></div><div class="timeline-item"><span></span><div><strong>Inventory alert triggered for Pro License</strong><small>43 min ago</small></div></div><div class="timeline-item"><span></span><div><strong>Q2 executive report generated</strong><small>1 hr ago</small></div></div></div></div></div></div>
+
+        <div class="row g-4 mt-1">
+          <div class="col-12">
+            <div class="panel">
+              <div class="panel-head">
+                <div><h2>Public Website Builder</h2><p>Controls the content of your public direct-booking mini-site</p></div>
+                <a class="btn btn-sm btn-light" href="{{ route('public.villa', \Illuminate\Support\Str::slug($globalSettings->villa_name)) }}" target="_blank" rel="noopener"><i class="bi bi-box-arrow-up-right"></i> View Public Website</a>
+              </div>
+              <form class="row g-3" method="POST" action="{{ route('settings.update') }}">
+                @csrf
+                <input type="hidden" name="section" value="website">
+                <div class="col-md-6">
+                  <label class="form-label">Website logo URL</label>
+                  <input class="form-control @error('website_logo_url') is-invalid @enderror" type="url" name="website_logo_url" value="{{ old('website_logo_url', $globalSettings->website_logo_url) }}" placeholder="https://...">
+                  @error('website_logo_url')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label">Hero background image URL</label>
+                  <input class="form-control @error('website_hero_image_url') is-invalid @enderror" type="url" name="website_hero_image_url" value="{{ old('website_hero_image_url', $globalSettings->website_hero_image_url) }}" placeholder="https://...">
+                  @error('website_hero_image_url')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label">Hero title</label>
+                  <input class="form-control @error('website_hero_title') is-invalid @enderror" name="website_hero_title" value="{{ old('website_hero_title', $globalSettings->website_hero_title) }}" placeholder="Welcome to {{ $globalSettings->villa_name }}">
+                  @error('website_hero_title')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label">Public WhatsApp number</label>
+                  <input class="form-control @error('public_whatsapp_number') is-invalid @enderror" name="public_whatsapp_number" value="{{ old('public_whatsapp_number', $globalSettings->public_whatsapp_number) }}" placeholder="+94 77 123 4567">
+                  @error('public_whatsapp_number')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror
+                </div>
+                <div class="col-12">
+                  <label class="form-label">Hero subtitle / tagline</label>
+                  <textarea class="form-control @error('website_hero_subtitle') is-invalid @enderror" name="website_hero_subtitle" rows="2" placeholder="A private cabana escape on Sri Lanka's coast...">{{ old('website_hero_subtitle', $globalSettings->website_hero_subtitle) }}</textarea>
+                  @error('website_hero_subtitle')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label">Half Board rate <small class="text-muted">({{ $globalSettings->currency }} per guest / night)</small></label>
+                  <input class="form-control @error('half_board_rate') is-invalid @enderror" type="number" step="0.01" min="0" name="half_board_rate" value="{{ old('half_board_rate', $globalSettings->half_board_rate) }}" placeholder="3500.00">
+                  @error('half_board_rate')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label">Full Board rate <small class="text-muted">({{ $globalSettings->currency }} per guest / night)</small></label>
+                  <input class="form-control @error('full_board_rate') is-invalid @enderror" type="number" step="0.01" min="0" name="full_board_rate" value="{{ old('full_board_rate', $globalSettings->full_board_rate) }}" placeholder="6000.00">
+                  @error('full_board_rate')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror
+                </div>
+                <div class="col-12"><button class="btn btn-primary" type="submit">Save Website Settings</button></div>
+              </form>
+            </div>
+          </div>
+        </div>
 @endsection

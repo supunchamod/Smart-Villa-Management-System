@@ -16,15 +16,14 @@ use Illuminate\View\View;
 class PublicBookingController extends Controller
 {
     /**
-     * Board type -> label, included meals, and the per-guest-per-night
-     * supplement added on top of the room rate. There's no admin-managed
-     * pricing table for this yet, so these are a documented starting point
-     * a real deployment would want to move into Settings.
+     * Board type -> label and included meals. The per-guest-per-night
+     * supplement isn't listed here since it's owner-configurable (Settings
+     * -> Public Website Builder) - see boardTypes().
      */
-    private const BOARD_TYPES = [
-        'cabana_only' => ['label' => 'Cabana Only', 'meals' => [], 'supplement' => 0],
-        'half_board' => ['label' => 'Half Board (Breakfast & Dinner)', 'meals' => ['breakfast', 'dinner'], 'supplement' => 3500],
-        'full_board' => ['label' => 'Full Board (Breakfast, Lunch & Dinner)', 'meals' => ['breakfast', 'lunch', 'dinner'], 'supplement' => 6000],
+    private const BOARD_TYPE_MEALS = [
+        'cabana_only' => ['label' => 'Cabana Only', 'meals' => []],
+        'half_board' => ['label' => 'Half Board (Breakfast & Dinner)', 'meals' => ['breakfast', 'dinner']],
+        'full_board' => ['label' => 'Full Board (Breakfast, Lunch & Dinner)', 'meals' => ['breakfast', 'lunch', 'dinner']],
     ];
 
     /**
@@ -52,7 +51,7 @@ class PublicBookingController extends Controller
             'settings' => $settings,
             'slug' => $slug,
             'rooms' => $rooms,
-            'boardTypes' => self::BOARD_TYPES,
+            'boardTypes' => $this->boardTypes($settings),
             'menuOptions' => self::MENU_OPTIONS,
         ]);
     }
@@ -67,6 +66,7 @@ class PublicBookingController extends Controller
     public function store(Request $request, string $slug): RedirectResponse
     {
         $settings = $this->resolveSettings($slug);
+        $boardTypes = $this->boardTypes($settings);
 
         $validated = $request->validate([
             'room_id' => ['required', 'integer', 'exists:rooms,id'],
@@ -77,7 +77,7 @@ class PublicBookingController extends Controller
             'check_out' => ['required', 'date', 'after:check_in'],
             'adults' => ['required', 'integer', 'min:1', 'max:20'],
             'children' => ['nullable', 'integer', 'min:0', 'max:20'],
-            'board_type' => ['required', Rule::in(array_keys(self::BOARD_TYPES))],
+            'board_type' => ['required', Rule::in(array_keys($boardTypes))],
             'menu_items' => ['nullable', 'array'],
             'menu_items.*' => ['nullable', 'string', 'max:255'],
         ]);
@@ -98,7 +98,7 @@ class PublicBookingController extends Controller
         $checkOut = Carbon::parse($validated['check_out'])->startOfDay();
         $nights = max(1, $checkIn->diffInDays($checkOut));
 
-        $board = self::BOARD_TYPES[$validated['board_type']];
+        $board = $boardTypes[$validated['board_type']];
         $selectedMenuItems = $this->sanitizeMenuItems($validated['menu_items'] ?? [], $board['meals']);
 
         $roomTotal = round((float) $room->price_per_night * $nights, 2);
@@ -130,6 +130,27 @@ class PublicBookingController extends Controller
             ->with('bookingSubmitted', true)
             ->with('bookingReference', $reference)
             ->with('whatsappUrl', $whatsappUrl);
+    }
+
+    /**
+     * Board type -> label, included meals, and the per-guest-per-night
+     * supplement, with the two paid tiers' rates pulled from Settings
+     * (Public Website Builder) rather than hardcoded, falling back to a
+     * sensible default if the owner hasn't set one yet.
+     *
+     * @return array<string, array{label: string, meals: list<string>, supplement: float}>
+     */
+    private function boardTypes(Setting $settings): array
+    {
+        $rates = [
+            'cabana_only' => 0.0,
+            'half_board' => (float) ($settings->half_board_rate ?? 3500),
+            'full_board' => (float) ($settings->full_board_rate ?? 6000),
+        ];
+
+        return collect(self::BOARD_TYPE_MEALS)
+            ->map(fn (array $board, string $key) => [...$board, 'supplement' => $rates[$key]])
+            ->all();
     }
 
     /**
@@ -212,7 +233,7 @@ class PublicBookingController extends Controller
         $lines[] = '';
         $lines[] = 'Please confirm availability and next steps. Thank you!';
 
-        $phone = preg_replace('/\D+/', '', (string) $settings->phone_number) ?: '';
+        $phone = preg_replace('/\D+/', '', (string) ($settings->public_whatsapp_number ?: $settings->phone_number)) ?: '';
 
         return 'https://wa.me/'.$phone.'?text='.rawurlencode(implode("\n", $lines));
     }

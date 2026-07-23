@@ -29,19 +29,19 @@
   class="pv-has-sticky-bar"
 >
   {{-- Hero --}}
-  <header class="pv-hero">
+  <header class="pv-hero" @if ($settings->website_hero_image_url) style="background-image: linear-gradient(180deg, rgba(0,15,35,.55), rgba(0,15,35,.85)), url({{ $settings->website_hero_image_url }}); background-size: cover; background-position: center;" @endif>
     <div class="pv-container pv-hero-inner">
       <div class="pv-hero-logo">
-        @if ($settings->villa_logo)
-          <img src="{{ $settings->villa_logo }}" alt="{{ $settings->villa_name }} logo">
+        @if ($settings->website_logo_url)
+          <img src="{{ $settings->website_logo_url }}" alt="{{ $settings->villa_name }} logo">
         @else
           <span class="pv-hero-logo-fallback"><i class="bi bi-water"></i></span>
         @endif
         <span>{{ $settings->villa_name }}</span>
       </div>
       <span class="pv-hero-eyebrow"><i class="bi bi-star-fill"></i> Book Direct &amp; Save</span>
-      <h1 class="pv-hero-title">{{ $settings->villa_name }}</h1>
-      <p class="pv-hero-tagline">A private cabana escape on Sri Lanka's coast - handpicked rooms, a personalised meal plan, and the best rate you'll find anywhere, guaranteed direct.</p>
+      <h1 class="pv-hero-title">{{ $settings->website_hero_title ?: $settings->villa_name }}</h1>
+      <p class="pv-hero-tagline">{{ $settings->website_hero_subtitle ?: "A private cabana escape on Sri Lanka's coast - handpicked rooms, a personalised meal plan, and the best rate you'll find anywhere, guaranteed direct." }}</p>
       <div class="pv-hero-specs">
         <span class="pv-spec-chip"><i class="bi bi-wifi"></i> Free WiFi</span>
         <span class="pv-spec-chip"><i class="bi bi-water"></i> Private Pool</span>

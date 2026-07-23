@@ -24,8 +24,13 @@ class DatabaseSeeder extends Seeder
             'villa_logo' => null,
             'address' => '123, Galle Road, Hikkaduwa',
             'phone_number' => '+94771234567',
+            'public_whatsapp_number' => '+94771234567',
             'email' => 'info@ceylonvilla.com',
             'currency' => 'LKR',
+            'website_hero_title' => 'Ceylon Cabana & Villa',
+            'website_hero_subtitle' => "A private cabana escape on Sri Lanka's coast - handpicked rooms, a personalised meal plan, and the best rate you'll find anywhere, guaranteed direct.",
+            'half_board_rate' => 3500,
+            'full_board_rate' => 6000,
         ]);
 
         // Dev-only default credentials - change the password immediately

@@ -23,11 +23,33 @@ class SettingsController extends Controller
     }
 
     /**
-     * Update the villa's settings.
+     * Update the villa's settings. The form is split into two independent
+     * sections (general workspace settings, and the public website/mini-CMS
+     * fields) that each post here with their own hidden "section" marker,
+     * so a submission only validates and saves the fields that section
+     * actually renders - otherwise saving the website section alone would
+     * fail validation on required general fields (like villa_name) it
+     * never included.
      */
     public function update(Request $request): RedirectResponse
     {
         $settings = Setting::current();
+
+        if ($request->input('section') === 'website') {
+            $validated = $request->validate([
+                'website_logo_url' => ['nullable', 'url', 'max:2048'],
+                'website_hero_image_url' => ['nullable', 'url', 'max:2048'],
+                'website_hero_title' => ['nullable', 'string', 'max:255'],
+                'website_hero_subtitle' => ['nullable', 'string', 'max:500'],
+                'public_whatsapp_number' => ['nullable', 'string', 'max:30'],
+                'half_board_rate' => ['nullable', 'numeric', 'min:0'],
+                'full_board_rate' => ['nullable', 'numeric', 'min:0'],
+            ]);
+
+            $settings->fill($validated)->save();
+
+            return back()->with('status', 'Public website settings updated successfully.');
+        }
 
         $validated = $request->validate([
             'villa_name' => ['required', 'string', 'max:255'],
