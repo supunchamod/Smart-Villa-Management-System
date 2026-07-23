@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Admin\WhatsAppSettingsController;
 use App\Http\Controllers\BookingController;
 use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\DashboardController;
@@ -97,6 +98,13 @@ Route::middleware('auth')->group(function () {
         Route::post('/team', [TeamController::class, 'store'])->name('team.store');
         Route::put('/team/{user}', [TeamController::class, 'update'])->name('team.update');
         Route::delete('/team/{user}', [TeamController::class, 'destroy'])->name('team.destroy');
+
+        // Linking/unlinking the villa's WhatsApp (WAHA) device is an
+        // account-wide integration setting, so it stays owner-only
+        // alongside Team management.
+        Route::get('/admin/whatsapp', [WhatsAppSettingsController::class, 'index'])->name('admin.whatsapp.index');
+        Route::get('/admin/whatsapp/status', [WhatsAppSettingsController::class, 'status'])->name('admin.whatsapp.status');
+        Route::post('/admin/whatsapp/disconnect', [WhatsAppSettingsController::class, 'disconnect'])->name('admin.whatsapp.disconnect');
     });
 });
 

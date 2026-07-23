@@ -28,6 +28,7 @@
         @endcan
         @can('manage-team')
           <a class="nav-link {{ request()->routeIs('team') ? 'active' : '' }}" href="{{ route('team') }}"><i class="bi bi-person-workspace"></i><span>Team</span></a>
+          <a class="nav-link {{ request()->routeIs('admin.whatsapp.index') ? 'active' : '' }}" href="{{ route('admin.whatsapp.index') }}"><i class="bi bi-whatsapp"></i><span>WhatsApp</span></a>
         @endcan
         <a class="nav-link {{ request()->routeIs('settings') ? 'active' : '' }}" href="{{ route('settings') }}"><i class="bi bi-gear"></i><span>Settings</span></a>
       </nav>
