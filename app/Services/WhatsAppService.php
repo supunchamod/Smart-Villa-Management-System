@@ -3,7 +3,6 @@
 namespace App\Services;
 
 use Illuminate\Http\Client\PendingRequest;
-use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
@@ -61,10 +60,15 @@ class WhatsAppService
     }
 
     /**
-     * Retrieve the Base64 QR code image used to authenticate the session.
+     * Retrieve the session's QR code as a ready-to-render Base64 data URI.
      * Ensures the session actually exists and isn't stopped first (via
-     * getSessionStatus(), which auto-starts it if needed) since WAHA
-     * has nothing to return a QR code for otherwise.
+     * getSessionStatus(), which auto-starts it if needed) since WAHA has
+     * nothing to return a QR code for otherwise.
+     *
+     * Requests format=raw so the NOWEB engine returns the QR as a raw
+     * image/png body rather than a JSON-wrapped value - the response is
+     * read as binary and Base64-encoded directly, with no JSON parsing
+     * in between.
      */
     public function getQrCode(): ?string
     {
@@ -79,7 +83,9 @@ class WhatsAppService
             return null;
         }
 
-        $response = $this->client()->get("/api/sessions/{$this->session}/auth/qr");
+        // client() already attaches the x-api-key header (as X-Api-Key,
+        // which HTTP treats identically) whenever one is configured.
+        $response = $this->client()->get("/api/sessions/{$this->session}/auth/qr", ['format' => 'raw']);
 
         if ($response->failed()) {
             Log::error('WAHA: failed to fetch QR code', [
@@ -91,32 +97,7 @@ class WhatsAppService
             return null;
         }
 
-        return $this->extractQrValue($response);
-    }
-
-    /**
-     * Normalizes the QR endpoint's response into a bare Base64 string,
-     * regardless of whether WAHA answered with a JSON payload
-     * ({"value": "..."} or {"mimetype": ..., "data": "..."}) or a raw
-     * image/png body.
-     */
-    private function extractQrValue(Response $response): ?string
-    {
-        $contentType = (string) $response->header('Content-Type');
-
-        if (str_contains($contentType, 'application/json')) {
-            $value = $response->json('value') ?? $response->json('data');
-
-            return $value !== null ? (string) $value : null;
-        }
-
-        if (str_starts_with($contentType, 'image/')) {
-            return base64_encode($response->body());
-        }
-
-        $value = $response->json('value') ?? $response->json('data');
-
-        return $value !== null ? (string) $value : ($response->body() ?: null);
+        return 'data:image/png;base64,'.base64_encode($response->body());
     }
 
     /**

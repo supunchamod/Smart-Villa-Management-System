@@ -48,10 +48,12 @@ class WhatsAppSettingsController extends Controller
     /**
      * Fetches the session status - auto-starting the session on WAHA's
      * side if it's missing or stopped, via WhatsAppService::getSessionStatus()
-     * - and, only while a QR scan is actually needed, the QR code image.
-     * This is what both index() and status() poll, so the page never gets
-     * stuck showing "STOPPED": it either shows the QR right away or picks
-     * it up on the next poll a few seconds later.
+     * - and, only while a QR scan is actually needed, the QR code as a
+     * ready-to-render Base64 data URI straight from
+     * WhatsAppService::getQrCode(). This is what both index() and
+     * status() poll, so the page never gets stuck showing "STOPPED": it
+     * either shows the QR right away or picks it up on the next poll a
+     * few seconds later.
      */
     private function currentState(): array
     {
@@ -59,23 +61,7 @@ class WhatsAppSettingsController extends Controller
 
         return [
             'status' => $status,
-            'qr' => in_array($status, ['SCAN_QR_CODE', 'STARTING'], true) ? $this->qrDataUri() : null,
+            'qr' => in_array($status, ['SCAN_QR_CODE', 'STARTING'], true) ? $this->whatsapp->getQrCode() : null,
         ];
-    }
-
-    /**
-     * Normalizes the QR value returned by WhatsAppService::getQrCode()
-     * (a bare Base64 string) into a data URI the <img> tag can render
-     * directly, without assuming the service already did so.
-     */
-    private function qrDataUri(): ?string
-    {
-        $qr = $this->whatsapp->getQrCode();
-
-        if (! $qr) {
-            return null;
-        }
-
-        return str_starts_with($qr, 'data:') ? $qr : "data:image/png;base64,{$qr}";
     }
 }
