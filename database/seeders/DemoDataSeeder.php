@@ -10,14 +10,16 @@ use Illuminate\Database\Seeder;
 use Illuminate\Support\Collection;
 
 /**
- * Realistic Sri Lankan villa/cabana demo data for sales pitches: rooms,
- * a local + foreign guest mix, bookings spanning past/present/future, and
- * an expense history varied enough for the Profit Analyzer's charts to
- * show real up-and-down trends instead of flat lines.
+ * Demo data for Star Moon Cabana - Kalupahana: the two real cabana
+ * products, a local + foreign guest mix, bookings spanning past/present/
+ * future, and an expense history varied enough for the Profit Analyzer's
+ * charts to show real up-and-down trends instead of flat lines.
  *
- * Re-runnable: every `php artisan db:seed` clears out this seeder's own
- * demo bookings/expenses first (scoped to its own rooms/categories, never
- * a blanket truncate) and reseeds a fresh, internally consistent dataset.
+ * Re-runnable: every `php artisan db:seed` first retires any older
+ * generic demo rooms left over from before this villa was Star Moon
+ * Cabana (cascade-deleting their bookings), then clears out this
+ * seeder's own bookings/expenses and reseeds a fresh, internally
+ * consistent dataset against just the two Star Moon cabanas.
  *
  * Schema note: the app has no separate Guest, "booking channel", or
  * revenue-category (Restaurant/Spa/Safari) table - guests live directly on
@@ -47,28 +49,26 @@ class DemoDataSeeder extends Seeder
     ];
 
     /**
-     * Room status is a real enum (available|maintenance) - there's no
-     * stored "Occupied" state; occupancy is computed elsewhere from
-     * overlapping confirmed bookings, which the booking plan below
-     * naturally produces for a few of these rooms around "today".
+     * Generic placeholder cabanas seeded before this villa was rebranded to
+     * Star Moon Cabana - Kalupahana. Retired on every seed run (see
+     * retireLegacyRooms()) so only the two real cabanas below exist
+     * anywhere in the app, including the public booking page.
      */
-    private const ROOMS = [
-        ['name_or_number' => 'Luxury Ocean-View Cabana A', 'type' => 'Ocean-View Cabana', 'price_per_night' => 45000, 'capacity' => 3, 'status' => 'available'],
-        ['name_or_number' => 'Premium Garden Cabana B', 'type' => 'Garden Cabana', 'price_per_night' => 35000, 'capacity' => 2, 'status' => 'available'],
-        ['name_or_number' => 'Deluxe Family Villa Suite', 'type' => 'Family Villa Suite', 'price_per_night' => 65000, 'capacity' => 6, 'status' => 'available'],
-        ['name_or_number' => 'Standard Honeymoon Cabana C', 'type' => 'Honeymoon Cabana', 'price_per_night' => 38000, 'capacity' => 2, 'status' => 'available'],
-        ['name_or_number' => 'Premium Lakeside Cabana D', 'type' => 'Lakeside Cabana', 'price_per_night' => 42000, 'capacity' => 4, 'status' => 'available'],
-        ['name_or_number' => 'Eco-Wooden Cabana E', 'type' => 'Eco-Wooden Cabana', 'price_per_night' => 28000, 'capacity' => 2, 'status' => 'maintenance'],
+    private const LEGACY_ROOM_NAMES = [
+        'Luxury Ocean-View Cabana A',
+        'Premium Garden Cabana B',
+        'Deluxe Family Villa Suite',
+        'Standard Honeymoon Cabana C',
+        'Premium Lakeside Cabana D',
+        'Eco-Wooden Cabana E',
     ];
 
     /**
-     * The two real Star Moon Cabana - Kalupahana products shown on the
-     * public booking page (see PublicBookingController). Seeded separately
-     * from ROOMS/BOOKING_PLAN above (which stay untouched, index-for-index,
-     * so the rich Profit Analyzer/dashboard demo history keeps working)
-     * rather than folded into that array.
+     * The two real Star Moon Cabana - Kalupahana products (see
+     * PublicBookingController and Room::rateForGuests()). The Family
+     * Two-Story Cabana's pricing_tiers key is "max guests for this rate".
      */
-    private const STAR_MOON_ROOMS = [
+    private const ROOMS = [
         [
             'name_or_number' => 'Vintage Couple Cabana',
             'type' => 'Romantic Cabana',
@@ -89,45 +89,44 @@ class DemoDataSeeder extends Seeder
 
     /**
      * [room index, guest index, check-in offset from today in days,
-     * nights, advance-payment ratio, status]
+     * nights, pax (guest count - drives the Family Two-Story Cabana's
+     * tiered rate), advance-payment ratio, status]
      *
-     * Room index 5 (Eco-Wooden Cabana E, under maintenance) is
-     * deliberately left with no bookings. Every other room's date ranges
-     * are checked to never overlap another *non-cancelled* booking on the
-     * same room, so the calendar never shows a double-booking.
+     * Every room's date ranges are checked to never overlap another
+     * *non-cancelled* booking on the same room, so the calendar never
+     * shows a double-booking.
      */
     private const BOOKING_PLAN = [
         // Completed stays over the past ~2 months (mixed advance ratios so
         // both Advance Payment and Final Settlement income events exist).
-        [2, 5, -58, 4, 0.5, 'checked_out'],
-        [0, 6, -50, 3, 0.6, 'checked_out'],
-        [1, 0, -44, 2, 1.0, 'checked_out'],
-        [3, 7, -37, 5, 0.4, 'checked_out'],
-        [4, 1, -30, 2, 0.7, 'checked_out'],
-        [2, 8, -21, 3, 0.5, 'checked_out'],
-        [0, 2, -16, 2, 0.6, 'checked_out'],
+        [0, 5, -58, 3, 2, 0.5, 'checked_out'],
+        [1, 6, -50, 4, 6, 0.6, 'checked_out'],
+        [0, 0, -44, 2, 2, 1.0, 'checked_out'],
+        [1, 7, -37, 5, 8, 0.4, 'checked_out'],
+        [0, 1, -30, 2, 2, 0.7, 'checked_out'],
+        [1, 8, -21, 3, 4, 0.5, 'checked_out'],
+        [0, 2, -16, 2, 2, 0.6, 'checked_out'],
         // Currently in-house (checked in, still "confirmed" - checkout
         // hasn't happened yet).
-        [1, 9, -2, 5, 1.0, 'confirmed'],
-        [3, 3, -1, 3, 0.6, 'confirmed'],
-        [4, 4, -3, 6, 1.0, 'confirmed'],
+        [1, 9, -2, 5, 6, 1.0, 'confirmed'],
+        [0, 3, -1, 3, 2, 0.6, 'confirmed'],
         // Upcoming, paid in full ahead of arrival.
-        [0, 5, 4, 3, 1.0, 'confirmed'],
-        [2, 6, 9, 2, 1.0, 'confirmed'],
+        [1, 4, 4, 3, 4, 1.0, 'confirmed'],
+        [0, 5, 9, 2, 2, 1.0, 'confirmed'],
         // Upcoming with only a deposit paid ("pending payment" flavour -
         // there's no separate status for this, so it's carried by a low
         // advance-to-total ratio instead).
-        [1, 7, 14, 4, 0.3, 'confirmed'],
-        [3, 8, 20, 2, 0.25, 'confirmed'],
+        [1, 6, 14, 4, 8, 0.3, 'confirmed'],
+        [0, 7, 20, 2, 2, 0.25, 'confirmed'],
         // Further-out schedule (next couple of months).
-        [4, 0, 34, 3, 0.5, 'confirmed'],
-        [0, 1, 48, 5, 0.4, 'confirmed'],
-        [2, 2, 61, 2, 1.0, 'confirmed'],
+        [1, 8, 34, 3, 5, 0.5, 'confirmed'],
+        [0, 0, 48, 5, 2, 0.4, 'confirmed'],
+        [1, 1, 61, 2, 3, 1.0, 'confirmed'],
         // Cancelled, for status diversity - cancelled bookings are
         // excluded from the overlap check everywhere else in the app, so
         // these are allowed to sit inside another booking's date range.
-        [1, 3, 12, 3, 0.2, 'cancelled'],
-        [3, 4, -10, 2, 1.0, 'cancelled'],
+        [0, 2, 12, 3, 2, 0.2, 'cancelled'],
+        [1, 3, -10, 2, 7, 1.0, 'cancelled'],
     ];
 
     /**
@@ -153,16 +152,27 @@ class DemoDataSeeder extends Seeder
 
     public function run(): void
     {
-        $rooms = collect(self::ROOMS)->map(
-            fn (array $room) => Room::firstOrCreate(['name_or_number' => $room['name_or_number']], $room)
-        );
+        $this->retireLegacyRooms();
 
-        collect(self::STAR_MOON_ROOMS)->each(
+        $rooms = collect(self::ROOMS)->map(
             fn (array $room) => Room::firstOrCreate(['name_or_number' => $room['name_or_number']], $room)
         );
 
         $this->seedBookings($rooms);
         $this->seedExpenses();
+    }
+
+    /**
+     * Deletes any of the old generic placeholder cabanas (see
+     * LEGACY_ROOM_NAMES) still sitting in the database from before this
+     * villa was rebranded to Star Moon Cabana - Kalupahana. rooms.id is
+     * cascadeOnDelete() on bookings, so each room's booking history goes
+     * with it - an accepted trade-off so only the two real cabanas exist
+     * anywhere in the app, including the public booking page.
+     */
+    private function retireLegacyRooms(): void
+    {
+        Room::whereIn('name_or_number', self::LEGACY_ROOM_NAMES)->delete();
     }
 
     /**
@@ -174,12 +184,12 @@ class DemoDataSeeder extends Seeder
 
         $today = Carbon::today();
 
-        foreach (self::BOOKING_PLAN as $index => [$roomIdx, $guestIdx, $offset, $nights, $advanceRatio, $status]) {
+        foreach (self::BOOKING_PLAN as $index => [$roomIdx, $guestIdx, $offset, $nights, $pax, $advanceRatio, $status]) {
             $room = $rooms[$roomIdx];
             $guest = self::GUESTS[$guestIdx];
             $checkIn = $today->copy()->addDays($offset);
             $checkOut = $checkIn->copy()->addDays($nights);
-            $total = round((float) $room->price_per_night * $nights, 2);
+            $total = round($room->rateForGuests($pax) * $nights, 2);
             $advance = round($total * $advanceRatio, 2);
 
             // The booking itself can't have been made in the future: for an
@@ -200,6 +210,8 @@ class DemoDataSeeder extends Seeder
                 'total_amount' => $total,
                 'advance_payment' => $advance,
                 'status' => $status,
+                'guests_adults' => $pax,
+                'guests_children' => 0,
             ];
 
             if ($status === 'checked_out') {
