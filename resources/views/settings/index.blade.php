@@ -108,4 +108,49 @@
             </div>
           </div>
         </div>
+
+        <div class="row g-4 mt-1">
+          <div class="col-12">
+            <div class="panel">
+              <div class="panel-head">
+                <div><h2><i class="bi bi-whatsapp text-success"></i> Guest WhatsApp Messaging</h2><p>Location, WiFi, and review links used in the click-to-send guest message templates</p></div>
+              </div>
+              <form class="row g-3" method="POST" action="{{ route('settings.update') }}">
+                @csrf
+                <input type="hidden" name="section" value="whatsapp">
+                <div class="col-md-6">
+                  <label class="form-label">Google Maps location link</label>
+                  <input class="form-control @error('google_map_link') is-invalid @enderror" type="url" name="google_map_link" value="{{ old('google_map_link', $globalSettings->google_map_link) }}" placeholder="https://maps.google.com/...">
+                  @error('google_map_link')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror
+                </div>
+                <div class="col-md-3">
+                  <label class="form-label">WiFi network name</label>
+                  <input class="form-control @error('wifi_name') is-invalid @enderror" name="wifi_name" value="{{ old('wifi_name', $globalSettings->wifi_name) }}">
+                  @error('wifi_name')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror
+                </div>
+                <div class="col-md-3">
+                  <label class="form-label">WiFi password</label>
+                  <input class="form-control @error('wifi_password') is-invalid @enderror" name="wifi_password" value="{{ old('wifi_password', $globalSettings->wifi_password) }}">
+                  @error('wifi_password')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror
+                </div>
+                <div class="col-md-4">
+                  <label class="form-label">Google Review link</label>
+                  <input class="form-control @error('google_review_link') is-invalid @enderror" type="url" name="google_review_link" value="{{ old('google_review_link', $globalSettings->google_review_link) }}" placeholder="https://g.page/r/...">
+                  @error('google_review_link')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror
+                </div>
+                <div class="col-md-4">
+                  <label class="form-label">TripAdvisor link</label>
+                  <input class="form-control @error('tripadvisor_link') is-invalid @enderror" type="url" name="tripadvisor_link" value="{{ old('tripadvisor_link', $globalSettings->tripadvisor_link) }}" placeholder="https://tripadvisor.com/...">
+                  @error('tripadvisor_link')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror
+                </div>
+                <div class="col-md-4">
+                  <label class="form-label">Social media link</label>
+                  <input class="form-control @error('social_media_link') is-invalid @enderror" type="url" name="social_media_link" value="{{ old('social_media_link', $globalSettings->social_media_link) }}" placeholder="https://instagram.com/...">
+                  @error('social_media_link')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror
+                </div>
+                <div class="col-12"><button class="btn btn-primary" type="submit">Save Guest Messaging Settings</button></div>
+              </form>
+            </div>
+          </div>
+        </div>
 @endsection

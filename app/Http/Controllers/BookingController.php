@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Booking;
 use App\Models\Room;
+use App\Services\WhatsAppService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -260,6 +261,28 @@ class BookingController extends Controller
         });
 
         return response()->json($events);
+    }
+
+    /**
+     * Records that a click-to-send WhatsApp message was sent for this
+     * booking, so the admin UI can show an "already sent" status badge.
+     * Called via AJAX right after the wa.me link is opened in a new tab -
+     * this only logs the click, since there's no WhatsApp API to confirm
+     * actual delivery.
+     */
+    public function logWaSent(Request $request, Booking $booking): JsonResponse
+    {
+        $validated = $request->validate([
+            'type' => ['required', Rule::in(array_keys(WhatsAppService::MESSAGE_TYPES))],
+        ]);
+
+        $column = WhatsAppService::MESSAGE_TYPES[$validated['type']];
+        $booking->update([$column => now()]);
+
+        return response()->json([
+            'type' => $validated['type'],
+            'sent_at' => $booking->{$column}->format('d M Y, h:i A'),
+        ]);
     }
 
     /**

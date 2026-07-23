@@ -62,6 +62,21 @@ class SettingsController extends Controller
             return back()->with('status', 'Public website settings updated successfully.');
         }
 
+        if ($request->input('section') === 'whatsapp') {
+            $validated = $request->validate([
+                'google_map_link' => ['nullable', 'url', 'max:2048'],
+                'wifi_name' => ['nullable', 'string', 'max:255'],
+                'wifi_password' => ['nullable', 'string', 'max:255'],
+                'google_review_link' => ['nullable', 'url', 'max:2048'],
+                'tripadvisor_link' => ['nullable', 'url', 'max:2048'],
+                'social_media_link' => ['nullable', 'url', 'max:2048'],
+            ]);
+
+            $settings->fill($validated)->save();
+
+            return back()->with('status', 'Guest WhatsApp messaging settings updated successfully.');
+        }
+
         $validated = $request->validate([
             'villa_name' => ['required', 'string', 'max:255'],
             'address' => ['nullable', 'string', 'max:255'],

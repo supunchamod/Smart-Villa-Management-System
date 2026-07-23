@@ -24,6 +24,38 @@
             @if ($booking->status === 'confirmed')
               <button type="button" class="btn btn-primary" @click="bootstrap.Modal.getOrCreateInstance(document.getElementById('checkoutModal')).show()"><i class="bi bi-box-arrow-right"></i> Checkout</button>
             @endif
+            @if ($booking->customer_phone)
+              @php $wa = app(\App\Services\WhatsAppService::class); @endphp
+              <div class="dropdown">
+                <button class="btn btn-success dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false"><i class="bi bi-whatsapp"></i> Send WhatsApp</button>
+                <ul class="dropdown-menu dropdown-menu-end wa-dropdown-menu">
+                  <li>
+                    <a class="dropdown-item wa-send-btn" href="{{ $wa->getConfirmationUrl($booking) }}" target="_blank" rel="noopener" data-booking-id="{{ $booking->id }}" data-wa-type="confirmation">
+                      <span>🟢 Send Confirmation</span>
+                      @if ($booking->wa_confirmation_sent_at)<span class="wa-sent-badge">Sent {{ $booking->wa_confirmation_sent_at->format('h:i A') }}</span>@endif
+                    </a>
+                  </li>
+                  <li>
+                    <a class="dropdown-item wa-send-btn" href="{{ $wa->getPreCheckinReminderUrl($booking) }}" target="_blank" rel="noopener" data-booking-id="{{ $booking->id }}" data-wa-type="reminder">
+                      <span>🔵 Send Pre-Checkin Reminder</span>
+                      @if ($booking->wa_reminder_sent_at)<span class="wa-sent-badge">Sent {{ $booking->wa_reminder_sent_at->format('h:i A') }}</span>@endif
+                    </a>
+                  </li>
+                  <li>
+                    <a class="dropdown-item wa-send-btn" href="{{ $wa->getCheckinDetailsUrl($booking) }}" target="_blank" rel="noopener" data-booking-id="{{ $booking->id }}" data-wa-type="checkin">
+                      <span>📍 Send Location &amp; Check-in Info</span>
+                      @if ($booking->wa_checkin_sent_at)<span class="wa-sent-badge">Sent {{ $booking->wa_checkin_sent_at->format('h:i A') }}</span>@endif
+                    </a>
+                  </li>
+                  <li>
+                    <a class="dropdown-item wa-send-btn" href="{{ $wa->getCheckoutThankYouUrl($booking) }}" target="_blank" rel="noopener" data-booking-id="{{ $booking->id }}" data-wa-type="thankyou">
+                      <span>⭐ Send Thank You &amp; Review Request</span>
+                      @if ($booking->wa_thankyou_sent_at)<span class="wa-sent-badge">Sent {{ $booking->wa_thankyou_sent_at->format('h:i A') }}</span>@endif
+                    </a>
+                  </li>
+                </ul>
+              </div>
+            @endif
           </div>
         </div>
 
@@ -64,6 +96,17 @@
                 <div class="balance-stat"><span>Remaining Balance</span><strong>{{ number_format($booking->remaining_balance, 2) }}</strong></div>
               </div>
             </div>
+
+            <div class="panel mt-4">
+              <div class="panel-head"><div><h2><i class="bi bi-whatsapp text-success"></i> WhatsApp Messages</h2><p>Click-to-send status for this guest</p></div></div>
+              <div class="qv-row"><span>🟢 Confirmation</span><strong>{{ $booking->wa_confirmation_sent_at ? 'Sent at '.$booking->wa_confirmation_sent_at->format('d M Y, h:i A') : 'Not sent' }}</strong></div>
+              <div class="qv-row"><span>🔵 Pre-Checkin Reminder</span><strong>{{ $booking->wa_reminder_sent_at ? 'Sent at '.$booking->wa_reminder_sent_at->format('d M Y, h:i A') : 'Not sent' }}</strong></div>
+              <div class="qv-row"><span>📍 Location &amp; Check-in Info</span><strong>{{ $booking->wa_checkin_sent_at ? 'Sent at '.$booking->wa_checkin_sent_at->format('d M Y, h:i A') : 'Not sent' }}</strong></div>
+              <div class="qv-row"><span>⭐ Thank You &amp; Review</span><strong>{{ $booking->wa_thankyou_sent_at ? 'Sent at '.$booking->wa_thankyou_sent_at->format('d M Y, h:i A') : 'Not sent' }}</strong></div>
+              @unless ($booking->customer_phone)
+                <p class="text-muted small mb-0 mt-2">Add a phone number to this booking to enable WhatsApp messaging.</p>
+              @endunless
+            </div>
           </div>
         </div>
 
@@ -88,3 +131,7 @@
           </div>
         </div>
 @endsection
+
+@push('scripts')
+  @include('partials.whatsapp-log-script')
+@endpush

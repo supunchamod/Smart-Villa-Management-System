@@ -29,6 +29,12 @@ class Setting extends Model
         'public_whatsapp_number',
         'half_board_rate',
         'full_board_rate',
+        'google_map_link',
+        'wifi_name',
+        'wifi_password',
+        'google_review_link',
+        'tripadvisor_link',
+        'social_media_link',
     ];
 
     /**

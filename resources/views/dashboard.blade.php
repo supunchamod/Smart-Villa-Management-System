@@ -51,6 +51,55 @@
           <div class="crm-kpi-card metric-warning"><div><span>Monthly Revenue</span><h3>{{ $globalSettings->currency }} {{ number_format($monthlyRevenue, 2) }}</h3>@if ($revenueTrend !== null)<small class="text-warning"><i class="bi bi-caret-{{ $revenueTrend >= 0 ? 'up' : 'down' }}-fill"></i> {{ $revenueTrend >= 0 ? '+' : '' }}{{ $revenueTrend }}%</small>@endif</div><i class="bi bi-cash-stack bg-warning-soft"></i></div>
           <div class="crm-kpi-card metric-success"><div><span>Checked Out Today</span><h3>{{ $checkedOutToday }}</h3></div><i class="bi bi-check2-circle bg-success-soft"></i></div>
         </div>
+
+        @can('manage_bookings')
+          @php $wa = app(\App\Services\WhatsAppService::class); @endphp
+          <div class="panel wa-actions-panel mt-4">
+            <div class="panel-head"><div><h2><i class="bi bi-whatsapp text-success"></i> Today's WhatsApp Actions</h2><p>One-click guest messaging for arrivals, check-ins, and check-outs</p></div></div>
+
+            <div class="wa-action-group-label">Check-in Tomorrow &middot; Send Pre-Checkin Reminder</div>
+            @forelse ($tomorrowCheckIns as $booking)
+              <div class="wa-action-row">
+                <div class="wa-action-info"><span class="mdash-avatar sm">{{ $booking->customer_initials }}</span><div><strong>{{ $booking->customer_name }}</strong><small>{{ $booking->room->name_or_number }}</small></div></div>
+                @if ($booking->customer_phone)
+                  <a href="{{ $wa->getPreCheckinReminderUrl($booking) }}" target="_blank" rel="noopener" class="btn btn-sm btn-whatsapp wa-send-btn" data-booking-id="{{ $booking->id }}" data-wa-type="reminder"><i class="bi bi-whatsapp"></i> Send via WhatsApp</a>
+                @else
+                  <span class="text-muted small">No phone on file</span>
+                @endif
+              </div>
+            @empty
+              <p class="wa-actions-empty">No check-ins scheduled for tomorrow.</p>
+            @endforelse
+
+            <div class="wa-action-group-label">Check-in Today &middot; Send Location &amp; Welcome</div>
+            @forelse ($todaysBookings as $booking)
+              <div class="wa-action-row">
+                <div class="wa-action-info"><span class="mdash-avatar sm">{{ $booking->customer_initials }}</span><div><strong>{{ $booking->customer_name }}</strong><small>{{ $booking->room->name_or_number }}</small></div></div>
+                @if ($booking->customer_phone)
+                  <a href="{{ $wa->getCheckinDetailsUrl($booking) }}" target="_blank" rel="noopener" class="btn btn-sm btn-whatsapp wa-send-btn" data-booking-id="{{ $booking->id }}" data-wa-type="checkin"><i class="bi bi-whatsapp"></i> Send via WhatsApp</a>
+                @else
+                  <span class="text-muted small">No phone on file</span>
+                @endif
+              </div>
+            @empty
+              <p class="wa-actions-empty">No arrivals scheduled for today.</p>
+            @endforelse
+
+            <div class="wa-action-group-label">Check-out Today &middot; Send Thank You &amp; Review Request</div>
+            @forelse ($todaysCheckouts as $booking)
+              <div class="wa-action-row">
+                <div class="wa-action-info"><span class="mdash-avatar sm">{{ $booking->customer_initials }}</span><div><strong>{{ $booking->customer_name }}</strong><small>{{ $booking->room->name_or_number }}</small></div></div>
+                @if ($booking->customer_phone)
+                  <a href="{{ $wa->getCheckoutThankYouUrl($booking) }}" target="_blank" rel="noopener" class="btn btn-sm btn-whatsapp wa-send-btn" data-booking-id="{{ $booking->id }}" data-wa-type="thankyou"><i class="bi bi-whatsapp"></i> Send via WhatsApp</a>
+                @else
+                  <span class="text-muted small">No phone on file</span>
+                @endif
+              </div>
+            @empty
+              <p class="wa-actions-empty">No check-outs scheduled for today.</p>
+            @endforelse
+          </div>
+        @endcan
 <div class="row g-4 mt-1">
   <div class="col-xl-8">
     <div class="panel">
@@ -293,6 +342,16 @@
                     target="_blank"
                     rel="noopener"
                   ><i class="bi bi-file-earmark-arrow-down"></i> Download Confirmation PDF</a>
+                  @if ($booking->customer_phone)
+                    <a
+                      href="{{ app(\App\Services\WhatsAppService::class)->getCheckinDetailsUrl($booking) }}"
+                      class="mdash-action-btn mdash-action-btn-whatsapp wa-send-btn"
+                      target="_blank"
+                      rel="noopener"
+                      data-booking-id="{{ $booking->id }}"
+                      data-wa-type="checkin"
+                    ><i class="bi bi-whatsapp"></i> Send Location &amp; Welcome</a>
+                  @endif
                 @endcan
               </div>
             @empty
@@ -338,6 +397,17 @@
                     rel="noopener"
                     x-show="checkedOut"
                   ><i class="bi bi-file-earmark-check"></i> Download Final Invoice PDF</a>
+
+                  @if ($booking->customer_phone)
+                    <a
+                      href="{{ app(\App\Services\WhatsAppService::class)->getCheckoutThankYouUrl($booking) }}"
+                      class="mdash-action-btn mdash-action-btn-whatsapp wa-send-btn"
+                      target="_blank"
+                      rel="noopener"
+                      data-booking-id="{{ $booking->id }}"
+                      data-wa-type="thankyou"
+                    ><i class="bi bi-whatsapp"></i> Send Thank You &amp; Review Request</a>
+                  @endif
                 @endcan
 
                 <p class="mdash-inline-error" x-show="error" x-text="error"></p>
@@ -360,6 +430,18 @@
                 <strong>{{ $booking->customer_name }}</strong>
                 <small><i class="bi bi-clock"></i> Check-in</small>
                 <span class="mdash-room-chip">{{ $booking->room->name_or_number }}</span>
+                @can('manage_bookings')
+                  @if ($booking->customer_phone)
+                    <a
+                      href="{{ app(\App\Services\WhatsAppService::class)->getPreCheckinReminderUrl($booking) }}"
+                      class="mdash-action-btn mdash-action-btn-whatsapp wa-send-btn"
+                      target="_blank"
+                      rel="noopener"
+                      data-booking-id="{{ $booking->id }}"
+                      data-wa-type="reminder"
+                    ><i class="bi bi-whatsapp"></i> Send Reminder</a>
+                  @endif
+                @endcan
               </div>
             @empty
               <p class="mdash-empty">No check-ins scheduled for tomorrow.</p>
@@ -370,6 +452,7 @@
 @endsection
 
 @push('scripts')
+  @include('partials.whatsapp-log-script')
 <script>
     document.addEventListener('alpine:init', () => {
         Alpine.data('publicLinkWidget', (url) => ({

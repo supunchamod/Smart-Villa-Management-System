@@ -72,6 +72,7 @@
                       </tr>
                     </thead>
                     <tbody>
+                      @php $wa = app(\App\Services\WhatsAppService::class); @endphp
                       @forelse ($bookings as $booking)
                         @php
                           $today = today();
@@ -80,16 +81,6 @@
                           if ($booking->status === 'confirmed' && $booking->check_out->isSameDay($today)) $rowTabs[] = 'today_checkouts';
                           if ($booking->status === 'confirmed' && (float) $booking->advance_payment < (float) $booking->total_amount) $rowTabs[] = 'balance_due';
                           $badge = ['pending' => 'pending', 'confirmed' => 'new', 'checked_out' => 'won', 'cancelled' => 'stuck'][$booking->status] ?? 'new';
-                          $waPhoneDigits = preg_replace('/\D+/', '', (string) $booking->customer_phone);
-                          $waUrl = $waPhoneDigits ? 'https://wa.me/'.$waPhoneDigits.'?text='.rawurlencode(
-                              "Hi {$booking->customer_name}, this is {$globalSettings->villa_name} confirming your booking:\n\n"
-                              ."Room: {$booking->room->name_or_number}\n"
-                              ."Check-in: {$booking->check_in->format('d M Y')}\n"
-                              ."Check-out: {$booking->check_out->format('d M Y')}\n"
-                              ."Total: {$globalSettings->currency} ".number_format($booking->total_amount, 2)."\n"
-                              ."Balance Due: {$globalSettings->currency} ".number_format($booking->remaining_balance, 2)."\n\n"
-                              ."Thank you for choosing us!"
-                          ) : null;
                         @endphp
                         <tr x-show="@json($rowTabs).includes(tab)">
                           <td><strong>{{ $booking->customer_name }}</strong></td>
@@ -123,8 +114,36 @@
                                 <a class="btn btn-sm btn-outline-primary" href="{{ route($booking->status === 'checked_out' ? 'bookings.invoice.final' : 'bookings.invoice.confirmation', $booking) }}" target="_blank" rel="noopener" data-bs-toggle="tooltip" title="Download Invoice / Confirmation PDF" aria-label="Download invoice"><i class="bi bi-file-earmark-pdf"></i></a>
                               @endif
 
-                              @if ($waUrl)
-                                <a class="btn btn-sm btn-outline-success" href="{{ $waUrl }}" target="_blank" rel="noopener" data-bs-toggle="tooltip" title="Resend via WhatsApp" aria-label="Resend via WhatsApp"><i class="bi bi-whatsapp"></i></a>
+                              @if ($booking->customer_phone)
+                                <div class="dropdown">
+                                  <button class="btn btn-sm btn-outline-success dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" title="Send WhatsApp message" aria-label="Send WhatsApp message"><i class="bi bi-whatsapp"></i></button>
+                                  <ul class="dropdown-menu dropdown-menu-end wa-dropdown-menu">
+                                    <li>
+                                      <a class="dropdown-item wa-send-btn" href="{{ $wa->getConfirmationUrl($booking) }}" target="_blank" rel="noopener" data-booking-id="{{ $booking->id }}" data-wa-type="confirmation">
+                                        <span>🟢 Send Confirmation</span>
+                                        @if ($booking->wa_confirmation_sent_at)<span class="wa-sent-badge">Sent {{ $booking->wa_confirmation_sent_at->format('h:i A') }}</span>@endif
+                                      </a>
+                                    </li>
+                                    <li>
+                                      <a class="dropdown-item wa-send-btn" href="{{ $wa->getPreCheckinReminderUrl($booking) }}" target="_blank" rel="noopener" data-booking-id="{{ $booking->id }}" data-wa-type="reminder">
+                                        <span>🔵 Send Pre-Checkin Reminder</span>
+                                        @if ($booking->wa_reminder_sent_at)<span class="wa-sent-badge">Sent {{ $booking->wa_reminder_sent_at->format('h:i A') }}</span>@endif
+                                      </a>
+                                    </li>
+                                    <li>
+                                      <a class="dropdown-item wa-send-btn" href="{{ $wa->getCheckinDetailsUrl($booking) }}" target="_blank" rel="noopener" data-booking-id="{{ $booking->id }}" data-wa-type="checkin">
+                                        <span>📍 Send Location &amp; Check-in Info</span>
+                                        @if ($booking->wa_checkin_sent_at)<span class="wa-sent-badge">Sent {{ $booking->wa_checkin_sent_at->format('h:i A') }}</span>@endif
+                                      </a>
+                                    </li>
+                                    <li>
+                                      <a class="dropdown-item wa-send-btn" href="{{ $wa->getCheckoutThankYouUrl($booking) }}" target="_blank" rel="noopener" data-booking-id="{{ $booking->id }}" data-wa-type="thankyou">
+                                        <span>⭐ Send Thank You &amp; Review Request</span>
+                                        @if ($booking->wa_thankyou_sent_at)<span class="wa-sent-badge">Sent {{ $booking->wa_thankyou_sent_at->format('h:i A') }}</span>@endif
+                                      </a>
+                                    </li>
+                                  </ul>
+                                </div>
                               @endif
 
                               <button type="button" class="btn btn-sm btn-light" data-bs-toggle="modal" data-bs-target="#quickViewModal{{ $booking->id }}" aria-label="Quick view"><i class="bi bi-eye"></i></button>
@@ -164,16 +183,6 @@
                       if ($booking->status === 'confirmed' && $booking->check_out->isSameDay($today)) $rowTabs[] = 'today_checkouts';
                       if ($booking->status === 'confirmed' && (float) $booking->advance_payment < (float) $booking->total_amount) $rowTabs[] = 'balance_due';
                       $badge = ['pending' => 'pending', 'confirmed' => 'new', 'checked_out' => 'won', 'cancelled' => 'stuck'][$booking->status] ?? 'new';
-                      $waPhoneDigits = preg_replace('/\D+/', '', (string) $booking->customer_phone);
-                      $waUrl = $waPhoneDigits ? 'https://wa.me/'.$waPhoneDigits.'?text='.rawurlencode(
-                          "Hi {$booking->customer_name}, this is {$globalSettings->villa_name} confirming your booking:\n\n"
-                          ."Room: {$booking->room->name_or_number}\n"
-                          ."Check-in: {$booking->check_in->format('d M Y')}\n"
-                          ."Check-out: {$booking->check_out->format('d M Y')}\n"
-                          ."Total: {$globalSettings->currency} ".number_format($booking->total_amount, 2)."\n"
-                          ."Balance Due: {$globalSettings->currency} ".number_format($booking->remaining_balance, 2)."\n\n"
-                          ."Thank you for choosing us!"
-                      ) : null;
                     @endphp
                     <div class="mdash-booking-card stacked" x-show="@json($rowTabs).includes(tab)">
                       <div class="mdash-card-top">
@@ -216,9 +225,7 @@
                           data-bs-target="#checkoutModal{{ $booking->id }}"
                         ><i class="bi bi-box-arrow-right"></i> {{ $booking->remaining_balance > 0 ? 'Collect Balance & Checkout' : 'Checkout' }}</button>
 
-                        @if ($waUrl)
-                          <a href="{{ $waUrl }}" class="mdash-action-btn mdash-action-btn-whatsapp" target="_blank" rel="noopener"><i class="bi bi-whatsapp"></i> Resend via WhatsApp</a>
-                        @endif
+                        @include('bookings.partials.wa-mobile-dropdown', ['booking' => $booking])
                       @elseif ($booking->status === 'checked_out')
                         <a
                           href="{{ route('bookings.invoice.final', $booking) }}"
@@ -227,9 +234,7 @@
                           rel="noopener"
                         ><i class="bi bi-file-earmark-check"></i> Download Final Invoice PDF</a>
 
-                        @if ($waUrl)
-                          <a href="{{ $waUrl }}" class="mdash-action-btn mdash-action-btn-whatsapp" target="_blank" rel="noopener"><i class="bi bi-whatsapp"></i> Resend via WhatsApp</a>
-                        @endif
+                        @include('bookings.partials.wa-mobile-dropdown', ['booking' => $booking])
                       @endif
 
                       <div class="mdash-card-actions">
@@ -327,11 +332,28 @@
                   <div class="qv-row"><span>Advance Paid</span><strong>{{ $globalSettings->currency }} {{ number_format($booking->advance_payment, 2) }}</strong></div>
                   <div class="qv-row"><span>Balance Due</span><strong>{{ $globalSettings->currency }} {{ number_format($booking->remaining_balance, 2) }}</strong></div>
                   <div class="qv-row"><span>Payment Status</span><strong>{{ $booking->payment_status_label }}</strong></div>
+
+                  <div class="qv-section-label">WhatsApp Messages</div>
+                  <div class="qv-row"><span>🟢 Confirmation</span><strong>{{ $booking->wa_confirmation_sent_at ? 'Sent at '.$booking->wa_confirmation_sent_at->format('h:i A') : 'Not sent' }}</strong></div>
+                  <div class="qv-row"><span>🔵 Pre-Checkin Reminder</span><strong>{{ $booking->wa_reminder_sent_at ? 'Sent at '.$booking->wa_reminder_sent_at->format('h:i A') : 'Not sent' }}</strong></div>
+                  <div class="qv-row"><span>📍 Location &amp; Check-in Info</span><strong>{{ $booking->wa_checkin_sent_at ? 'Sent at '.$booking->wa_checkin_sent_at->format('h:i A') : 'Not sent' }}</strong></div>
+                  <div class="qv-row"><span>⭐ Thank You &amp; Review</span><strong>{{ $booking->wa_thankyou_sent_at ? 'Sent at '.$booking->wa_thankyou_sent_at->format('h:i A') : 'Not sent' }}</strong></div>
                 </div>
                 <div class="modal-footer">
                   <a class="btn btn-light" href="{{ route('bookings.edit', $booking) }}"><i class="bi bi-pencil"></i> Edit</a>
                   @if ($booking->status !== 'cancelled')
                     <a class="btn btn-outline-primary" href="{{ route($booking->status === 'checked_out' ? 'bookings.invoice.final' : 'bookings.invoice.confirmation', $booking) }}" target="_blank" rel="noopener"><i class="bi bi-file-earmark-pdf"></i> Download PDF</a>
+                  @endif
+                  @if ($booking->customer_phone)
+                    <div class="dropdown">
+                      <button class="btn btn-success dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false"><i class="bi bi-whatsapp"></i> Send WhatsApp</button>
+                      <ul class="dropdown-menu dropdown-menu-end wa-dropdown-menu">
+                        <li><a class="dropdown-item wa-send-btn" href="{{ $wa->getConfirmationUrl($booking) }}" target="_blank" rel="noopener" data-booking-id="{{ $booking->id }}" data-wa-type="confirmation"><span>🟢 Send Confirmation</span></a></li>
+                        <li><a class="dropdown-item wa-send-btn" href="{{ $wa->getPreCheckinReminderUrl($booking) }}" target="_blank" rel="noopener" data-booking-id="{{ $booking->id }}" data-wa-type="reminder"><span>🔵 Send Pre-Checkin Reminder</span></a></li>
+                        <li><a class="dropdown-item wa-send-btn" href="{{ $wa->getCheckinDetailsUrl($booking) }}" target="_blank" rel="noopener" data-booking-id="{{ $booking->id }}" data-wa-type="checkin"><span>📍 Send Location &amp; Check-in Info</span></a></li>
+                        <li><a class="dropdown-item wa-send-btn" href="{{ $wa->getCheckoutThankYouUrl($booking) }}" target="_blank" rel="noopener" data-booking-id="{{ $booking->id }}" data-wa-type="thankyou"><span>⭐ Send Thank You &amp; Review Request</span></a></li>
+                      </ul>
+                    </div>
                   @endif
                 </div>
               </div>
@@ -339,3 +361,7 @@
           </div>
         @endforeach
 @endsection
+
+@push('scripts')
+  @include('partials.whatsapp-log-script')
+@endpush
