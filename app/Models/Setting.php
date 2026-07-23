@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -41,6 +42,26 @@ class Setting extends Model
             'half_board_rate' => 'decimal:2',
             'full_board_rate' => 'decimal:2',
         ];
+    }
+
+    /**
+     * The villa logo's public URL, or null if none is set (or the file
+     * referenced in the database is somehow missing from disk - degrades
+     * to "no logo" instead of a broken image tag). villa_logo is stored
+     * as a path relative to public/ (e.g. "images/villa-logos/logo_
+     * 123.png"), written directly there by SettingsController rather than
+     * through the storage/app/public disk + public/storage symlink, so
+     * this doesn't depend on that symlink existing.
+     */
+    protected function logoUrl(): Attribute
+    {
+        return Attribute::get(function () {
+            if (! $this->villa_logo) {
+                return null;
+            }
+
+            return file_exists(public_path($this->villa_logo)) ? asset($this->villa_logo) : null;
+        });
     }
 
     /**

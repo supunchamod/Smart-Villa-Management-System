@@ -15,8 +15,8 @@
     <table class="header-table">
         <tr>
             <td style="width: 55%;">
-                @if ($globalSettings->villa_logo && file_exists(public_path('storage/'.$globalSettings->villa_logo)))
-                    <img class="villa-logo" src="{{ public_path('storage/'.$globalSettings->villa_logo) }}">
+                @if ($globalSettings->villa_logo && file_exists(public_path($globalSettings->villa_logo)))
+                    <img class="villa-logo" src="{{ public_path($globalSettings->villa_logo) }}">
                 @endif
                 <div class="villa-name">{{ $globalSettings->villa_name }}</div>
                 <div class="muted">

@@ -23,8 +23,8 @@
           <div class="col-12">
             <label class="form-label">Villa logo</label>
             <div class="d-flex align-items-center gap-3 mb-2">
-              @if ($globalSettings->villa_logo)
-                <img src="{{ asset('storage/'.$globalSettings->villa_logo) }}" alt="{{ $globalSettings->villa_name }}" style="width:56px;height:56px;object-fit:cover;border-radius:8px;">
+              @if ($globalSettings->logo_url)
+                <img src="{{ $globalSettings->logo_url }}" alt="{{ $globalSettings->villa_name }}" style="width:56px;height:56px;object-fit:cover;border-radius:8px;">
               @endif
               <input class="form-control @error('villa_logo') is-invalid @enderror" type="file" name="villa_logo" accept="image/*">
             </div>

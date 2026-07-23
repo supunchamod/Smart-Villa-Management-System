@@ -3,8 +3,8 @@
   </aside>
     <aside class="sidebar" id="sidebar">
       <a class="brand" href="{{ route('dashboard') }}" aria-label="{{ $globalSettings->villa_name }} home">
-        @if ($globalSettings->villa_logo)
-          <span class="brand-mark"><img src="{{ asset('storage/'.$globalSettings->villa_logo) }}" alt="{{ $globalSettings->villa_name }}" style="width:100%;height:100%;object-fit:cover;border-radius:8px;"></span>
+        @if ($globalSettings->logo_url)
+          <span class="brand-mark"><img src="{{ $globalSettings->logo_url }}" alt="{{ $globalSettings->villa_name }}" style="width:100%;height:100%;object-fit:cover;border-radius:8px;"></span>
         @else
           <span class="brand-mark">{{ strtoupper(substr($globalSettings->villa_name, 0, 1)) }}</span>
         @endif
