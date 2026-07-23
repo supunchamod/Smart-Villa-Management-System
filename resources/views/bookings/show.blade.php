@@ -13,13 +13,18 @@
               <li aria-current="page"><h1>{{ $booking->customer_name }}</h1></li>
             </ol>
           </nav>
-          <div class="page-actions booking-detail-actions" x-data>
+          <div class="page-actions booking-detail-actions" x-data="bookingActions('{{ route('bookings.send-whatsapp', $booking) }}')">
             <a class="btn btn-light" href="{{ route('bookings.edit', $booking) }}"><i class="bi bi-pencil"></i> Edit</a>
             @if ($booking->status !== 'cancelled')
               <a class="btn btn-light" href="{{ route('bookings.invoice.confirmation', $booking) }}" target="_blank"><i class="bi bi-file-earmark-pdf"></i> Confirmation Invoice</a>
             @endif
             @if ($booking->status === 'checked_out')
               <a class="btn btn-light" href="{{ route('bookings.invoice.final', $booking) }}" target="_blank"><i class="bi bi-file-earmark-check"></i> Final Invoice</a>
+            @endif
+            @if (in_array($booking->status, ['confirmed', 'checked_out'], true) && $booking->customer_phone)
+              <button type="button" class="btn btn-outline-success" @click="sendWhatsApp()" :disabled="waSending">
+                <i class="bi bi-whatsapp"></i> <span x-text="waSending ? 'Sending…' : 'Send WhatsApp Message'"></span>
+              </button>
             @endif
             @if ($booking->status === 'confirmed')
               <button type="button" class="btn btn-primary" @click="bootstrap.Modal.getOrCreateInstance(document.getElementById('checkoutModal')).show()"><i class="bi bi-box-arrow-right"></i> Checkout</button>
@@ -88,3 +93,39 @@
           </div>
         </div>
 @endsection
+
+@push('scripts')
+<script>
+    function bookingActions(sendWhatsAppUrl) {
+        return {
+            waSending: false,
+            async sendWhatsApp() {
+                this.waSending = true;
+                try {
+                    const response = await fetch(sendWhatsAppUrl, {
+                        method: 'POST',
+                        headers: {
+                            'Accept': 'application/json',
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                        },
+                    });
+                    const data = await response.json();
+                    this.showToast(data.message || (data.success ? 'WhatsApp dispatch initiated' : 'Failed to send WhatsApp message.'));
+                } catch (error) {
+                    console.error('Failed to dispatch WhatsApp message', error);
+                    this.showToast('Failed to send WhatsApp message. Please try again.');
+                } finally {
+                    this.waSending = false;
+                }
+            },
+            showToast(message) {
+                const toastEl = document.getElementById('actionToast');
+                if (!toastEl || !window.bootstrap) return;
+                const body = toastEl.querySelector('.toast-body');
+                if (body) body.textContent = message;
+                bootstrap.Toast.getOrCreateInstance(toastEl).show();
+            },
+        };
+    }
+</script>
+@endpush

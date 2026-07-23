@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Jobs\SendBookingWhatsAppJob;
 use App\Models\Booking;
 use App\Models\Room;
 use Barryvdh\DomPDF\Facade\Pdf;
@@ -63,7 +64,13 @@ class BookingController extends Controller
     {
         $validated = $this->validateBooking($request);
 
-        Booking::create($validated);
+        $booking = Booking::create($validated);
+
+        // Only a confirmed booking gets an immediate WhatsApp confirmation
+        // + invoice - a 'pending' one is still awaiting review via confirm().
+        if ($booking->status === 'confirmed') {
+            SendBookingWhatsAppJob::dispatch($booking);
+        }
 
         return redirect()->route('bookings.index')->with('status', 'Booking created successfully.');
     }
@@ -138,6 +145,10 @@ class BookingController extends Controller
             'payment_method' => $validated['payment_method'] ?? null,
         ]);
 
+        // The booking is now marked as paid in full - send the final
+        // invoice over WhatsApp.
+        SendBookingWhatsAppJob::dispatch($booking);
+
         if ($request->wantsJson()) {
             return response()->json([
                 'status' => $booking->status,
@@ -165,6 +176,8 @@ class BookingController extends Controller
         }
 
         $booking->update(['status' => 'confirmed']);
+
+        SendBookingWhatsAppJob::dispatch($booking);
 
         if ($request->wantsJson()) {
             return response()->json([
@@ -200,6 +213,36 @@ class BookingController extends Controller
         }
 
         return back()->with('status', 'Booking declined.');
+    }
+
+    /**
+     * Manually (re)send a booking's WhatsApp confirmation/invoice from the
+     * booking details page. Dispatches the same background job the
+     * create/confirm/checkout flows fire automatically, so the message
+     * always reflects the booking's current stage.
+     */
+    public function sendWhatsApp(Booking $booking): JsonResponse
+    {
+        if (in_array($booking->status, ['pending', 'cancelled'], true)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'This booking must be confirmed before a WhatsApp message can be sent.',
+            ], 422);
+        }
+
+        if (! $booking->customer_phone) {
+            return response()->json([
+                'success' => false,
+                'message' => 'This booking has no phone number on file.',
+            ], 422);
+        }
+
+        SendBookingWhatsAppJob::dispatch($booking);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'WhatsApp dispatch initiated',
+        ]);
     }
 
     /**
