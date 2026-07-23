@@ -193,7 +193,7 @@ class WhatsAppService
         $mimeType = mime_content_type($filePath) ?: 'application/octet-stream';
         $base64 = base64_encode(file_get_contents($filePath));
 
-        $response = $this->client()->post('/api/sendDocument', [
+        $response = $this->client()->post('/api/sendFile', [
             'session' => $this->session,
             'chatId' => $chatId,
             'caption' => $caption,
