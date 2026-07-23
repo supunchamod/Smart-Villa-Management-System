@@ -28,12 +28,21 @@ class BookingController extends Controller
 
     /**
      * Display a listing of the villa's bookings.
+     *
+     * The quick-filter bar's counts are always computed across every
+     * booking (not just the current page), so they stay accurate
+     * regardless of which page or filter tab is currently showing.
      */
     public function index(): View
     {
+        $today = today();
+
         return view('bookings.index', [
             'bookings' => Booking::with('room')->latest('check_in')->paginate(10),
             'pendingBookingsCount' => Booking::where('status', 'pending')->count(),
+            'todayCheckInsCount' => Booking::where('status', 'confirmed')->whereDate('check_in', $today)->count(),
+            'todayCheckOutsCount' => Booking::where('status', 'confirmed')->whereDate('check_out', $today)->count(),
+            'balanceDueCount' => Booking::where('status', 'confirmed')->whereColumn('advance_payment', '<', 'total_amount')->count(),
         ]);
     }
 
@@ -104,8 +113,9 @@ class BookingController extends Controller
 
     /**
      * Mark a confirmed booking as checked out, settling the balance. Also
-     * callable via AJAX (e.g. the dashboard's inline checkout cards), which
-     * gets a JSON reply instead of a redirect so the UI can update in place.
+     * callable via AJAX (e.g. the dashboard's inline checkout cards, and
+     * the Manage Bookings "Checkout & Pay Balance" modal), which gets a
+     * JSON reply instead of a redirect so the UI can update in place.
      */
     public function checkout(Request $request, Booking $booking): RedirectResponse|JsonResponse
     {
@@ -117,10 +127,15 @@ class BookingController extends Controller
             return back()->with('error', 'Only confirmed bookings can be checked out.');
         }
 
+        $validated = $request->validate([
+            'payment_method' => ['nullable', 'string', Rule::in(['cash', 'card', 'bank_transfer'])],
+        ]);
+
         $booking->update([
             'status' => 'checked_out',
             'final_settlement_amount' => (float) $booking->total_amount - (float) $booking->advance_payment,
             'checked_out_at' => now(),
+            'payment_method' => $validated['payment_method'] ?? null,
         ]);
 
         if ($request->wantsJson()) {

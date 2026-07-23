@@ -21,15 +21,33 @@
         @endif
         <div class="row g-4">
           <div class="col-12">
-            <div class="panel" x-data="{ tab: '{{ in_array(request('tab'), ['all', 'pending', 'active', 'completed', 'cancelled'], true) ? request('tab') : 'all' }}' }">
+            <div class="panel" x-data="{ tab: '{{ in_array(request('tab'), ['all', 'pending', 'active', 'completed', 'cancelled', 'today_checkins', 'today_checkouts', 'balance_due'], true) ? request('tab') : 'all' }}' }">
               <div class="panel-head"><div><h2>Bookings</h2><p>Reservations across all rooms and cabanas</p></div></div>
 
               <div class="booking-tabs" role="tablist" aria-label="Filter bookings by status">
                 <button type="button" class="booking-tab" role="tab" :class="{ active: tab === 'all' }" :aria-selected="tab === 'all'" @click="tab = 'all'">All Bookings</button>
+                <button type="button" class="booking-tab" role="tab" :class="{ active: tab === 'today_checkins' }" :aria-selected="tab === 'today_checkins'" @click="tab = 'today_checkins'">
+                  Today's Check-ins
+                  @if ($todayCheckInsCount > 0)
+                    <span class="tab-count-badge tab-count-badge-green">{{ $todayCheckInsCount }}</span>
+                  @endif
+                </button>
+                <button type="button" class="booking-tab" role="tab" :class="{ active: tab === 'today_checkouts' }" :aria-selected="tab === 'today_checkouts'" @click="tab = 'today_checkouts'">
+                  Today's Checkouts
+                  @if ($todayCheckOutsCount > 0)
+                    <span class="tab-count-badge tab-count-badge-blue">{{ $todayCheckOutsCount }}</span>
+                  @endif
+                </button>
                 <button type="button" class="booking-tab" role="tab" :class="{ active: tab === 'pending' }" :aria-selected="tab === 'pending'" @click="tab = 'pending'">
-                  Pending Requests
+                  Pending Enquiries
                   @if ($pendingBookingsCount > 0)
-                    <span class="pubsite-quick-badge" style="position:static; margin-left:6px;">{{ $pendingBookingsCount }}</span>
+                    <span class="tab-count-badge tab-count-badge-yellow">{{ $pendingBookingsCount }}</span>
+                  @endif
+                </button>
+                <button type="button" class="booking-tab" role="tab" :class="{ active: tab === 'balance_due' }" :aria-selected="tab === 'balance_due'" @click="tab = 'balance_due'">
+                  Balance Due
+                  @if ($balanceDueCount > 0)
+                    <span class="tab-count-badge tab-count-badge-red">{{ $balanceDueCount }}</span>
                   @endif
                 </button>
                 <button type="button" class="booking-tab" role="tab" :class="{ active: tab === 'active' }" :aria-selected="tab === 'active'" @click="tab = 'active'">Active</button>
@@ -56,10 +74,24 @@
                     <tbody>
                       @forelse ($bookings as $booking)
                         @php
-                          $tabKey = ['pending' => 'pending', 'checked_out' => 'completed', 'cancelled' => 'cancelled'][$booking->status] ?? 'active';
+                          $today = today();
+                          $rowTabs = ['all', ['pending' => 'pending', 'checked_out' => 'completed', 'cancelled' => 'cancelled'][$booking->status] ?? 'active'];
+                          if ($booking->status === 'confirmed' && $booking->check_in->isSameDay($today)) $rowTabs[] = 'today_checkins';
+                          if ($booking->status === 'confirmed' && $booking->check_out->isSameDay($today)) $rowTabs[] = 'today_checkouts';
+                          if ($booking->status === 'confirmed' && (float) $booking->advance_payment < (float) $booking->total_amount) $rowTabs[] = 'balance_due';
                           $badge = ['pending' => 'pending', 'confirmed' => 'new', 'checked_out' => 'won', 'cancelled' => 'stuck'][$booking->status] ?? 'new';
+                          $waPhoneDigits = preg_replace('/\D+/', '', (string) $booking->customer_phone);
+                          $waUrl = $waPhoneDigits ? 'https://wa.me/'.$waPhoneDigits.'?text='.rawurlencode(
+                              "Hi {$booking->customer_name}, this is {$globalSettings->villa_name} confirming your booking:\n\n"
+                              ."Room: {$booking->room->name_or_number}\n"
+                              ."Check-in: {$booking->check_in->format('d M Y')}\n"
+                              ."Check-out: {$booking->check_out->format('d M Y')}\n"
+                              ."Total: {$globalSettings->currency} ".number_format($booking->total_amount, 2)."\n"
+                              ."Balance Due: {$globalSettings->currency} ".number_format($booking->remaining_balance, 2)."\n\n"
+                              ."Thank you for choosing us!"
+                          ) : null;
                         @endphp
-                        <tr x-show="tab === 'all' || tab === '{{ $tabKey }}'">
+                        <tr x-show="@json($rowTabs).includes(tab)">
                           <td><strong>{{ $booking->customer_name }}</strong></td>
                           <td>{{ $booking->room->name_or_number }}</td>
                           <td>{{ $booking->check_in->format('d M Y') }}</td>
@@ -71,27 +103,46 @@
                             <span class="deal-badge {{ $badge }}">{{ ucfirst(str_replace('_', ' ', $booking->status)) }}</span>
                           </td>
                           <td>
-                            <div class="d-flex gap-2 flex-wrap">
+                            <div class="booking-row-actions">
                               @if ($booking->status === 'pending')
                                 <form method="POST" action="{{ route('bookings.confirm', $booking) }}">
                                   @csrf
-                                  <button class="btn btn-sm btn-success" type="submit"><i class="bi bi-check-lg"></i> Accept &amp; Confirm</button>
+                                  <button class="btn btn-sm btn-success" type="submit"><i class="bi bi-check-lg"></i> Accept</button>
                                 </form>
                                 <form method="POST" action="{{ route('bookings.decline', $booking) }}" onsubmit="return confirm('Decline this booking request?');">
                                   @csrf
                                   <button class="btn btn-sm btn-outline-danger" type="submit"><i class="bi bi-x-lg"></i> Decline</button>
                                 </form>
+                              @elseif ($booking->status === 'confirmed')
+                                <button type="button" class="btn btn-sm {{ $booking->remaining_balance > 0 ? 'btn-warning' : 'btn-success' }}" data-bs-toggle="modal" data-bs-target="#checkoutModal{{ $booking->id }}">
+                                  <i class="bi bi-box-arrow-right"></i> {{ $booking->remaining_balance > 0 ? 'Collect Balance & Checkout' : 'Checkout' }}
+                                </button>
                               @endif
-                              <a class="btn btn-sm btn-light" href="{{ route('bookings.show', $booking) }}" aria-label="View booking"><i class="bi bi-eye"></i></a>
-                              <a class="btn btn-sm btn-light" href="{{ route('bookings.edit', $booking) }}" aria-label="Edit booking"><i class="bi bi-pencil"></i></a>
-                              @if ($booking->status !== 'cancelled')
-                                <a class="btn btn-sm btn-light" href="{{ route($booking->status === 'checked_out' ? 'bookings.invoice.final' : 'bookings.invoice.confirmation', $booking) }}" target="_blank" aria-label="Download invoice"><i class="bi bi-file-earmark-pdf"></i></a>
+
+                              @if ($booking->status !== 'cancelled' && $booking->status !== 'pending')
+                                <a class="btn btn-sm btn-outline-primary" href="{{ route($booking->status === 'checked_out' ? 'bookings.invoice.final' : 'bookings.invoice.confirmation', $booking) }}" target="_blank" rel="noopener" data-bs-toggle="tooltip" title="Download Invoice / Confirmation PDF" aria-label="Download invoice"><i class="bi bi-file-earmark-pdf"></i></a>
                               @endif
-                              <form method="POST" action="{{ route('bookings.destroy', $booking) }}" onsubmit="return confirm('Delete this booking?');">
-                                @csrf
-                                @method('DELETE')
-                                <button class="btn btn-sm btn-light text-danger" type="submit" aria-label="Delete booking"><i class="bi bi-trash"></i></button>
-                              </form>
+
+                              @if ($waUrl)
+                                <a class="btn btn-sm btn-outline-success" href="{{ $waUrl }}" target="_blank" rel="noopener" data-bs-toggle="tooltip" title="Resend via WhatsApp" aria-label="Resend via WhatsApp"><i class="bi bi-whatsapp"></i></a>
+                              @endif
+
+                              <button type="button" class="btn btn-sm btn-light" data-bs-toggle="modal" data-bs-target="#quickViewModal{{ $booking->id }}" aria-label="Quick view"><i class="bi bi-eye"></i></button>
+
+                              <div class="dropdown">
+                                <button class="btn btn-sm btn-light dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="More actions"><i class="bi bi-three-dots-vertical"></i></button>
+                                <ul class="dropdown-menu dropdown-menu-end">
+                                  <li><a class="dropdown-item" href="{{ route('bookings.edit', $booking) }}"><i class="bi bi-pencil me-2"></i>Edit Booking</a></li>
+                                  <li><hr class="dropdown-divider"></li>
+                                  <li>
+                                    <form method="POST" action="{{ route('bookings.destroy', $booking) }}" onsubmit="return confirm('Delete this booking?');">
+                                      @csrf
+                                      @method('DELETE')
+                                      <button class="dropdown-item text-danger" type="submit"><i class="bi bi-trash me-2"></i>Delete Booking</button>
+                                    </form>
+                                  </li>
+                                </ul>
+                              </div>
                             </div>
                           </td>
                         </tr>
@@ -107,16 +158,24 @@
                 <div class="mdash-booking-list">
                   @forelse ($bookings as $booking)
                     @php
-                      $tabKey = ['checked_out' => 'completed', 'cancelled' => 'cancelled'][$booking->status] ?? 'active';
+                      $today = today();
+                      $rowTabs = ['all', ['pending' => 'pending', 'checked_out' => 'completed', 'cancelled' => 'cancelled'][$booking->status] ?? 'active'];
+                      if ($booking->status === 'confirmed' && $booking->check_in->isSameDay($today)) $rowTabs[] = 'today_checkins';
+                      if ($booking->status === 'confirmed' && $booking->check_out->isSameDay($today)) $rowTabs[] = 'today_checkouts';
+                      if ($booking->status === 'confirmed' && (float) $booking->advance_payment < (float) $booking->total_amount) $rowTabs[] = 'balance_due';
                       $badge = ['pending' => 'pending', 'confirmed' => 'new', 'checked_out' => 'won', 'cancelled' => 'stuck'][$booking->status] ?? 'new';
+                      $waPhoneDigits = preg_replace('/\D+/', '', (string) $booking->customer_phone);
+                      $waUrl = $waPhoneDigits ? 'https://wa.me/'.$waPhoneDigits.'?text='.rawurlencode(
+                          "Hi {$booking->customer_name}, this is {$globalSettings->villa_name} confirming your booking:\n\n"
+                          ."Room: {$booking->room->name_or_number}\n"
+                          ."Check-in: {$booking->check_in->format('d M Y')}\n"
+                          ."Check-out: {$booking->check_out->format('d M Y')}\n"
+                          ."Total: {$globalSettings->currency} ".number_format($booking->total_amount, 2)."\n"
+                          ."Balance Due: {$globalSettings->currency} ".number_format($booking->remaining_balance, 2)."\n\n"
+                          ."Thank you for choosing us!"
+                      ) : null;
                     @endphp
-                    <div
-                      class="mdash-booking-card stacked"
-                      x-show="tab === 'all' || tab === '{{ $tabKey }}'"
-                      @if ($booking->status === 'confirmed')
-                        x-data="checkoutCard(@js(route('bookings.checkout', $booking)), @js(route('bookings.invoice.final', $booking)))"
-                      @endif
-                    >
+                    <div class="mdash-booking-card stacked" x-show="@json($rowTabs).includes(tab)">
                       <div class="mdash-card-top">
                         <span class="mdash-avatar sm">{{ $booking->customer_initials }}</span>
                         <div class="mdash-booking-info">
@@ -152,21 +211,14 @@
 
                         <button
                           type="button"
-                          class="mdash-action-btn mdash-action-btn-amber"
-                          x-show="!checkedOut"
-                          :disabled="processing"
-                          @click="checkout()"
-                        ><i class="bi bi-box-arrow-right"></i> <span x-text="processing ? 'Processing…' : 'Checkout & Pay Balance'"></span></button>
+                          class="mdash-action-btn {{ $booking->remaining_balance > 0 ? 'mdash-action-btn-amber' : 'mdash-action-btn-success' }}"
+                          data-bs-toggle="modal"
+                          data-bs-target="#checkoutModal{{ $booking->id }}"
+                        ><i class="bi bi-box-arrow-right"></i> {{ $booking->remaining_balance > 0 ? 'Collect Balance & Checkout' : 'Checkout' }}</button>
 
-                        <a
-                          :href="finalInvoiceUrl"
-                          class="mdash-action-btn mdash-action-btn-success"
-                          target="_blank"
-                          rel="noopener"
-                          x-show="checkedOut"
-                        ><i class="bi bi-file-earmark-check"></i> Download Final Invoice PDF</a>
-
-                        <p class="mdash-inline-error" x-show="error" x-text="error"></p>
+                        @if ($waUrl)
+                          <a href="{{ $waUrl }}" class="mdash-action-btn mdash-action-btn-whatsapp" target="_blank" rel="noopener"><i class="bi bi-whatsapp"></i> Resend via WhatsApp</a>
+                        @endif
                       @elseif ($booking->status === 'checked_out')
                         <a
                           href="{{ route('bookings.invoice.final', $booking) }}"
@@ -174,10 +226,14 @@
                           target="_blank"
                           rel="noopener"
                         ><i class="bi bi-file-earmark-check"></i> Download Final Invoice PDF</a>
+
+                        @if ($waUrl)
+                          <a href="{{ $waUrl }}" class="mdash-action-btn mdash-action-btn-whatsapp" target="_blank" rel="noopener"><i class="bi bi-whatsapp"></i> Resend via WhatsApp</a>
+                        @endif
                       @endif
 
                       <div class="mdash-card-actions">
-                        <a class="mdash-icon-btn" href="{{ route('bookings.show', $booking) }}" aria-label="View booking"><i class="bi bi-eye"></i></a>
+                        <button class="mdash-icon-btn" type="button" data-bs-toggle="modal" data-bs-target="#quickViewModal{{ $booking->id }}" aria-label="Quick view"><i class="bi bi-eye"></i></button>
                         <a class="mdash-icon-btn" href="{{ route('bookings.edit', $booking) }}" aria-label="Edit booking"><i class="bi bi-pencil"></i></a>
                         <form method="POST" action="{{ route('bookings.destroy', $booking) }}" onsubmit="return confirm('Delete this booking?');">
                           @csrf
@@ -198,4 +254,88 @@
             </div>
           </div>
         </div>
+
+        {{-- Checkout & Quick View modals - one per booking on this page, shared by
+             both the desktop table and mobile cards above. --}}
+        @foreach ($bookings as $booking)
+          @if ($booking->status === 'confirmed')
+            <div class="modal fade" id="checkoutModal{{ $booking->id }}" tabindex="-1" aria-hidden="true">
+              <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content dash-modal">
+                  <form method="POST" action="{{ route('bookings.checkout', $booking) }}">
+                    @csrf
+                    <div class="modal-header">
+                      <div><span class="eyebrow">Checkout</span><h2 class="modal-title">Checkout {{ $booking->customer_name }}?</h2></div>
+                      <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                      <div class="balance-grid mb-3">
+                        <div class="balance-stat"><span>Total Amount</span><strong>{{ $globalSettings->currency }} {{ number_format($booking->total_amount, 2) }}</strong></div>
+                        <div class="balance-stat"><span>Advance Paid</span><strong>{{ $globalSettings->currency }} {{ number_format($booking->advance_payment, 2) }}</strong></div>
+                        <div class="balance-stat"><span>Balance Due</span><strong>{{ $globalSettings->currency }} {{ number_format($booking->remaining_balance, 2) }}</strong></div>
+                      </div>
+                      @if ($booking->remaining_balance > 0)
+                        <div class="mb-3">
+                          <label class="form-label" for="payment_method{{ $booking->id }}">Payment method for the balance received</label>
+                          <select class="form-select" name="payment_method" id="payment_method{{ $booking->id }}">
+                            <option value="cash">Cash</option>
+                            <option value="card">Card</option>
+                            <option value="bank_transfer">Bank Transfer</option>
+                          </select>
+                        </div>
+                        <p class="text-muted small mb-0">This confirms the remaining balance has been received. The booking will be marked as checked out and the final invoice will be generated.</p>
+                      @else
+                        <p class="text-muted small mb-0">This booking is already paid in full. Confirming will mark it as checked out and generate the final invoice.</p>
+                      @endif
+                    </div>
+                    <div class="modal-footer">
+                      <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                      <button type="submit" class="btn btn-primary"><i class="bi bi-check2-circle"></i> Confirm Checkout &amp; Complete</button>
+                    </div>
+                  </form>
+                </div>
+              </div>
+            </div>
+          @endif
+
+          @php
+            $badge = ['pending' => 'pending', 'confirmed' => 'new', 'checked_out' => 'won', 'cancelled' => 'stuck'][$booking->status] ?? 'new';
+          @endphp
+          <div class="modal fade" id="quickViewModal{{ $booking->id }}" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+              <div class="modal-content dash-modal">
+                <div class="modal-header">
+                  <div><span class="eyebrow">Quick View</span><h2 class="modal-title">{{ $booking->customer_name }}</h2></div>
+                  <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                  <div class="qv-section-label">Guest</div>
+                  <div class="qv-row"><span>Phone</span><strong>{{ $booking->customer_phone ?: '—' }}</strong></div>
+                  <div class="qv-row"><span>Email</span><strong>{{ $booking->customer_email ?: '—' }}</strong></div>
+
+                  <div class="qv-section-label">Stay</div>
+                  <div class="qv-row"><span>Cabana</span><strong>{{ $booking->room->name_or_number }}</strong></div>
+                  <div class="qv-row"><span>Check-in</span><strong>{{ $booking->check_in->format('d M Y') }}</strong></div>
+                  <div class="qv-row"><span>Check-out</span><strong>{{ $booking->check_out->format('d M Y') }}</strong></div>
+                  @if ($booking->board_type_label)
+                    <div class="qv-row"><span>Board Type</span><strong>{{ $booking->board_type_label }}</strong></div>
+                  @endif
+                  <div class="qv-row"><span>Status</span><span class="deal-badge {{ $badge }}">{{ ucfirst(str_replace('_', ' ', $booking->status)) }}</span></div>
+
+                  <div class="qv-section-label">Payment</div>
+                  <div class="qv-row"><span>Total Amount</span><strong>{{ $globalSettings->currency }} {{ number_format($booking->total_amount, 2) }}</strong></div>
+                  <div class="qv-row"><span>Advance Paid</span><strong>{{ $globalSettings->currency }} {{ number_format($booking->advance_payment, 2) }}</strong></div>
+                  <div class="qv-row"><span>Balance Due</span><strong>{{ $globalSettings->currency }} {{ number_format($booking->remaining_balance, 2) }}</strong></div>
+                  <div class="qv-row"><span>Payment Status</span><strong>{{ $booking->payment_status_label }}</strong></div>
+                </div>
+                <div class="modal-footer">
+                  <a class="btn btn-light" href="{{ route('bookings.edit', $booking) }}"><i class="bi bi-pencil"></i> Edit</a>
+                  @if ($booking->status !== 'cancelled')
+                    <a class="btn btn-outline-primary" href="{{ route($booking->status === 'checked_out' ? 'bookings.invoice.final' : 'bookings.invoice.confirmation', $booking) }}" target="_blank" rel="noopener"><i class="bi bi-file-earmark-pdf"></i> Download PDF</a>
+                  @endif
+                </div>
+              </div>
+            </div>
+          </div>
+        @endforeach
 @endsection

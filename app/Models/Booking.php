@@ -29,6 +29,7 @@ class Booking extends Model
         'final_settlement_amount',
         'status',
         'checked_out_at',
+        'payment_method',
         'board_type',
         'selected_menu_items',
         'guests_adults',
@@ -121,6 +122,34 @@ class Booking extends Model
             }
 
             return round(((float) $this->advance_payment / (float) $this->total_amount) * 100, 1);
+        });
+    }
+
+    /**
+     * Human-readable board type - "cabana_only" -> "Cabana Only", etc.
+     * Null for bookings made before the meal-plan feature existed, or
+     * created without one via the internal admin form.
+     */
+    protected function boardTypeLabel(): Attribute
+    {
+        return Attribute::get(fn () => $this->board_type
+            ? str(str_replace('_', ' ', $this->board_type))->title()->toString()
+            : null);
+    }
+
+    /**
+     * A simple, guest-facing payment status independent of the booking's
+     * lifecycle status (a still-"confirmed" booking can already be fully
+     * paid ahead of arrival, for example).
+     */
+    protected function paymentStatusLabel(): Attribute
+    {
+        return Attribute::get(function () {
+            if ($this->remaining_balance <= 0.0) {
+                return 'Fully Paid';
+            }
+
+            return (float) $this->advance_payment > 0.0 ? 'Partially Paid' : 'Unpaid';
         });
     }
 }

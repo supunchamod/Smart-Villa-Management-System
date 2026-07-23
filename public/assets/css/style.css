@@ -1471,6 +1471,7 @@ h1 { font-size: clamp(30px, 3.5vw, 42px); margin: 4px 0 8px; font-weight: 700; l
 .mdash-action-btn-primary { background: rgba(82,120,255,.12); color: var(--primary); }
 .mdash-action-btn-amber { background: linear-gradient(145deg, #fbbf24, #d97706); color: #fff; box-shadow: 0 10px 22px rgba(217,119,6,.28); }
 .mdash-action-btn-success { background: linear-gradient(145deg, #34d399, #0d9488); color: #fff; box-shadow: 0 10px 22px rgba(13,148,136,.28); }
+.mdash-action-btn-whatsapp { background: #25d366; color: #fff; }
 
 .mdash-icon-btn { display: grid; flex: 0 0 auto; place-items: center; width: 44px; height: 44px; border-radius: 14px; background: var(--surface-2); border: 1px solid var(--line); color: var(--muted); font-size: 16px; text-decoration: none; }
 .mdash-icon-btn:active { transform: scale(.93); }
@@ -1483,6 +1484,27 @@ h1 { font-size: clamp(30px, 3.5vw, 42px); margin: 4px 0 8px; font-weight: 700; l
 .booking-tab { flex: 1 1 0; min-width: 118px; min-height: 44px; padding: 10px 14px; border: 0; border-radius: 12px; background: transparent; color: var(--muted); font-size: 13px; font-weight: 800; letter-spacing: -.005em; white-space: nowrap; cursor: pointer; transition: background .15s ease, color .15s ease, box-shadow .15s ease; }
 .booking-tab.active { background: var(--primary); color: #fff; box-shadow: 0 10px 22px rgba(82,120,255,.28); }
 .booking-tab:active { transform: scale(.97); }
+
+.tab-count-badge { display: inline-flex; align-items: center; justify-content: center; min-width: 20px; height: 20px; padding: 0 6px; margin-left: 6px; border-radius: 999px; font-size: 11px; font-weight: 800; }
+.tab-count-badge-green { background: rgba(47,168,79,.16); color: #1a7a34; }
+.tab-count-badge-blue { background: rgba(82,120,255,.16); color: #3450d3; }
+.tab-count-badge-yellow { background: rgba(245,158,11,.18); color: #92400e; }
+.tab-count-badge-red { background: rgba(220,38,38,.16); color: #b91c1c; }
+.booking-tab.active .tab-count-badge { background: rgba(255,255,255,.28); color: #fff; }
+[data-theme="dark"] .tab-count-badge-green { color: #4ade80; }
+[data-theme="dark"] .tab-count-badge-blue { color: #93a9ff; }
+[data-theme="dark"] .tab-count-badge-yellow { color: #fbbf24; }
+[data-theme="dark"] .tab-count-badge-red { color: #fca5a5; }
+
+.booking-row-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.booking-row-actions .dropdown-toggle::after { display: none; }
+
+.qv-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--line); font-size: 13px; }
+.qv-row:last-child { border-bottom: 0; }
+.qv-row span:first-child { color: var(--muted); font-weight: 600; }
+.qv-row strong { text-align: right; }
+.qv-section-label { margin: 18px 0 4px; font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); }
+.qv-section-label:first-child { margin-top: 0; }
 
 [data-theme="dark"] .mdash-badge.partial { color: #fbbf24; }
 [data-theme="dark"] .mdash-invoice-btn { background: rgba(82,120,255,.20); }

@@ -167,6 +167,17 @@
         font-size: 16px;
     }
 
+    .payment-status-pill {
+        display: inline-block;
+        padding: 5px 14px;
+        border: 2px solid;
+        border-radius: 999px;
+        font-weight: bold;
+        font-size: 11px;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+    }
+
     .footer-note {
         margin-top: 50px;
         text-align: center;

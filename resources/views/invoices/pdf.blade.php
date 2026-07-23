@@ -46,9 +46,12 @@
             </td>
             <td>
                 <div class="section-label">Stay Details</div>
-                <div>Room: {{ $booking->room->name_or_number }} ({{ $booking->room->type }})</div>
+                <div>Cabana: {{ $booking->room->name_or_number }} ({{ $booking->room->type }})</div>
                 <div>Check-in: {{ $booking->check_in->format('d M Y') }}</div>
                 <div>Check-out: {{ $booking->check_out->format('d M Y') }}</div>
+                @if ($booking->board_type_label)
+                    <div>Board Type: {{ $booking->board_type_label }}</div>
+                @endif
             </td>
         </tr>
     </table>
@@ -90,6 +93,18 @@
             <td class="value" style="color: {{ $stage === 'final' ? '#2fa84f' : '#111827' }};">{{ $globalSettings->currency }} {{ number_format($booking->remaining_balance, 2) }}</td>
         </tr>
     </table>
+
+    @php
+        $paymentStatusColors = [
+            'Fully Paid' => '#2fa84f',
+            'Partially Paid' => '#d97706',
+            'Unpaid' => '#dc2626',
+        ];
+        $paymentStatusColor = $paymentStatusColors[$booking->payment_status_label] ?? '#6b7280';
+    @endphp
+    <div class="text-right" style="margin-top: 8px;">
+        <span class="payment-status-pill" style="border-color: {{ $paymentStatusColor }}; color: {{ $paymentStatusColor }};">{{ $booking->payment_status_label }}</span>
+    </div>
 
     <div class="footer-note">
         Thank you for choosing {{ $globalSettings->villa_name }}.
