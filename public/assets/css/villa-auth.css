@@ -1,0 +1,374 @@
+/*
+ * Premium split-screen login/register experience for the villa admin
+ * suite. Scoped entirely under .villa-auth-page so it can't leak into
+ * or collide with the shared Dashora template styles in style.css.
+ * Reuses the app's existing theme variables (--surface, --text, --line,
+ * etc.) so it automatically follows the dashboard's light/dark toggle.
+ */
+
+.villa-auth-page {
+  min-height: 100vh;
+  background: var(--surface);
+}
+
+.villa-auth-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  min-height: 100vh;
+}
+
+@media (min-width: 992px) {
+  .villa-auth-grid { grid-template-columns: 5fr 7fr; }
+}
+
+/* Left showcase panel (desktop only) */
+
+.villa-auth-showcase {
+  position: relative;
+  display: none;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 40px;
+  overflow: hidden;
+  padding: 56px 48px;
+  color: #fff;
+  background:
+    radial-gradient(circle at 14% 12%, rgba(16, 185, 129, .35), transparent 45%),
+    radial-gradient(circle at 88% 86%, rgba(16, 185, 129, .16), transparent 42%),
+    linear-gradient(160deg, #0f172a 0%, #111c2e 45%, #043a2e 100%);
+}
+
+@media (min-width: 992px) {
+  .villa-auth-showcase { display: flex; }
+}
+
+.villa-auth-showcase::before {
+  content: "";
+  position: absolute;
+  top: -120px;
+  right: -100px;
+  width: 320px;
+  height: 320px;
+  border-radius: 50%;
+  background: rgba(16, 185, 129, .14);
+  filter: blur(10px);
+}
+
+.villa-auth-showcase::after {
+  content: "";
+  position: absolute;
+  left: -140px;
+  bottom: -160px;
+  width: 380px;
+  height: 380px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, .05);
+}
+
+.villa-auth-brand {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.villa-auth-brand-mark {
+  display: grid;
+  flex: 0 0 44px;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  overflow: hidden;
+  background: linear-gradient(135deg, #34d399, #059669);
+  box-shadow: 0 10px 24px rgba(16, 185, 129, .35);
+  color: #fff;
+  font-size: 18px;
+  font-weight: 800;
+}
+
+.villa-auth-brand-mark img { width: 100%; height: 100%; object-fit: cover; }
+
+.villa-auth-brand-name strong { display: block; font-size: 16px; font-weight: 800; color: #fff; }
+
+.villa-auth-brand-name small {
+  display: block;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, .55);
+}
+
+.villa-auth-showcase-copy { position: relative; z-index: 1; }
+
+.villa-auth-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 14px;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: #6ee7b7;
+}
+
+.villa-auth-showcase-copy h2 {
+  margin: 0 0 12px;
+  font-size: clamp(26px, 3vw, 34px);
+  font-weight: 800;
+  line-height: 1.22;
+  letter-spacing: -.02em;
+  color: #fff;
+}
+
+.villa-auth-showcase-copy p {
+  max-width: 420px;
+  margin: 0;
+  color: rgba(255, 255, 255, .62);
+  font-size: 15px;
+  line-height: 1.7;
+}
+
+.villa-auth-features {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  gap: 14px;
+}
+
+.villa-auth-feature-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 16px;
+  border: 1px solid rgba(255, 255, 255, .12);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, .06);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+}
+
+.villa-auth-feature-icon {
+  display: grid;
+  flex: 0 0 40px;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: rgba(16, 185, 129, .18);
+  color: #6ee7b7;
+  font-size: 18px;
+}
+
+.villa-auth-feature-card strong { display: block; margin-bottom: 2px; font-size: 14px; font-weight: 700; color: #fff; }
+
+.villa-auth-feature-card p { margin: 0; color: rgba(255, 255, 255, .6); font-size: 12.5px; line-height: 1.55; }
+
+/* Right form panel */
+
+.villa-auth-form-panel {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+  background: var(--surface);
+}
+
+@media (min-width: 992px) {
+  .villa-auth-form-panel { padding: 64px; }
+}
+
+.villa-auth-form-wrap { width: 100%; max-width: 420px; }
+
+.villa-auth-mobile-brand {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin-bottom: 32px;
+}
+
+@media (min-width: 992px) {
+  .villa-auth-mobile-brand { display: none; }
+}
+
+.villa-auth-mobile-brand strong { font-size: 15px; font-weight: 800; color: var(--text); }
+.villa-auth-mobile-brand small { display: block; font-size: 11px; font-weight: 700; color: var(--muted); }
+
+.villa-auth-form-head { margin-bottom: 28px; }
+
+.villa-auth-form-head h1 {
+  margin: 0 0 8px;
+  font-size: clamp(24px, 3vw, 28px);
+  font-weight: 800;
+  letter-spacing: -.02em;
+  color: var(--text);
+}
+
+.villa-auth-form-head p { margin: 0; color: var(--muted); font-size: 14px; line-height: 1.6; }
+
+/* Alerts (session status / error summaries) */
+
+.villa-auth-alert {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin-bottom: 20px;
+  padding: 12px 14px;
+  border: 1px solid transparent;
+  border-radius: 12px;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.5;
+}
+
+.villa-auth-alert i { margin-top: 1px; font-size: 16px; }
+
+.villa-auth-alert-success {
+  border-color: rgba(16, 185, 129, .25);
+  background: rgba(16, 185, 129, .10);
+  color: #047857;
+}
+
+[data-theme="dark"] .villa-auth-alert-success {
+  border-color: rgba(16, 185, 129, .3);
+  background: rgba(16, 185, 129, .14);
+  color: #6ee7b7;
+}
+
+.villa-auth-alert-danger {
+  border-color: rgba(220, 38, 38, .22);
+  background: rgba(220, 38, 38, .08);
+  color: #b91c1c;
+}
+
+[data-theme="dark"] .villa-auth-alert-danger {
+  border-color: rgba(220, 38, 38, .32);
+  background: rgba(220, 38, 38, .14);
+  color: #fca5a5;
+}
+
+/* Form fields */
+
+.villa-auth-field { margin-bottom: 18px; }
+
+.villa-auth-label-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+
+.villa-auth-label { display: block; margin-bottom: 7px; font-size: 12.5px; font-weight: 700; color: var(--text); }
+
+.villa-auth-link-sm { margin-bottom: 7px; font-size: 12.5px; font-weight: 700; color: #059669; }
+
+.villa-auth-input-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  border: 1.5px solid var(--line);
+  border-radius: 12px;
+  background: var(--surface-2);
+  transition: border-color .2s ease, box-shadow .2s ease;
+}
+
+.villa-auth-input-wrap:focus-within {
+  border-color: #059669;
+  box-shadow: 0 0 0 4px rgba(16, 185, 129, .15);
+}
+
+.villa-auth-input-wrap.is-invalid { border-color: #dc2626; }
+
+.villa-auth-input-wrap.is-invalid:focus-within { box-shadow: 0 0 0 4px rgba(220, 38, 38, .14); }
+
+.villa-auth-input-icon {
+  display: grid;
+  flex: 0 0 44px;
+  place-items: center;
+  color: var(--muted);
+  font-size: 15px;
+}
+
+.villa-auth-input {
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 14px 6px 14px 0;
+  border: 0;
+  background: transparent;
+  color: var(--text);
+  font-size: 14.5px;
+  outline: none;
+}
+
+.villa-auth-input::placeholder { color: var(--muted); opacity: .7; }
+
+.villa-auth-toggle-visibility {
+  display: grid;
+  flex: 0 0 44px;
+  place-items: center;
+  height: 44px;
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  font-size: 15px;
+}
+
+.villa-auth-toggle-visibility:hover { color: var(--text); }
+
+.villa-auth-field-error { margin: 7px 0 0; color: #dc2626; font-size: 12.5px; font-weight: 600; }
+
+.villa-auth-remember {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 22px;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.villa-auth-remember input { width: 16px; height: 16px; accent-color: #059669; }
+
+.villa-auth-terms {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  margin-bottom: 22px;
+  color: var(--muted);
+  font-size: 12.5px;
+  font-weight: 600;
+  line-height: 1.5;
+}
+
+.villa-auth-terms input { flex-shrink: 0; width: 16px; height: 16px; margin-top: 2px; accent-color: #059669; }
+
+.villa-auth-submit {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 14px 20px;
+  border: 0;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #10b981, #047857);
+  box-shadow: 0 10px 24px rgba(16, 185, 129, .22);
+  color: #fff;
+  font-size: 14.5px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform .2s ease, box-shadow .2s ease;
+}
+
+.villa-auth-submit:hover { box-shadow: 0 16px 30px rgba(16, 185, 129, .32); transform: translateY(-2px); }
+
+.villa-auth-submit:active { box-shadow: 0 8px 18px rgba(16, 185, 129, .24); transform: translateY(0); }
+
+.villa-auth-switch { margin-top: 26px; color: var(--muted); font-size: 13.5px; font-weight: 600; text-align: center; }
+
+.villa-auth-switch a { color: #059669; font-weight: 800; }
+
+.villa-auth-switch a:hover { text-decoration: underline; }
+
+[data-theme="dark"] .villa-auth-link-sm,
+[data-theme="dark"] .villa-auth-switch a { color: #34d399; }
