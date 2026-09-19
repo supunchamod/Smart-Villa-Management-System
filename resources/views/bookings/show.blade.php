@@ -46,6 +46,10 @@
               <div class="row g-3 booking-info-grid">
                 <div class="col-md-6"><small class="text-muted d-block">Customer</small><strong>{{ $booking->customer_name }}</strong></div>
                 <div class="col-md-6"><small class="text-muted d-block">Room</small><strong>{{ $booking->room->name_or_number }} ({{ $booking->room->type }})</strong></div>
+                <div class="col-md-6">
+                  <small class="text-muted d-block">Board Basis / Meal Plan</small>
+                  <span class="board-badge {{ $booking->board_type_badge_class }}">{{ $booking->board_type_label }}</span>
+                </div>
                 <div class="col-md-6"><small class="text-muted d-block">Email</small><strong>{{ $booking->customer_email ?: '—' }}</strong></div>
                 <div class="col-md-6"><small class="text-muted d-block">Phone</small><strong>{{ $booking->customer_phone ?: '—' }}</strong></div>
                 <div class="col-md-6"><small class="text-muted d-block">Check-in</small><strong>{{ $booking->check_in->format('d M Y') }}</strong></div>

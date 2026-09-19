@@ -25,6 +25,16 @@
     </div>
   @endif
 
+  <div class="col-md-6">
+    <label class="form-label">Board Basis / Meal Plan</label>
+    <select class="form-select @error('board_type') is-invalid @enderror" name="board_type">
+      @foreach (\App\Models\Booking::BOARD_TYPES as $value => $label)
+        <option value="{{ $value }}" @selected(old('board_type', $booking->board_type ?? 'cabana_only') === $value)>{{ $label }}</option>
+      @endforeach
+    </select>
+    @error('board_type')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror
+  </div>
+
   <div class="col-md-4">
     <label class="form-label">Customer name</label>
     <input class="form-control @error('customer_name') is-invalid @enderror" name="customer_name" value="{{ old('customer_name', $booking->customer_name ?? '') }}" placeholder="Sara Ahmed">

@@ -195,7 +195,11 @@
                               </div>
                             </div>
                           </td>
-                          <td>{{ $booking->room->name_or_number }}<br><small class="text-muted">{{ $booking->room->type }}</small></td>
+                          <td>
+                            {{ $booking->room->name_or_number }}<br>
+                            <small class="text-muted">{{ $booking->room->type }}</small><br>
+                            <span class="board-badge {{ $booking->board_type_badge_class }}" data-bs-toggle="tooltip" title="{{ $booking->board_type_label }}">{{ $booking->board_type_badge_label }}</span>
+                          </td>
                           <td>
                             <span class="bk-stay-dates">{{ $booking->check_in->format('d M') }} - {{ $booking->check_out->format('d M Y') }}</span>
                             <span class="bk-stay-nights">{{ $nights }} {{ \Illuminate\Support\Str::plural('Night', $nights) }}</span>
@@ -286,6 +290,7 @@
                         <div class="mdash-booking-info">
                           <strong>{{ $booking->customer_name }}</strong>
                           <small>{{ $booking->room->name_or_number }} &middot; {{ $booking->check_in->format('d M') }} - {{ $booking->check_out->format('d M Y') }} ({{ $nights }} {{ \Illuminate\Support\Str::plural('Night', $nights) }})</small>
+                          <span class="board-badge {{ $booking->board_type_badge_class }}">{{ $booking->board_type_badge_label }}</span>
                         </div>
                         <span class="deal-badge {{ $statusMeta['badge'] }}">{{ $statusMeta['label'] }}</span>
                       </div>
@@ -433,7 +438,7 @@
                   <div class="qv-row"><span>Check-in</span><strong>{{ $booking->check_in->format('d M Y') }}</strong></div>
                   <div class="qv-row"><span>Check-out</span><strong>{{ $booking->check_out->format('d M Y') }}</strong></div>
                   @if ($booking->board_type_label)
-                    <div class="qv-row"><span>Board Type</span><strong>{{ $booking->board_type_label }}</strong></div>
+                    <div class="qv-row"><span>Board Type</span><span class="board-badge {{ $booking->board_type_badge_class }}">{{ $booking->board_type_label }}</span></div>
                   @endif
                   <div class="qv-row"><span>Status</span><span class="deal-badge {{ $statusMeta['badge'] }}">{{ $statusMeta['label'] }}</span></div>
 

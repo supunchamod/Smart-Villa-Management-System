@@ -406,6 +406,7 @@ class BookingController extends Controller
             'total_amount' => ['required', 'numeric', 'min:0'],
             'advance_payment' => ['required', 'numeric', 'min:0', 'lte:total_amount'],
             'status' => [Rule::in(['pending', 'confirmed', 'checked_out', 'cancelled'])],
+            'board_type' => ['nullable', Rule::in(array_keys(Booking::BOARD_TYPES))],
         ]);
 
         $validated['status'] = $validated['status'] ?? 'confirmed';
