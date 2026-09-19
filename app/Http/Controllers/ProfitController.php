@@ -27,6 +27,7 @@ class ProfitController extends Controller
     private const DIRECT_COST_KEYWORDS = [
         'housekeeping', 'laundry', 'food', 'beverage', 'f&b', 'fnb',
         'dining', 'kitchen', 'inventory', 'supplies', 'cabana', 'amenities',
+        'safari', 'jeep', 'park ticket', 'guide',
     ];
 
     private const LEDGER_PER_PAGE = 12;

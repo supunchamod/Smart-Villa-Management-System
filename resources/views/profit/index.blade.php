@@ -222,8 +222,8 @@
                   <span class="pa-upcoming-date-month">{{ $booking->check_in->format('M') }}</span>
                 </div>
                 <div class="pa-upcoming-body">
-                  <strong class="pa-upcoming-title">{{ $booking->room->name_or_number }}</strong>
-                  <small class="pa-upcoming-meta">Guest: {{ $booking->customer_name }} &bull; {{ $nights }} Night{{ $nights === 1 ? '' : 's' }}</small>
+                  <strong class="pa-upcoming-title">{{ $booking->room_label }}</strong>
+                  <small class="pa-upcoming-meta">Guest: {{ $booking->customer_name }} &bull; {{ $booking->booking_type === 'safari_only' ? 'Safari' : $nights.' Night'.($nights === 1 ? '' : 's') }}</small>
                 </div>
                 <span class="pa-upcoming-revenue">{{ $globalSettings->currency }} {{ number_format($booking->total_amount, 0) }}</span>
               </div>

@@ -85,7 +85,20 @@
                   <div class="row g-3">
                     <div class="col-12">
                       <label class="form-label">Category</label>
-                      <input class="form-control" :class="errors.category ? 'is-invalid' : ''" name="category" x-model="form.category" @input="validate()">
+                      <input class="form-control" list="expenseCategoryOptions" :class="errors.category ? 'is-invalid' : ''" name="category" x-model="form.category" @input="validate()">
+                      <datalist id="expenseCategoryOptions">
+                        <option value="Housekeeping">
+                        <option value="Laundry">
+                        <option value="Food &amp; Beverage">
+                        <option value="Kitchen Supplies">
+                        <option value="Amenities">
+                        <option value="Maintenance">
+                        <option value="Utilities">
+                        <option value="Marketing">
+                        @if ($globalSettings->is_safari_enabled)
+                          <option value="Safari Operations">
+                        @endif
+                      </datalist>
                       <div class="invalid-feedback d-block" x-show="errors.category" x-text="errors.category"></div>
                     </div>
                     <div class="col-md-6">

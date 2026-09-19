@@ -73,6 +73,8 @@ class SettingsController extends Controller
             'villa_logo' => ['nullable', 'image', 'max:2048'],
         ]);
 
+        $validated['is_safari_enabled'] = $request->boolean('is_safari_enabled');
+
         if ($request->hasFile('villa_logo')) {
             $this->deleteLogo($settings->villa_logo);
             $validated['villa_logo'] = $this->storeLogo($request);

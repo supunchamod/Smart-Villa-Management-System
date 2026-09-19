@@ -1,8 +1,31 @@
 @php
     $isEdit = isset($booking);
+    $bookingType = old('booking_type', $booking->booking_type ?? 'accommodation_only');
 @endphp
-<div class="row g-3" x-data="{ total: {{ (float) old('total_amount', $booking->total_amount ?? 0) }}, advance: {{ (float) old('advance_payment', $booking->advance_payment ?? 0) }}, get balance() { return (this.total - this.advance).toFixed(2); } }">
-  <div class="col-md-6">
+<div
+  class="row g-3"
+  x-data="bookingForm({
+      total: {{ (float) old('total_amount', $booking->total_amount ?? 0) }},
+      advance: {{ (float) old('advance_payment', $booking->advance_payment ?? 0) }},
+      bookingType: '{{ $bookingType }}',
+  })"
+>
+  @if ($globalSettings->is_safari_enabled)
+    <div class="col-12">
+      <label class="form-label d-block">Booking Type</label>
+      <div class="btn-group w-100 flex-wrap" role="group" aria-label="Booking type">
+        @foreach (\App\Models\Booking::BOOKING_TYPES as $value => $label)
+          <input type="radio" class="btn-check" name="booking_type" id="bookingType_{{ $value }}" value="{{ $value }}" autocomplete="off" x-model="bookingType">
+          <label class="btn btn-outline-primary" for="bookingType_{{ $value }}">{{ $label }}</label>
+        @endforeach
+      </div>
+      @error('booking_type')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror
+    </div>
+  @else
+    <input type="hidden" name="booking_type" value="accommodation_only">
+  @endif
+
+  <div class="col-md-6" x-show="bookingType !== 'safari_only'">
     <label class="form-label">Room</label>
     <select class="form-select @error('room_id') is-invalid @enderror" name="room_id">
       <option value="">Select a room</option>
@@ -41,16 +64,54 @@
     @error('customer_phone')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror
   </div>
 
-  <div class="col-md-6">
+  <div class="col-md-6" x-show="bookingType !== 'safari_only'">
     <label class="form-label">Check-in</label>
     <input class="form-control @error('check_in') is-invalid @enderror" type="date" name="check_in" value="{{ old('check_in', optional($booking->check_in ?? null)->toDateString()) }}">
     @error('check_in')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror
   </div>
-  <div class="col-md-6">
+  <div class="col-md-6" x-show="bookingType !== 'safari_only'">
     <label class="form-label">Check-out</label>
     <input class="form-control @error('check_out') is-invalid @enderror" type="date" name="check_out" value="{{ old('check_out', optional($booking->check_out ?? null)->toDateString()) }}">
     @error('check_out')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror
   </div>
+
+  <template x-if="bookingType !== 'accommodation_only'">
+    <div class="col-12"><hr><h3 class="h6 mb-0"><i class="bi bi-compass"></i> Safari Details</h3></div>
+  </template>
+  <div class="col-md-5" x-show="bookingType !== 'accommodation_only'">
+    <label class="form-label">Safari package / tour name</label>
+    <input class="form-control @error('safari_tour_name') is-invalid @enderror" name="safari_tour_name" value="{{ old('safari_tour_name', $booking->safari_tour_name ?? '') }}" placeholder="Yala Full Day Jeep Safari">
+    @error('safari_tour_name')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror
+  </div>
+  <div class="col-md-3" x-show="bookingType !== 'accommodation_only'">
+    <label class="form-label">Safari date</label>
+    <input class="form-control @error('safari_date') is-invalid @enderror" type="date" name="safari_date" value="{{ old('safari_date', optional($booking->safari_date ?? null)->toDateString()) }}">
+    @error('safari_date')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror
+  </div>
+  <div class="col-md-4" x-show="bookingType !== 'accommodation_only'">
+    <label class="form-label">Vehicle details</label>
+    <input class="form-control @error('safari_vehicle_details') is-invalid @enderror" name="safari_vehicle_details" value="{{ old('safari_vehicle_details', $booking->safari_vehicle_details ?? '') }}" placeholder="Jeep #3 — Driver: Sunil">
+    @error('safari_vehicle_details')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror
+  </div>
+
+  <template x-if="bookingType === 'full_package'">
+    <div class="col-12">
+      <label class="form-label d-block">Integrated billing calculation <small class="text-muted">(optional helper, sums into Total Amount below)</small></label>
+      <div class="row g-2 align-items-end">
+        <div class="col-md-4">
+          <label class="form-label small text-muted">Accommodation amount</label>
+          <input class="form-control" type="number" step="0.01" min="0" x-model.number="roomAmount" placeholder="0.00">
+        </div>
+        <div class="col-md-4">
+          <label class="form-label small text-muted">Safari package amount</label>
+          <input class="form-control" type="number" step="0.01" min="0" x-model.number="safariAmount" placeholder="0.00">
+        </div>
+        <div class="col-md-4">
+          <button type="button" class="btn btn-light w-100" @click="applyCombinedTotal()"><i class="bi bi-calculator"></i> Sum into Total Amount</button>
+        </div>
+      </div>
+    </div>
+  </template>
 
   <div class="col-md-4">
     <label class="form-label">Total amount</label>
@@ -72,3 +133,25 @@
     <a class="btn btn-light" href="{{ route('bookings.index') }}">Cancel</a>
   </div>
 </div>
+
+@push('scripts')
+<script>
+    function bookingForm(config) {
+        return {
+            bookingType: config.bookingType,
+            total: config.total,
+            advance: config.advance,
+            roomAmount: '',
+            safariAmount: '',
+            get balance() {
+                return (this.total - this.advance).toFixed(2);
+            },
+            applyCombinedTotal() {
+                const room = parseFloat(this.roomAmount) || 0;
+                const safari = parseFloat(this.safariAmount) || 0;
+                this.total = +(room + safari).toFixed(2);
+            },
+        };
+    }
+</script>
+@endpush

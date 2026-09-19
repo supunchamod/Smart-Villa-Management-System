@@ -135,7 +135,7 @@ class SendBookingWhatsAppJob implements ShouldQueue
             '',
             '✅ Hi '.$booking->customer_name.', your booking is '.($isFinal ? 'complete' : 'confirmed').'!',
             '',
-            "🏡 Room: {$booking->room->name_or_number}",
+            "🏡 Room: {$booking->room_label}",
             '📅 Check-in: '.$booking->check_in->format('d M Y'),
             '📅 Check-out: '.$booking->check_out->format('d M Y'),
             "💰 Total: {$currency} ".number_format((float) $booking->total_amount, 2),

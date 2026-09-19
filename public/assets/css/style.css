@@ -933,6 +933,13 @@ h1 { font-size: clamp(30px, 3.5vw, 42px); margin: 4px 0 8px; font-weight: 700; l
 .deal-badge.new { color: #5278ff; background: #eef3ff; }
 .deal-badge.stuck { color: #dc2626; background: #fff0ee; }
 .deal-badge.pending { color: #b45309; background: #fff7e6; }
+.type-badge { display: inline-flex; align-items: center; gap: 5px; border-radius: 999px; padding: 6px 11px; font-size: 11px; font-weight: 800; white-space: nowrap; }
+.type-badge-safari { color: #b45309; background: rgba(245,158,11,.16); }
+.type-badge-cabana { color: #1a7a34; background: rgba(47,168,79,.16); }
+.type-badge-combo { color: #6d28d9; background: rgba(139,92,246,.18); }
+[data-theme="dark"] .type-badge-safari { color: #fbbf24; }
+[data-theme="dark"] .type-badge-cabana { color: #4ade80; }
+[data-theme="dark"] .type-badge-combo { color: #c4b5fd; }
 .crm-widget { min-height: 100%; }
 .crm-task-list { display: grid; gap: 10px; }
 .crm-task { display: flex; gap: 12px; padding: 12px; border: 1px solid var(--line); border-radius: 8px; background: #f7f9fc; }

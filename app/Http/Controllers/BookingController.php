@@ -6,6 +6,7 @@ use App\Jobs\SendBookingWhatsAppJob;
 use App\Jobs\SendPostCheckoutReviewWhatsAppJob;
 use App\Models\Booking;
 use App\Models\Room;
+use App\Models\Setting;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -46,8 +47,8 @@ class BookingController extends Controller
         return view('bookings.index', [
             'bookings' => Booking::with('room')->latest()->paginate(10),
             'pendingBookingsCount' => Booking::where('status', 'pending')->count(),
-            'todayCheckInsCount' => Booking::where('status', 'confirmed')->whereDate('check_in', $today)->count(),
-            'todayCheckOutsCount' => Booking::where('status', 'confirmed')->whereDate('check_out', $today)->count(),
+            'todayCheckInsCount' => Booking::where('status', 'confirmed')->where('booking_type', '!=', 'safari_only')->whereDate('check_in', $today)->count(),
+            'todayCheckOutsCount' => Booking::where('status', 'confirmed')->where('booking_type', '!=', 'safari_only')->whereDate('check_out', $today)->count(),
             'balanceDueCount' => Booking::where('status', 'confirmed')->whereColumn('advance_payment', '<', 'total_amount')->count(),
         ]);
     }
@@ -290,7 +291,7 @@ class BookingController extends Controller
         $events = Booking::with('room')->get()->map(function (Booking $booking) {
             return [
                 'id' => $booking->id,
-                'title' => $booking->room->name_or_number.' — '.$booking->customer_name,
+                'title' => $booking->room_label.' — '.$booking->customer_name,
                 'start' => $booking->check_in->toDateString(),
                 'end' => $booking->check_out->toDateString(),
                 'color' => self::STATUS_COLORS[$booking->status] ?? '#5278ff',
@@ -298,7 +299,7 @@ class BookingController extends Controller
                     'customer_name' => $booking->customer_name,
                     'customer_email' => $booking->customer_email,
                     'customer_phone' => $booking->customer_phone,
-                    'room' => $booking->room->name_or_number,
+                    'room' => $booking->room_label,
                     'check_in' => $booking->check_in->toFormattedDateString(),
                     'check_out' => $booking->check_out->toFormattedDateString(),
                     'total_amount' => number_format((float) $booking->total_amount, 2),
@@ -317,31 +318,68 @@ class BookingController extends Controller
      */
     private function validateBooking(Request $request, ?Booking $booking = null): array
     {
+        // Safari fields only mean anything once the villa has switched the
+        // module on - otherwise every booking is forced back to the
+        // original accommodation-only shape, regardless of what a crafted
+        // request sends.
+        $bookingType = Setting::current()->is_safari_enabled
+            ? $request->input('booking_type', 'accommodation_only')
+            : 'accommodation_only';
+
+        if (! array_key_exists($bookingType, Booking::BOOKING_TYPES)) {
+            $bookingType = 'accommodation_only';
+        }
+
+        $needsRoom = $bookingType !== 'safari_only';
+        $needsSafari = $bookingType !== 'accommodation_only';
+
         $validated = $request->validate([
-            'room_id' => ['required', 'exists:rooms,id'],
+            'room_id' => [$needsRoom ? 'required' : 'nullable', 'exists:rooms,id'],
+            'check_in' => [$needsRoom ? 'required' : 'nullable', 'date'],
+            'check_out' => array_filter([$needsRoom ? 'required' : 'nullable', 'date', $needsRoom ? 'after:check_in' : null]),
+            'safari_tour_name' => [$needsSafari ? 'required' : 'nullable', 'string', 'max:255'],
+            'safari_date' => [$needsSafari ? 'required' : 'nullable', 'date'],
+            'safari_vehicle_details' => ['nullable', 'string', 'max:255'],
             'customer_name' => ['required', 'string', 'max:255'],
             'customer_email' => ['nullable', 'email', 'max:255'],
             'customer_phone' => ['nullable', 'string', 'max:30'],
-            'check_in' => ['required', 'date'],
-            'check_out' => ['required', 'date', 'after:check_in'],
             'total_amount' => ['required', 'numeric', 'min:0'],
             'advance_payment' => ['required', 'numeric', 'min:0', 'lte:total_amount'],
             'status' => [Rule::in(['pending', 'confirmed', 'checked_out', 'cancelled'])],
         ]);
 
+        $validated['booking_type'] = $bookingType;
         $validated['status'] = $validated['status'] ?? 'confirmed';
 
-        $overlaps = Booking::where('room_id', $validated['room_id'])
-            ->where('status', '!=', 'cancelled')
-            ->when($booking, fn ($query) => $query->where('id', '!=', $booking->id))
-            ->where('check_in', '<', $validated['check_out'])
-            ->where('check_out', '>', $validated['check_in'])
-            ->exists();
+        if (! $needsRoom) {
+            // A safari-only booking has no room or stay dates of its own -
+            // the safari date stands in for both so every date-driven query
+            // and view elsewhere (reminders, dashboard widgets, the
+            // calendar feed) keeps working without special-casing this type.
+            $validated['room_id'] = null;
+            $validated['check_in'] = $validated['safari_date'];
+            $validated['check_out'] = $validated['safari_date'];
+        }
 
-        if ($overlaps) {
-            throw ValidationException::withMessages([
-                'check_in' => 'This room is already booked for the selected dates.',
-            ]);
+        if (! $needsSafari) {
+            $validated['safari_tour_name'] = null;
+            $validated['safari_date'] = null;
+            $validated['safari_vehicle_details'] = null;
+        }
+
+        if ($needsRoom) {
+            $overlaps = Booking::where('room_id', $validated['room_id'])
+                ->where('status', '!=', 'cancelled')
+                ->when($booking, fn ($query) => $query->where('id', '!=', $booking->id))
+                ->where('check_in', '<', $validated['check_out'])
+                ->where('check_out', '>', $validated['check_in'])
+                ->exists();
+
+            if ($overlaps) {
+                throw ValidationException::withMessages([
+                    'check_in' => 'This room is already booked for the selected dates.',
+                ]);
+            }
         }
 
         return $validated;

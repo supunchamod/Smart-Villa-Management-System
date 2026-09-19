@@ -13,12 +13,29 @@ class Booking extends Model
     use HasFactory;
 
     /**
+     * Human-readable labels for the booking_type column, keyed by its raw
+     * value - the single source of truth for the 3-way selector on the Add
+     * Booking form, the Manage Bookings filter tabs, and the type badge.
+     *
+     * @var array<string, string>
+     */
+    public const BOOKING_TYPES = [
+        'accommodation_only' => 'Accommodation Only',
+        'safari_only' => 'Safari Only',
+        'full_package' => 'Full Package',
+    ];
+
+    /**
      * The attributes that are mass assignable.
      *
      * @var list<string>
      */
     protected $fillable = [
         'room_id',
+        'booking_type',
+        'safari_tour_name',
+        'safari_date',
+        'safari_vehicle_details',
         'customer_name',
         'customer_email',
         'customer_phone',
@@ -52,6 +69,7 @@ class Booking extends Model
         return [
             'check_in' => 'date',
             'check_out' => 'date',
+            'safari_date' => 'date',
             'total_amount' => 'decimal:2',
             'advance_payment' => 'decimal:2',
             'final_settlement_amount' => 'decimal:2',
@@ -129,6 +147,34 @@ class Booking extends Model
 
             return round(((float) $this->advance_payment / (float) $this->total_amount) * 100, 1);
         });
+    }
+
+    /**
+     * The room/cabana name, or - for a safari-only booking, which has no
+     * room - the safari tour name instead. Every view/job that used to
+     * assume $booking->room existed reads this instead, so a safari-only
+     * booking (nullable room_id) never causes a null-property crash.
+     */
+    protected function roomLabel(): Attribute
+    {
+        return Attribute::get(fn () => $this->room?->name_or_number ?? $this->safari_tour_name ?? 'Safari Booking');
+    }
+
+    /**
+     * Companion to room_label for the "Room Type" style columns - falls
+     * back to a fixed "Safari Tour" label when there's no room.
+     */
+    protected function roomTypeLabel(): Attribute
+    {
+        return Attribute::get(fn () => $this->room?->type ?? 'Safari Tour');
+    }
+
+    /**
+     * Human-readable booking_type - "safari_only" -> "Safari Only", etc.
+     */
+    protected function bookingTypeLabel(): Attribute
+    {
+        return Attribute::get(fn () => self::BOOKING_TYPES[$this->booking_type] ?? self::BOOKING_TYPES['accommodation_only']);
     }
 
     /**

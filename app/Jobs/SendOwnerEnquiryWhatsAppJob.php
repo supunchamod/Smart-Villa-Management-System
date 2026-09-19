@@ -79,7 +79,7 @@ class SendOwnerEnquiryWhatsAppJob implements ShouldQueue
             "Reference: {$reference}",
             "Guest: {$booking->customer_name}",
             "Phone: {$booking->customer_phone}",
-            "Room: {$booking->room->name_or_number}",
+            "Room: {$booking->room_label}",
             'Check-in: '.$booking->check_in->format('d M Y'),
             'Check-out: '.$booking->check_out->format('d M Y'),
             'Guests: '.$adults.' Adult'.($adults === 1 ? '' : 's').($children > 0 ? ", {$children} Child".($children === 1 ? '' : 'ren') : ''),

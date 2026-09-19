@@ -63,9 +63,9 @@
                 <tr>
                   <td><a href="{{ route('bookings.show', $booking) }}" class="sr-link">BKG-{{ str_pad($booking->id, 6, '0', STR_PAD_LEFT) }}</a></td>
                   <td><strong>{{ $booking->customer_name }}</strong></td>
-                  <td>{{ $booking->room->name_or_number }}</td>
-                  <td>{{ $booking->check_in->format('d M Y') }}</td>
-                  <td>{{ $booking->check_out->format('d M Y') }}</td>
+                  <td>{{ $booking->room_label }}</td>
+                  <td>{{ $booking->booking_type === 'safari_only' ? '—' : $booking->check_in->format('d M Y') }}</td>
+                  <td>{{ $booking->booking_type === 'safari_only' ? '—' : $booking->check_out->format('d M Y') }}</td>
                   <td><span class="deal-badge {{ $badge }}">{{ ucfirst(str_replace('_', ' ', $booking->status)) }}</span></td>
                 </tr>
               @endforeach

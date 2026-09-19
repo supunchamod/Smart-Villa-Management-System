@@ -31,6 +31,7 @@ class Setting extends Model
         'review_link',
         'half_board_rate',
         'full_board_rate',
+        'is_safari_enabled',
     ];
 
     /**
@@ -43,6 +44,7 @@ class Setting extends Model
         return [
             'half_board_rate' => 'decimal:2',
             'full_board_rate' => 'decimal:2',
+            'is_safari_enabled' => 'boolean',
         ];
     }
 
@@ -79,6 +81,7 @@ class Setting extends Model
             'currency' => 'LKR',
             'half_board_rate' => 3500,
             'full_board_rate' => 6000,
+            'is_safari_enabled' => false,
         ]);
     }
 }

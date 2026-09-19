@@ -45,11 +45,29 @@
               <div class="panel-head"><div><h2>Booking Details</h2><p>Customer and stay information</p></div></div>
               <div class="row g-3 booking-info-grid">
                 <div class="col-md-6"><small class="text-muted d-block">Customer</small><strong>{{ $booking->customer_name }}</strong></div>
-                <div class="col-md-6"><small class="text-muted d-block">Room</small><strong>{{ $booking->room->name_or_number }} ({{ $booking->room->type }})</strong></div>
+                <div class="col-md-6">
+                  <small class="text-muted d-block">Booking Type</small>
+                  @php
+                    $typeBadge = ['accommodation_only' => 'type-badge-cabana', 'safari_only' => 'type-badge-safari', 'full_package' => 'type-badge-combo'][$booking->booking_type] ?? 'type-badge-cabana';
+                  @endphp
+                  <span class="type-badge {{ $typeBadge }}">{{ $booking->booking_type_label }}</span>
+                </div>
+                @if ($booking->room)
+                  <div class="col-md-6"><small class="text-muted d-block">Room</small><strong>{{ $booking->room->name_or_number }} ({{ $booking->room->type }})</strong></div>
+                @endif
                 <div class="col-md-6"><small class="text-muted d-block">Email</small><strong>{{ $booking->customer_email ?: '—' }}</strong></div>
                 <div class="col-md-6"><small class="text-muted d-block">Phone</small><strong>{{ $booking->customer_phone ?: '—' }}</strong></div>
-                <div class="col-md-6"><small class="text-muted d-block">Check-in</small><strong>{{ $booking->check_in->format('d M Y') }}</strong></div>
-                <div class="col-md-6"><small class="text-muted d-block">Check-out</small><strong>{{ $booking->check_out->format('d M Y') }}</strong></div>
+                @if ($booking->booking_type !== 'safari_only')
+                  <div class="col-md-6"><small class="text-muted d-block">Check-in</small><strong>{{ $booking->check_in->format('d M Y') }}</strong></div>
+                  <div class="col-md-6"><small class="text-muted d-block">Check-out</small><strong>{{ $booking->check_out->format('d M Y') }}</strong></div>
+                @endif
+                @if ($booking->booking_type !== 'accommodation_only')
+                  <div class="col-md-6"><small class="text-muted d-block">Safari Tour</small><strong>{{ $booking->safari_tour_name }}</strong></div>
+                  <div class="col-md-6"><small class="text-muted d-block">Safari Date</small><strong>{{ optional($booking->safari_date)->format('d M Y') }}</strong></div>
+                  @if ($booking->safari_vehicle_details)
+                    <div class="col-md-6"><small class="text-muted d-block">Vehicle Details</small><strong>{{ $booking->safari_vehicle_details }}</strong></div>
+                  @endif
+                @endif
                 <div class="col-md-6">
                   <small class="text-muted d-block">Status</small>
                   @php

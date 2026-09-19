@@ -45,10 +45,23 @@
                 @if ($booking->customer_phone)<div class="muted">{{ $booking->customer_phone }}</div>@endif
             </td>
             <td>
-                <div class="section-label">Stay Details</div>
-                <div>Cabana: {{ $booking->room->name_or_number }} ({{ $booking->room->type }})</div>
-                <div>Check-in: {{ $booking->check_in->format('d M Y') }}</div>
-                <div>Check-out: {{ $booking->check_out->format('d M Y') }}</div>
+                <div class="section-label">{{ $booking->booking_type === 'safari_only' ? 'Safari Details' : 'Stay Details' }}</div>
+                @if ($booking->room)
+                    <div>Cabana: {{ $booking->room->name_or_number }} ({{ $booking->room->type }})</div>
+                @endif
+                @if ($booking->booking_type !== 'accommodation_only' && $booking->safari_tour_name)
+                    <div>Safari: {{ $booking->safari_tour_name }}</div>
+                    @if ($booking->safari_date)
+                        <div>Safari Date: {{ $booking->safari_date->format('d M Y') }}</div>
+                    @endif
+                    @if ($booking->safari_vehicle_details)
+                        <div>Vehicle: {{ $booking->safari_vehicle_details }}</div>
+                    @endif
+                @endif
+                @if ($booking->booking_type !== 'safari_only')
+                    <div>Check-in: {{ $booking->check_in->format('d M Y') }}</div>
+                    <div>Check-out: {{ $booking->check_out->format('d M Y') }}</div>
+                @endif
                 @if ($booking->board_type_label)
                     <div>Board Type: {{ $booking->board_type_label }}</div>
                 @endif
@@ -66,8 +79,8 @@
         </thead>
         <tbody>
             <tr>
-                <td>{{ $booking->room->name_or_number }} — {{ $booking->room->type }}</td>
-                <td class="text-right">{{ max(1, $booking->check_in->diffInDays($booking->check_out)) }}</td>
+                <td>{{ $booking->room ? $booking->room->name_or_number.' — '.$booking->room->type : $booking->safari_tour_name }}</td>
+                <td class="text-right">{{ $booking->booking_type === 'safari_only' ? '—' : max(1, $booking->check_in->diffInDays($booking->check_out)) }}</td>
                 <td class="text-right">{{ $globalSettings->currency }} {{ number_format($booking->total_amount, 2) }}</td>
             </tr>
         </tbody>

@@ -17,6 +17,9 @@
           <a class="nav-link {{ request()->routeIs('bookings.*') && ! request()->routeIs('bookings.create') ? 'active' : '' }}" href="{{ route('bookings.index') }}"><i class="bi bi-journal-check"></i><span>Manage Bookings</span></a>
           <a class="nav-link {{ request()->routeIs('calendar') ? 'active' : '' }}" href="{{ route('calendar') }}"><i class="bi bi-calendar3"></i><span>Bookings Calendar</span></a>
           <a class="nav-link {{ request()->routeIs('landing-page.*') ? 'active' : '' }}" href="{{ route('landing-page.index') }}"><i class="bi bi-easel"></i><span>Landing Page</span></a>
+          @if ($globalSettings->is_safari_enabled)
+            <a class="nav-link {{ request()->routeIs('bookings.index') && request('type') === 'safari_only' ? 'active' : '' }}" href="{{ route('bookings.index', ['type' => 'safari_only']) }}"><i class="bi bi-compass"></i><span>Safari</span></a>
+          @endif
         @endcan
         @can('manage_expenses')
           <a class="nav-link {{ request()->routeIs('expenses.index') ? 'active' : '' }}" href="{{ route('expenses.index') }}"><i class="bi bi-receipt-cutoff"></i><span>Expenses</span></a>

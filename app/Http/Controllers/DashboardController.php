@@ -38,6 +38,7 @@ class DashboardController extends Controller
         $availableRooms = Room::where('status', 'available')->count();
         $maintenanceRooms = Room::where('status', 'maintenance')->count();
         $occupiedRooms = Booking::where('status', 'confirmed')
+            ->whereNotNull('room_id')
             ->whereDate('check_in', '<=', $today)
             ->whereDate('check_out', '>=', $today)
             ->pluck('room_id')
@@ -83,8 +84,12 @@ class DashboardController extends Controller
             $cursor->addDay();
         }
 
+        // Room turnover widgets only ever concern accommodation stays - a
+        // safari-only booking has no room, and its safari_date (which
+        // check_in/check_out mirror) isn't a physical arrival/departure.
         $upcomingCheckIns = Booking::with('room')
             ->where('status', 'confirmed')
+            ->where('booking_type', '!=', 'safari_only')
             ->whereDate('check_in', '>=', $today)
             ->orderBy('check_in')
             ->limit(4)
@@ -95,12 +100,14 @@ class DashboardController extends Controller
         // here, so a booking drops off the moment it's checked out.
         $todaysBookings = Booking::with('room')
             ->where('status', 'confirmed')
+            ->where('booking_type', '!=', 'safari_only')
             ->whereDate('check_in', $today)
             ->orderByDesc('created_at')
             ->get();
 
         $todaysCheckouts = Booking::with('room')
             ->where('status', 'confirmed')
+            ->where('booking_type', '!=', 'safari_only')
             ->whereDate('check_out', $today)
             ->orderBy('check_out')
             ->get();
@@ -110,6 +117,7 @@ class DashboardController extends Controller
         $tomorrow = $today->copy()->addDay();
         $tomorrowCheckIns = Booking::with('room')
             ->where('status', 'confirmed')
+            ->where('booking_type', '!=', 'safari_only')
             ->whereDate('check_in', $tomorrow)
             ->orderBy('check_in')
             ->get();

@@ -72,7 +72,7 @@
         @forelse ($upcomingCheckIns as $booking)
           <div class="crm-activity">
             <div class="date-chip"><strong>{{ $booking->check_in->format('d') }}</strong><span>{{ $booking->check_in->format('M') }}</span></div>
-            <div><small>Check-in</small><strong>{{ $booking->customer_name }}</strong><small>{{ $booking->room->name_or_number }}</small></div>
+            <div><small>Check-in</small><strong>{{ $booking->customer_name }}</strong><small>{{ $booking->room_label }}</small></div>
           </div>
         @empty
           <p class="text-muted small mb-0">No upcoming check-ins scheduled.</p>
@@ -104,10 +104,10 @@
                 $statusLabel = ['confirmed' => 'Confirmed', 'checked_out' => 'Completed', 'cancelled' => 'Cancelled'][$booking->status] ?? ucfirst($booking->status);
               @endphp
               <tr>
-                <td><strong>{{ $booking->customer_name }} - {{ $booking->room->name_or_number }}</strong></td>
+                <td><strong>{{ $booking->customer_name }} - {{ $booking->room_label }}</strong></td>
                 <td><span class="person-line"><span class="rep-avatar">{{ $booking->customer_initials }}</span><span>{{ $booking->customer_name }}</span></span></td>
                 <td><div class="table-progress"><span>{{ $booking->payment_progress }}%</span><div class="progress"><div class="progress-bar" style="width:{{ $booking->payment_progress }}%"></div></div></div></td>
-                <td>{{ $booking->room->type }}</td>
+                <td>{{ $booking->room_type_label }}</td>
                 <td><span class="deal-badge {{ $statusBadge }}">{{ $statusLabel }}</span></td>
                 <td>{{ $booking->check_out->format('d M Y') }}</td>
               </tr>
@@ -282,7 +282,7 @@
                   <span class="mdash-avatar sm">{{ $booking->customer_initials }}</span>
                   <div class="mdash-booking-info">
                     <strong>{{ $booking->customer_name }}</strong>
-                    <small>{{ $booking->room->name_or_number }}</small>
+                    <small>{{ $booking->room_label }}</small>
                   </div>
                   <span class="mdash-badge pending">Arrival Today</span>
                 </div>
@@ -316,7 +316,7 @@
                   <span class="mdash-avatar sm alt">{{ $booking->customer_initials }}</span>
                   <div class="mdash-booking-info">
                     <strong>{{ $booking->customer_name }}</strong>
-                    <small>{{ $booking->room->name_or_number }}</small>
+                    <small>{{ $booking->room_label }}</small>
                   </div>
                   <span class="mdash-badge partial" x-show="!checkedOut">{{ $globalSettings->currency }} {{ number_format($booking->remaining_balance, 2) }}</span>
                   <span class="mdash-badge paid" x-show="checkedOut">Paid</span>
@@ -359,7 +359,7 @@
                 <span class="mdash-avatar sm alt">{{ $booking->customer_initials }}</span>
                 <strong>{{ $booking->customer_name }}</strong>
                 <small><i class="bi bi-clock"></i> Check-in</small>
-                <span class="mdash-room-chip">{{ $booking->room->name_or_number }}</span>
+                <span class="mdash-room-chip">{{ $booking->room_label }}</span>
               </div>
             @empty
               <p class="mdash-empty">No check-ins scheduled for tomorrow.</p>

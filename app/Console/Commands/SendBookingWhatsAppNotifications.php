@@ -39,6 +39,7 @@ class SendBookingWhatsAppNotifications extends Command
     {
         $bookings = Booking::with('room')
             ->where('status', 'confirmed')
+            ->where('booking_type', '!=', 'safari_only')
             ->whereDate('check_in', now()->addDay()->toDateString())
             ->whereNull('reminder_sent_at')
             ->get();
@@ -71,6 +72,7 @@ class SendBookingWhatsAppNotifications extends Command
     {
         $bookings = Booking::with('room')
             ->where('status', 'confirmed')
+            ->where('booking_type', '!=', 'safari_only')
             ->whereDate('check_in', now()->toDateString())
             ->whereNull('checkin_info_sent_at')
             ->get();
@@ -102,7 +104,7 @@ class SendBookingWhatsAppNotifications extends Command
             '',
             "Hi {$booking->customer_name}, we are excited to welcome you tomorrow!",
             '',
-            "🏡 Room: {$booking->room->name_or_number}",
+            "🏡 Room: {$booking->room_label}",
             '📅 Check-in: '.$booking->check_in->format('d M Y'),
             '⏰ Check-in Time: 2:00 PM',
             '',

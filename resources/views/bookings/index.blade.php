@@ -21,8 +21,17 @@
         @endif
         <div class="row g-4">
           <div class="col-12">
-            <div class="panel" x-data="bookingsPanel('{{ in_array(request('tab'), ['all', 'pending', 'active', 'completed', 'cancelled', 'today_checkins', 'today_checkouts', 'balance_due'], true) ? request('tab') : 'all' }}')">
+            <div class="panel" x-data="bookingsPanel('{{ in_array(request('tab'), ['all', 'pending', 'active', 'completed', 'cancelled', 'today_checkins', 'today_checkouts', 'balance_due'], true) ? request('tab') : 'all' }}', '{{ in_array(request('type'), ['all', 'accommodation_only', 'safari_only', 'full_package'], true) ? request('type') : 'all' }}')">
               <div class="panel-head"><div><h2>Bookings</h2><p>Reservations across all rooms and cabanas</p></div></div>
+
+              @if ($globalSettings->is_safari_enabled)
+                <div class="booking-tabs" role="tablist" aria-label="Filter bookings by type">
+                  <button type="button" class="booking-tab" role="tab" :class="{ active: typeFilter === 'all' }" :aria-selected="typeFilter === 'all'" @click="typeFilter = 'all'">All</button>
+                  <button type="button" class="booking-tab" role="tab" :class="{ active: typeFilter === 'accommodation_only' }" :aria-selected="typeFilter === 'accommodation_only'" @click="typeFilter = 'accommodation_only'"><i class="bi bi-house-door"></i> Accommodations Only</button>
+                  <button type="button" class="booking-tab" role="tab" :class="{ active: typeFilter === 'safari_only' }" :aria-selected="typeFilter === 'safari_only'" @click="typeFilter = 'safari_only'"><i class="bi bi-truck-front"></i> Safari Only</button>
+                  <button type="button" class="booking-tab" role="tab" :class="{ active: typeFilter === 'full_package' }" :aria-selected="typeFilter === 'full_package'" @click="typeFilter = 'full_package'"><i class="bi bi-layers"></i> Full Packages</button>
+                </div>
+              @endif
 
               <div class="booking-tabs" role="tablist" aria-label="Filter bookings by status">
                 <button type="button" class="booking-tab" role="tab" :class="{ active: tab === 'all' }" :aria-selected="tab === 'all'" @click="tab = 'all'">All Bookings</button>
@@ -61,6 +70,9 @@
                     <thead>
                       <tr>
                         <th>Customer</th>
+                        @if ($globalSettings->is_safari_enabled)
+                          <th>Type</th>
+                        @endif
                         <th>Room</th>
                         <th>Check-in</th>
                         <th>Check-out</th>
@@ -76,17 +88,22 @@
                         @php
                           $today = today();
                           $rowTabs = ['all', ['pending' => 'pending', 'checked_out' => 'completed', 'cancelled' => 'cancelled'][$booking->status] ?? 'active'];
-                          if ($booking->status === 'confirmed' && $booking->check_in->isSameDay($today)) $rowTabs[] = 'today_checkins';
-                          if ($booking->status === 'confirmed' && $booking->check_out->isSameDay($today)) $rowTabs[] = 'today_checkouts';
+                          if ($booking->status === 'confirmed' && $booking->booking_type !== 'safari_only' && $booking->check_in->isSameDay($today)) $rowTabs[] = 'today_checkins';
+                          if ($booking->status === 'confirmed' && $booking->booking_type !== 'safari_only' && $booking->check_out->isSameDay($today)) $rowTabs[] = 'today_checkouts';
                           if ($booking->status === 'confirmed' && (float) $booking->advance_payment < (float) $booking->total_amount) $rowTabs[] = 'balance_due';
                           $badge = ['pending' => 'pending', 'confirmed' => 'new', 'checked_out' => 'won', 'cancelled' => 'stuck'][$booking->status] ?? 'new';
+                          $typeBadge = ['accommodation_only' => 'type-badge-cabana', 'safari_only' => 'type-badge-safari', 'full_package' => 'type-badge-combo'][$booking->booking_type] ?? 'type-badge-cabana';
+                          $typeIcon = ['accommodation_only' => 'house-door', 'safari_only' => 'truck-front', 'full_package' => 'layers'][$booking->booking_type] ?? 'house-door';
                           $canSendWhatsApp = $booking->customer_phone && in_array($booking->status, ['confirmed', 'checked_out'], true);
                         @endphp
-                        <tr x-show="@json($rowTabs).includes(tab)">
+                        <tr x-show="@json($rowTabs).includes(tab) && (typeFilter === 'all' || typeFilter === '{{ $booking->booking_type }}')">
                           <td><strong>{{ $booking->customer_name }}</strong></td>
-                          <td>{{ $booking->room->name_or_number }}</td>
-                          <td>{{ $booking->check_in->format('d M Y') }}</td>
-                          <td>{{ $booking->check_out->format('d M Y') }}</td>
+                          @if ($globalSettings->is_safari_enabled)
+                            <td><span class="type-badge {{ $typeBadge }}"><i class="bi bi-{{ $typeIcon }}"></i> {{ $booking->booking_type_label }}</span></td>
+                          @endif
+                          <td>{{ $booking->room_label }}</td>
+                          <td>{{ $booking->booking_type === 'safari_only' ? '—' : $booking->check_in->format('d M Y') }}</td>
+                          <td>{{ $booking->booking_type === 'safari_only' ? '—' : $booking->check_out->format('d M Y') }}</td>
                           <td>{{ number_format($booking->total_amount, 2) }}</td>
                           <td>{{ number_format($booking->advance_payment, 2) }}</td>
                           <td>{{ number_format($booking->remaining_balance, 2) }}</td>
@@ -138,7 +155,7 @@
                           </td>
                         </tr>
                       @empty
-                        <tr><td colspan="9" class="text-center text-muted py-4">No bookings yet. Add your first booking to get started.</td></tr>
+                        <tr><td colspan="{{ $globalSettings->is_safari_enabled ? 10 : 9 }}" class="text-center text-muted py-4">No bookings yet. Add your first booking to get started.</td></tr>
                       @endforelse
                     </tbody>
                   </table>
@@ -151,21 +168,28 @@
                     @php
                       $today = today();
                       $rowTabs = ['all', ['pending' => 'pending', 'checked_out' => 'completed', 'cancelled' => 'cancelled'][$booking->status] ?? 'active'];
-                      if ($booking->status === 'confirmed' && $booking->check_in->isSameDay($today)) $rowTabs[] = 'today_checkins';
-                      if ($booking->status === 'confirmed' && $booking->check_out->isSameDay($today)) $rowTabs[] = 'today_checkouts';
+                      if ($booking->status === 'confirmed' && $booking->booking_type !== 'safari_only' && $booking->check_in->isSameDay($today)) $rowTabs[] = 'today_checkins';
+                      if ($booking->status === 'confirmed' && $booking->booking_type !== 'safari_only' && $booking->check_out->isSameDay($today)) $rowTabs[] = 'today_checkouts';
                       if ($booking->status === 'confirmed' && (float) $booking->advance_payment < (float) $booking->total_amount) $rowTabs[] = 'balance_due';
                       $badge = ['pending' => 'pending', 'confirmed' => 'new', 'checked_out' => 'won', 'cancelled' => 'stuck'][$booking->status] ?? 'new';
+                      $typeBadge = ['accommodation_only' => 'type-badge-cabana', 'safari_only' => 'type-badge-safari', 'full_package' => 'type-badge-combo'][$booking->booking_type] ?? 'type-badge-cabana';
+                      $typeIcon = ['accommodation_only' => 'house-door', 'safari_only' => 'truck-front', 'full_package' => 'layers'][$booking->booking_type] ?? 'house-door';
                       $canSendWhatsApp = $booking->customer_phone && in_array($booking->status, ['confirmed', 'checked_out'], true);
                     @endphp
-                    <div class="mdash-booking-card stacked" x-show="@json($rowTabs).includes(tab)">
+                    <div class="mdash-booking-card stacked" x-show="@json($rowTabs).includes(tab) && (typeFilter === 'all' || typeFilter === '{{ $booking->booking_type }}')">
                       <div class="mdash-card-top">
                         <span class="mdash-avatar sm">{{ $booking->customer_initials }}</span>
                         <div class="mdash-booking-info">
                           <strong>{{ $booking->customer_name }}</strong>
-                          <small>{{ $booking->room->name_or_number }} &middot; {{ $booking->check_in->format('d M') }} - {{ $booking->check_out->format('d M Y') }}</small>
+                          <small>{{ $booking->room_label }} @if ($booking->booking_type !== 'safari_only') &middot; {{ $booking->check_in->format('d M') }} - {{ $booking->check_out->format('d M Y') }} @endif</small>
                         </div>
                         <span class="deal-badge {{ $badge }}">{{ ucfirst(str_replace('_', ' ', $booking->status)) }}</span>
                       </div>
+                      @if ($globalSettings->is_safari_enabled)
+                        <div class="mdash-card-top">
+                          <span class="type-badge {{ $typeBadge }}"><i class="bi bi-{{ $typeIcon }}"></i> {{ $booking->booking_type_label }}</span>
+                        </div>
+                      @endif
 
                       <div class="mdash-card-meta">
                         <span>Total <strong>{{ number_format($booking->total_amount, 2) }}</strong></span>
@@ -295,12 +319,25 @@
                   <div class="qv-row"><span>Phone</span><strong>{{ $booking->customer_phone ?: '—' }}</strong></div>
                   <div class="qv-row"><span>Email</span><strong>{{ $booking->customer_email ?: '—' }}</strong></div>
 
-                  <div class="qv-section-label">Stay</div>
-                  <div class="qv-row"><span>Cabana</span><strong>{{ $booking->room->name_or_number }}</strong></div>
-                  <div class="qv-row"><span>Check-in</span><strong>{{ $booking->check_in->format('d M Y') }}</strong></div>
-                  <div class="qv-row"><span>Check-out</span><strong>{{ $booking->check_out->format('d M Y') }}</strong></div>
-                  @if ($booking->board_type_label)
-                    <div class="qv-row"><span>Board Type</span><strong>{{ $booking->board_type_label }}</strong></div>
+                  @if ($globalSettings->is_safari_enabled)
+                    <div class="qv-row"><span>Booking Type</span><strong>{{ $booking->booking_type_label }}</strong></div>
+                  @endif
+                  @if ($booking->room)
+                    <div class="qv-section-label">Stay</div>
+                    <div class="qv-row"><span>Cabana</span><strong>{{ $booking->room->name_or_number }}</strong></div>
+                    <div class="qv-row"><span>Check-in</span><strong>{{ $booking->check_in->format('d M Y') }}</strong></div>
+                    <div class="qv-row"><span>Check-out</span><strong>{{ $booking->check_out->format('d M Y') }}</strong></div>
+                    @if ($booking->board_type_label)
+                      <div class="qv-row"><span>Board Type</span><strong>{{ $booking->board_type_label }}</strong></div>
+                    @endif
+                  @endif
+                  @if ($booking->booking_type !== 'accommodation_only')
+                    <div class="qv-section-label">Safari</div>
+                    <div class="qv-row"><span>Tour</span><strong>{{ $booking->safari_tour_name }}</strong></div>
+                    <div class="qv-row"><span>Safari Date</span><strong>{{ optional($booking->safari_date)->format('d M Y') }}</strong></div>
+                    @if ($booking->safari_vehicle_details)
+                      <div class="qv-row"><span>Vehicle</span><strong>{{ $booking->safari_vehicle_details }}</strong></div>
+                    @endif
                   @endif
                   <div class="qv-row"><span>Status</span><span class="deal-badge {{ $badge }}">{{ ucfirst(str_replace('_', ' ', $booking->status)) }}</span></div>
 
@@ -324,9 +361,10 @@
 
 @push('scripts')
 <script>
-    function bookingsPanel(initialTab) {
+    function bookingsPanel(initialTab, initialType) {
         return {
             tab: initialTab,
+            typeFilter: initialType || 'all',
             sendingWhatsApp: {},
             async sendWhatsApp(bookingId, url) {
                 if (this.sendingWhatsApp[bookingId]) return;
