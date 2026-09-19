@@ -4,8 +4,8 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="csrf-token" content="{{ csrf_token() }}">
-  <title>@yield('title', 'Dashora Admin Dashboard')</title>
-  <meta name="description" content="Dashora premium responsive HTML admin dashboard template.">
+  <title>@yield('title', ($globalSettings->villa_name ?? config('app.name')) . ' Admin Dashboard')</title>
+  <meta name="description" content="{{ ($globalSettings->villa_name ?? config('app.name')) . ' property management dashboard.' }}">
   <link rel="icon" type="image/svg+xml" href="{{ asset('assets/img/favicon.svg') }}">
   <link rel="shortcut icon" href="{{ asset('assets/img/favicon.svg') }}">
   <link href="{{ asset('assets/vendor/bootstrap/css/bootstrap.min.css') }}" rel="stylesheet">
@@ -13,7 +13,7 @@
   <link href="{{ asset('assets/css/style.css') }}" rel="stylesheet">
   @stack('styles')
 </head>
-<body class="app-layout">
+<body class="app-layout" data-villa-name="{{ $globalSettings->villa_name ?? config('app.name') }}" data-dashboard-url="{{ route('dashboard') }}">
   @include('layouts.partials.sidebar')
     <div class="sidebar-backdrop" data-sidebar-close></div>
     <main class="main">
@@ -45,7 +45,7 @@
   </div>
   <div class="toast-container position-fixed bottom-0 end-0 p-3">
     <div id="actionToast" class="toast dash-toast" role="status" aria-live="polite" aria-atomic="true">
-      <div class="toast-header"><strong class="me-auto">Dashora</strong><small>Now</small><button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button></div>
+      <div class="toast-header"><strong class="me-auto">{{ $globalSettings->villa_name ?? config('app.name') }}</strong><small>Now</small><button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button></div>
       <div class="toast-body">Action saved in this static demo.</div>
     </div>
   </div>

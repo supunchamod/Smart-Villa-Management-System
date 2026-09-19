@@ -1,7 +1,7 @@
 /*
  * Premium split-screen login/register experience for the villa admin
  * suite. Scoped entirely under .villa-auth-page so it can't leak into
- * or collide with the shared Dashora template styles in style.css.
+ * or collide with the shared legacy template styles in style.css.
  * Reuses the app's existing theme variables (--surface, --text, --line,
  * etc.) so it automatically follows the dashboard's light/dark toggle.
  */

@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Add Room | Dashora Admin Dashboard')
+@section('title', 'Add Room | ' . ($globalSettings->villa_name ?? config('app.name')))
 
 @section('content')
         <div class="page-title">

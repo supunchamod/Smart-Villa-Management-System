@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Invoice Details | Dashora Admin Dashboard')
+@section('title', 'Invoice Details | ' . ($globalSettings->villa_name ?? config('app.name')))
 
 @section('content')
         <div class="page-title">
@@ -17,8 +17,8 @@
           <article class="invoice-document panel" data-print-area>
             <div class="invoice-top">
               <div class="invoice-brand">
-                <span class="brand-mark">D</span>
-                <div><strong>Dashora</strong><small>Premium Admin Suite</small></div>
+                <span class="brand-mark">{{ strtoupper(substr($globalSettings->villa_name ?? config('app.name'), 0, 1)) }}</span>
+                <div><strong>{{ $globalSettings->villa_name ?? config('app.name') }}</strong><small>Villa Management Suite</small></div>
               </div>
               <div class="invoice-title">
                 <span class="deal-badge won">Paid</span>
@@ -43,8 +43,8 @@
             <div class="invoice-party-grid">
               <section>
                 <h3>Bill From</h3>
-                <strong>Dashora Studio Inc.</strong>
-                <p>88 Product Avenue<br>New York, NY 10013<br>billing@dashora.com</p>
+                <strong>{{ $globalSettings->villa_name ?? config('app.name') }}</strong>
+                <p>{{ $globalSettings->address ?? 'Address not set' }}<br>{{ $globalSettings->email ?? '' }}</p>
               </section>
               <section>
                 <h3>Bill To</h3>
@@ -57,7 +57,7 @@
               <table>
                 <thead><tr><th>Service</th><th>Qty</th><th>Rate</th><th>Total</th></tr></thead>
                 <tbody>
-                  <tr><td><strong>Dashora Enterprise License</strong><span>Annual dashboard template license and updates</span></td><td>1</td><td>$1,800.00</td><td>$1,800.00</td></tr>
+                  <tr><td><strong>Enterprise License</strong><span>Annual dashboard template license and updates</span></td><td>1</td><td>$1,800.00</td><td>$1,800.00</td></tr>
                   <tr><td><strong>Implementation Support</strong><span>Design system setup, layout review, and QA support</span></td><td>12h</td><td>$95.00</td><td>$1,140.00</td></tr>
                   <tr><td><strong>Custom Reporting Pack</strong><span>Invoice, customer, and analytics reporting views</span></td><td>1</td><td>$480.00</td><td>$480.00</td></tr>
                 </tbody>
