@@ -1,0 +1,214 @@
+/*
+ * "Manage Bookings" page redesign. Built entirely on the shared Dashora
+ * design tokens (var(--surface), var(--primary), var(--line), etc.) and
+ * the existing .deal-badge / .crm-kpi-card language so it stays visually
+ * consistent with the rest of the light/blue admin theme - just cleaner
+ * and more compact. Scoped to bk-* class names to avoid colliding with
+ * the shared stylesheet.
+ */
+
+/* A fifth status tag ("Checked In") alongside the existing won/new/stuck/pending */
+.deal-badge.progress { color: #1a7f96; background: #e3f6fa; }
+[data-theme="dark"] .deal-badge.progress { color: #5fd0e8; background: rgba(47, 182, 208, .16); }
+
+/* Pending-enquiries banner */
+.bk-pending-banner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 12px 16px;
+  margin-bottom: 18px;
+  border: 1px solid rgba(245, 158, 11, .3);
+  border-radius: 8px;
+  background: #fff7e6;
+  color: #92400e;
+  font-size: 13.5px;
+  font-weight: 700;
+}
+
+[data-theme="dark"] .bk-pending-banner {
+  border-color: rgba(245, 158, 11, .28);
+  background: rgba(245, 158, 11, .12);
+  color: #fbbf24;
+}
+
+/* KPI grid */
+.bk-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+@media (max-width: 1199px) {
+  .bk-kpi-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (max-width: 575px) {
+  .bk-kpi-grid { grid-template-columns: 1fr; }
+}
+
+.bk-kpi-card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 18px 20px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface);
+  box-shadow: var(--shadow);
+}
+
+.bk-kpi-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+
+.bk-kpi-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 6px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: .03em;
+}
+
+.bk-kpi-count { font-size: 30px; font-weight: 900; letter-spacing: -.02em; color: var(--text); line-height: 1; }
+
+.bk-kpi-icon {
+  display: grid;
+  flex: 0 0 42px;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  border-radius: 10px;
+  color: #fff;
+  font-size: 17px;
+}
+
+.bk-kpi-icon.blue { background: linear-gradient(135deg, #5278ff, #7c96ff); }
+.bk-kpi-icon.teal { background: linear-gradient(135deg, #2fb6d0, #56d2e8); }
+.bk-kpi-icon.violet { background: linear-gradient(135deg, #8a5cf2, #ab8cf7); }
+.bk-kpi-icon.amber { background: linear-gradient(135deg, #f0a942, #f6c26b); }
+
+.bk-kpi-list { display: grid; gap: 2px; }
+
+.bk-kpi-list-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 6px 0;
+  border-top: 1px dashed var(--line);
+  font-size: 12.5px;
+}
+
+.bk-kpi-list-row:first-child { border-top: 0; }
+.bk-kpi-list-row strong { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text); font-weight: 700; }
+.bk-kpi-list-row span { flex: 0 0 auto; color: var(--muted); font-weight: 700; }
+
+.bk-kpi-empty { padding: 4px 0; color: var(--muted); font-size: 12.5px; font-weight: 600; }
+
+.bk-kpi-more { margin-top: 2px; color: var(--primary); font-size: 12.5px; font-weight: 800; }
+
+.bk-kpi-alert {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  font-size: 12.5px;
+  font-weight: 800;
+}
+
+.bk-kpi-alert.warn { color: #b45309; background: #fff7e6; }
+.bk-kpi-alert.ok { color: #1a7a34; background: #eaf8ee; }
+[data-theme="dark"] .bk-kpi-alert.warn { color: #fbbf24; background: rgba(245, 158, 11, .16); }
+[data-theme="dark"] .bk-kpi-alert.ok { color: #4ade80; background: rgba(47, 168, 79, .16); }
+
+/* Search + filters */
+.bk-filter-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-bottom: 14px; }
+
+.bk-search-wrap { position: relative; flex: 1 1 260px; min-width: 220px; }
+.bk-search-wrap i { position: absolute; top: 50%; left: 14px; transform: translateY(-50%); color: var(--muted); font-size: 14px; }
+
+.bk-search-wrap input {
+  width: 100%;
+  padding: 10px 14px 10px 38px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--surface-2);
+  color: var(--text);
+  font-size: 13.5px;
+}
+
+.bk-search-wrap input:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(82, 120, 255, .14); }
+
+.bk-filter-selects { display: flex; flex-wrap: wrap; gap: 10px; }
+
+.bk-filter-selects select {
+  min-width: 150px;
+  padding: 9px 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface-2);
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.bk-clear-filters { flex: 0 0 auto; color: var(--muted); font-size: 12.5px; font-weight: 800; }
+.bk-clear-filters:hover { color: var(--primary); }
+
+.bk-pills { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 18px; }
+
+.bk-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 9px 16px;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  background: var(--surface-2);
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 800;
+  transition: background .15s ease, color .15s ease, box-shadow .15s ease;
+}
+
+.bk-pill:hover { color: var(--text); }
+.bk-pill.active { background: var(--primary); color: #fff; box-shadow: 0 10px 22px rgba(82, 120, 255, .28); }
+.bk-pill.active .tab-count-badge { background: rgba(255, 255, 255, .28); color: #fff; }
+
+/* Table: combined stay column + compact financial column */
+.bk-stay-dates { display: block; color: var(--text); font-weight: 700; }
+.bk-stay-nights { display: block; margin-top: 2px; color: var(--muted); font-size: 12px; font-weight: 700; }
+
+.bk-financial strong { display: block; color: var(--text); }
+.bk-financial .deal-badge { display: inline-block; margin-top: 6px; white-space: normal; }
+
+.bk-guest-line { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.bk-guest-line strong { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.bk-guest-line small { display: block; color: var(--muted); font-weight: 700; }
+
+/* Minimalist icon-only row actions */
+.bk-row-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+
+.bk-icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--muted);
+  transition: color .15s ease, border-color .15s ease, background .15s ease;
+}
+
+.bk-icon-btn:hover { color: var(--primary); border-color: rgba(82, 120, 255, .35); }
+.bk-icon-btn.whatsapp:hover { color: #1a7a34; border-color: rgba(47, 168, 79, .35); }
+.bk-icon-btn:disabled { opacity: .5; cursor: not-allowed; }

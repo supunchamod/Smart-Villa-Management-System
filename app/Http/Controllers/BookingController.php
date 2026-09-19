@@ -35,20 +35,75 @@ class BookingController extends Controller
      * just added or submitted always lands at the top of the table,
      * regardless of how far out its stay is.
      *
-     * The quick-filter bar's counts are always computed across every
-     * booking (not just the current page), so they stay accurate
-     * regardless of which page or filter tab is currently showing.
+     * The quick-filter bar's counts and the KPI cards are always computed
+     * across every booking (not just the current page or the active
+     * search/filter), so they stay accurate no matter what's currently
+     * showing in the table.
      */
-    public function index(): View
+    public function index(Request $request): View
     {
         $today = today();
+        $tomorrow = $today->copy()->addDay();
+
+        // Only 'all' / 'active' / 'balance_due' / 'history' are exposed as
+        // filter pills in the UI, but 'pending' stays a valid, directly
+        // linkable value so the "pending enquiries" alert can deep-link
+        // into it without adding a fifth pill.
+        $tab = in_array($request->query('tab'), ['all', 'active', 'balance_due', 'history', 'pending'], true)
+            ? $request->query('tab')
+            : 'all';
+
+        $range = in_array($request->query('range'), ['today', 'week', 'month'], true)
+            ? $request->query('range')
+            : null;
+
+        $bookingsQuery = Booking::query()->with('room')->latest();
+
+        match ($tab) {
+            'active' => $bookingsQuery->where('status', 'confirmed'),
+            'balance_due' => $bookingsQuery->where('status', 'confirmed')->whereColumn('advance_payment', '<', 'total_amount'),
+            'history' => $bookingsQuery->whereIn('status', ['checked_out', 'cancelled']),
+            'pending' => $bookingsQuery->where('status', 'pending'),
+            default => null,
+        };
+
+        if ($search = trim((string) $request->query('search', ''))) {
+            $bookingsQuery->where(function ($query) use ($search) {
+                $query->where('customer_name', 'like', "%{$search}%")
+                    ->orWhere('customer_phone', 'like', "%{$search}%");
+
+                if (ctype_digit($search)) {
+                    $query->orWhere('id', (int) $search);
+                }
+            });
+        }
+
+        if ($roomType = $request->query('room_type')) {
+            $bookingsQuery->whereHas('room', fn ($query) => $query->where('type', $roomType));
+        }
+
+        match ($range) {
+            'today' => $bookingsQuery->whereDate('check_in', $today),
+            'week' => $bookingsQuery->whereBetween('check_in', [$today, $today->copy()->addDays(7)]),
+            'month' => $bookingsQuery->whereBetween('check_in', [$today->copy()->startOfMonth(), $today->copy()->endOfMonth()]),
+            default => null,
+        };
 
         return view('bookings.index', [
-            'bookings' => Booking::with('room')->latest()->paginate(10),
+            'bookings' => $bookingsQuery->paginate(10)->withQueryString(),
+            'activeTab' => $tab,
+            'activeRange' => $range,
+            'search' => $request->query('search', ''),
+            'roomTypes' => Room::query()->select('type')->distinct()->orderBy('type')->pluck('type'),
+            'selectedRoomType' => $roomType ?? '',
             'pendingBookingsCount' => Booking::where('status', 'pending')->count(),
             'todayCheckInsCount' => Booking::where('status', 'confirmed')->whereDate('check_in', $today)->count(),
             'todayCheckOutsCount' => Booking::where('status', 'confirmed')->whereDate('check_out', $today)->count(),
+            'tomorrowCheckInsCount' => Booking::where('status', 'confirmed')->whereDate('check_in', $tomorrow)->count(),
+            'tomorrowCheckOutsCount' => Booking::where('status', 'confirmed')->whereDate('check_out', $tomorrow)->count(),
             'balanceDueCount' => Booking::where('status', 'confirmed')->whereColumn('advance_payment', '<', 'total_amount')->count(),
+            'todayArrivals' => Booking::with('room')->where('status', 'confirmed')->whereDate('check_in', $today)->orderBy('check_in')->get(),
+            'todayDepartures' => Booking::with('room')->where('status', 'confirmed')->whereDate('check_out', $today)->orderBy('check_out')->get(),
         ]);
     }
 

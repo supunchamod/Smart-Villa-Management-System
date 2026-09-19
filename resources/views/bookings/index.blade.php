@@ -2,7 +2,18 @@
 
 @section('title', 'Bookings | ' . ($globalSettings->villa_name ?? config('app.name')))
 
+@push('styles')
+  <link href="{{ asset('assets/css/bookings-index.css') }}" rel="stylesheet">
+@endpush
+
 @section('content')
+        @php
+          $today = today();
+          $baseQuery = collect(request()->except(['tab', 'page']))->filter(fn ($value) => $value !== null && $value !== '')->all();
+          $pillUrl = fn (string $tab) => route('bookings.index', $tab === 'all' ? $baseQuery : array_merge($baseQuery, ['tab' => $tab]));
+          $hasActiveFilters = $search !== '' || $selectedRoomType !== '' || $activeRange !== null;
+        @endphp
+
         <div class="page-title">
           <nav class="page-breadcrumb" aria-label="breadcrumb">
             <ol>
@@ -13,46 +24,132 @@
           </nav>
           <div class="page-actions"><a class="btn btn-primary" href="{{ route('bookings.create') }}"><i class="bi bi-plus-lg"></i> Add Booking</a></div>
         </div>
+
         @if (session('status'))
           <div class="alert alert-success">{{ session('status') }}</div>
         @endif
         @if (session('error'))
           <div class="alert alert-danger">{{ session('error') }}</div>
         @endif
+
+        @if ($pendingBookingsCount > 0)
+          <div class="bk-pending-banner">
+            <span><i class="bi bi-bell me-1"></i> {{ $pendingBookingsCount }} pending {{ \Illuminate\Support\Str::plural('enquiry', $pendingBookingsCount) }} awaiting review.</span>
+            <a class="btn btn-sm btn-warning" href="{{ $pillUrl('pending') }}">Review Now</a>
+          </div>
+        @endif
+
+        {{-- Daily Operations Grid --}}
+        <div class="bk-kpi-grid">
+          <div class="bk-kpi-card">
+            <div class="bk-kpi-head">
+              <div>
+                <div class="bk-kpi-label"><i class="bi bi-box-arrow-in-right"></i> Today's Check-ins</div>
+                <div class="bk-kpi-count">{{ $todayCheckInsCount }}</div>
+              </div>
+              <span class="bk-kpi-icon blue"><i class="bi bi-box-arrow-in-right"></i></span>
+            </div>
+            <div class="bk-kpi-list">
+              @forelse ($todayArrivals->take(3) as $arrival)
+                <div class="bk-kpi-list-row"><strong>{{ $arrival->customer_name }}</strong><span>{{ $arrival->room->name_or_number }}</span></div>
+              @empty
+                <p class="bk-kpi-empty mb-0">No arrivals scheduled today.</p>
+              @endforelse
+              @if ($todayArrivals->count() > 3)
+                <a class="bk-kpi-more" href="{{ route('bookings.index', ['range' => 'today', 'tab' => 'active']) }}">+{{ $todayArrivals->count() - 3 }} more</a>
+              @endif
+            </div>
+          </div>
+
+          <div class="bk-kpi-card">
+            <div class="bk-kpi-head">
+              <div>
+                <div class="bk-kpi-label"><i class="bi bi-box-arrow-right"></i> Today's Check-outs</div>
+                <div class="bk-kpi-count">{{ $todayCheckOutsCount }}</div>
+              </div>
+              <span class="bk-kpi-icon teal"><i class="bi bi-box-arrow-right"></i></span>
+            </div>
+            @php $unsettledDepartures = $todayDepartures->filter(fn ($booking) => $booking->remaining_balance > 0); @endphp
+            @if ($unsettledDepartures->isNotEmpty())
+              <div class="bk-kpi-alert warn"><i class="bi bi-exclamation-triangle"></i> {{ $unsettledDepartures->count() }} with balance due</div>
+              <div class="bk-kpi-list">
+                @foreach ($unsettledDepartures->take(2) as $departure)
+                  <div class="bk-kpi-list-row"><strong>{{ $departure->customer_name }}</strong><span>{{ $globalSettings->currency }} {{ number_format($departure->remaining_balance, 2) }}</span></div>
+                @endforeach
+              </div>
+            @elseif ($todayCheckOutsCount > 0)
+              <div class="bk-kpi-alert ok"><i class="bi bi-check-circle"></i> All departures settled</div>
+            @else
+              <p class="bk-kpi-empty mb-0">No departures scheduled today.</p>
+            @endif
+          </div>
+
+          <div class="bk-kpi-card">
+            <div class="bk-kpi-head">
+              <div>
+                <div class="bk-kpi-label"><i class="bi bi-calendar-plus"></i> Tomorrow's Check-ins</div>
+                <div class="bk-kpi-count">{{ $tomorrowCheckInsCount }}</div>
+              </div>
+              <span class="bk-kpi-icon violet"><i class="bi bi-calendar-plus"></i></span>
+            </div>
+            <p class="bk-kpi-empty mb-0">Upcoming arrivals for tomorrow.</p>
+          </div>
+
+          <div class="bk-kpi-card">
+            <div class="bk-kpi-head">
+              <div>
+                <div class="bk-kpi-label"><i class="bi bi-calendar-minus"></i> Tomorrow's Check-outs</div>
+                <div class="bk-kpi-count">{{ $tomorrowCheckOutsCount }}</div>
+              </div>
+              <span class="bk-kpi-icon amber"><i class="bi bi-calendar-minus"></i></span>
+            </div>
+            <p class="bk-kpi-empty mb-0">Scheduled room clearances tomorrow.</p>
+          </div>
+        </div>
+
         <div class="row g-4">
           <div class="col-12">
-            <div class="panel" x-data="bookingsPanel('{{ in_array(request('tab'), ['all', 'pending', 'active', 'completed', 'cancelled', 'today_checkins', 'today_checkouts', 'balance_due'], true) ? request('tab') : 'all' }}')">
-              <div class="panel-head"><div><h2>Bookings</h2><p>Reservations across all rooms and cabanas</p></div></div>
+            <div class="panel" x-data="bookingsPanel()">
+              <div class="panel-head"><div><h2>All Bookings</h2><p>Reservations across all rooms and cabanas</p></div></div>
 
-              <div class="booking-tabs" role="tablist" aria-label="Filter bookings by status">
-                <button type="button" class="booking-tab" role="tab" :class="{ active: tab === 'all' }" :aria-selected="tab === 'all'" @click="tab = 'all'">All Bookings</button>
-                <button type="button" class="booking-tab" role="tab" :class="{ active: tab === 'today_checkins' }" :aria-selected="tab === 'today_checkins'" @click="tab = 'today_checkins'">
-                  Today's Check-ins
-                  @if ($todayCheckInsCount > 0)
-                    <span class="tab-count-badge tab-count-badge-green">{{ $todayCheckInsCount }}</span>
+              {{-- Search & filters --}}
+              <form method="GET" action="{{ route('bookings.index') }}" class="bk-filter-bar">
+                <input type="hidden" name="tab" value="{{ $activeTab }}">
+                <div class="bk-search-wrap">
+                  <i class="bi bi-search"></i>
+                  <input type="search" name="search" value="{{ $search }}" placeholder="Search guest name, phone, or booking ID...">
+                </div>
+                <div class="bk-filter-selects">
+                  <select name="room_type" onchange="this.form.submit()" aria-label="Filter by cabana / room type">
+                    <option value="">All Cabana Types</option>
+                    @foreach ($roomTypes as $type)
+                      <option value="{{ $type }}" @selected($selectedRoomType === $type)>{{ $type }}</option>
+                    @endforeach
+                  </select>
+                  <select name="range" onchange="this.form.submit()" aria-label="Filter by check-in date range">
+                    <option value="">Any Check-in Date</option>
+                    <option value="today" @selected($activeRange === 'today')>Checking In Today</option>
+                    <option value="week" @selected($activeRange === 'week')>Next 7 Days</option>
+                    <option value="month" @selected($activeRange === 'month')>This Month</option>
+                  </select>
+                  <button type="submit" class="btn btn-primary btn-sm"><i class="bi bi-search"></i> Search</button>
+                  @if ($hasActiveFilters)
+                    <a class="bk-clear-filters" href="{{ $pillUrl($activeTab) }}"><i class="bi bi-x-circle me-1"></i>Clear filters</a>
                   @endif
-                </button>
-                <button type="button" class="booking-tab" role="tab" :class="{ active: tab === 'today_checkouts' }" :aria-selected="tab === 'today_checkouts'" @click="tab = 'today_checkouts'">
-                  Today's Checkouts
-                  @if ($todayCheckOutsCount > 0)
-                    <span class="tab-count-badge tab-count-badge-blue">{{ $todayCheckOutsCount }}</span>
-                  @endif
-                </button>
-                <button type="button" class="booking-tab" role="tab" :class="{ active: tab === 'pending' }" :aria-selected="tab === 'pending'" @click="tab = 'pending'">
-                  Pending Enquiries
-                  @if ($pendingBookingsCount > 0)
-                    <span class="tab-count-badge tab-count-badge-yellow">{{ $pendingBookingsCount }}</span>
-                  @endif
-                </button>
-                <button type="button" class="booking-tab" role="tab" :class="{ active: tab === 'balance_due' }" :aria-selected="tab === 'balance_due'" @click="tab = 'balance_due'">
+                </div>
+              </form>
+
+              {{-- Filter pills --}}
+              <div class="bk-pills" role="tablist" aria-label="Filter bookings by status">
+                <a role="tab" href="{{ $pillUrl('all') }}" class="bk-pill {{ $activeTab === 'all' ? 'active' : '' }}" aria-selected="{{ $activeTab === 'all' ? 'true' : 'false' }}">All Bookings</a>
+                <a role="tab" href="{{ $pillUrl('active') }}" class="bk-pill {{ $activeTab === 'active' ? 'active' : '' }}" aria-selected="{{ $activeTab === 'active' ? 'true' : 'false' }}">Active / In-House</a>
+                <a role="tab" href="{{ $pillUrl('balance_due') }}" class="bk-pill {{ $activeTab === 'balance_due' ? 'active' : '' }}" aria-selected="{{ $activeTab === 'balance_due' ? 'true' : 'false' }}">
                   Balance Due
                   @if ($balanceDueCount > 0)
                     <span class="tab-count-badge tab-count-badge-red">{{ $balanceDueCount }}</span>
                   @endif
-                </button>
-                <button type="button" class="booking-tab" role="tab" :class="{ active: tab === 'active' }" :aria-selected="tab === 'active'" @click="tab = 'active'">Active</button>
-                <button type="button" class="booking-tab" role="tab" :class="{ active: tab === 'completed' }" :aria-selected="tab === 'completed'" @click="tab = 'completed'">Completed</button>
-                <button type="button" class="booking-tab" role="tab" :class="{ active: tab === 'cancelled' }" :aria-selected="tab === 'cancelled'" @click="tab = 'cancelled'">Cancelled</button>
+                </a>
+                <a role="tab" href="{{ $pillUrl('history') }}" class="bk-pill {{ $activeTab === 'history' ? 'active' : '' }}" aria-selected="{{ $activeTab === 'history' ? 'true' : 'false' }}">Completed / History</a>
               </div>
 
               <div class="d-none d-md-block">
@@ -60,13 +157,10 @@
                   <table class="table align-middle dash-table">
                     <thead>
                       <tr>
-                        <th>Customer</th>
-                        <th>Room</th>
-                        <th>Check-in</th>
-                        <th>Check-out</th>
-                        <th>Total</th>
-                        <th>Advance</th>
-                        <th>Balance</th>
+                        <th>Guest</th>
+                        <th>Cabana</th>
+                        <th>Stay</th>
+                        <th>Financial</th>
                         <th>Status</th>
                         <th>Actions</th>
                       </tr>
@@ -74,27 +168,47 @@
                     <tbody>
                       @forelse ($bookings as $booking)
                         @php
-                          $today = today();
-                          $rowTabs = ['all', ['pending' => 'pending', 'checked_out' => 'completed', 'cancelled' => 'cancelled'][$booking->status] ?? 'active'];
-                          if ($booking->status === 'confirmed' && $booking->check_in->isSameDay($today)) $rowTabs[] = 'today_checkins';
-                          if ($booking->status === 'confirmed' && $booking->check_out->isSameDay($today)) $rowTabs[] = 'today_checkouts';
-                          if ($booking->status === 'confirmed' && (float) $booking->advance_payment < (float) $booking->total_amount) $rowTabs[] = 'balance_due';
-                          $badge = ['pending' => 'pending', 'confirmed' => 'new', 'checked_out' => 'won', 'cancelled' => 'stuck'][$booking->status] ?? 'new';
+                          $nights = $booking->check_in->diffInDays($booking->check_out);
+                          $isInHouse = $booking->status === 'confirmed' && $booking->check_in->lte($today) && $booking->check_out->gte($today);
+                          $statusMeta = match (true) {
+                              $booking->status === 'pending' => ['label' => 'Pending', 'badge' => 'pending'],
+                              $booking->status === 'confirmed' && $isInHouse => ['label' => 'Checked In', 'badge' => 'progress'],
+                              $booking->status === 'confirmed' => ['label' => 'Confirmed', 'badge' => 'new'],
+                              $booking->status === 'checked_out' => ['label' => 'Checked Out', 'badge' => 'won'],
+                              $booking->status === 'cancelled' => ['label' => 'Cancelled', 'badge' => 'stuck'],
+                              default => ['label' => ucfirst($booking->status), 'badge' => 'new'],
+                          };
+                          $financialBadge = match (true) {
+                              in_array($booking->status, ['cancelled', 'pending'], true) => null,
+                              $booking->remaining_balance <= 0 => ['label' => 'Fully Paid', 'class' => 'won'],
+                              default => ['label' => 'Balance Due: ' . $globalSettings->currency . ' ' . number_format($booking->remaining_balance, 2), 'class' => 'pending'],
+                          };
                           $canSendWhatsApp = $booking->customer_phone && in_array($booking->status, ['confirmed', 'checked_out'], true);
                         @endphp
-                        <tr x-show="@json($rowTabs).includes(tab)">
-                          <td><strong>{{ $booking->customer_name }}</strong></td>
-                          <td>{{ $booking->room->name_or_number }}</td>
-                          <td>{{ $booking->check_in->format('d M Y') }}</td>
-                          <td>{{ $booking->check_out->format('d M Y') }}</td>
-                          <td>{{ number_format($booking->total_amount, 2) }}</td>
-                          <td>{{ number_format($booking->advance_payment, 2) }}</td>
-                          <td>{{ number_format($booking->remaining_balance, 2) }}</td>
+                        <tr>
                           <td>
-                            <span class="deal-badge {{ $badge }}">{{ ucfirst(str_replace('_', ' ', $booking->status)) }}</span>
+                            <div class="bk-guest-line">
+                              <span class="mdash-avatar sm">{{ $booking->customer_initials }}</span>
+                              <div>
+                                <strong>{{ $booking->customer_name }}</strong>
+                                <small>#{{ $booking->id }}@if($booking->customer_phone) &middot; {{ $booking->customer_phone }}@endif</small>
+                              </div>
+                            </div>
                           </td>
+                          <td>{{ $booking->room->name_or_number }}<br><small class="text-muted">{{ $booking->room->type }}</small></td>
                           <td>
-                            <div class="booking-row-actions">
+                            <span class="bk-stay-dates">{{ $booking->check_in->format('d M') }} - {{ $booking->check_out->format('d M Y') }}</span>
+                            <span class="bk-stay-nights">{{ $nights }} {{ \Illuminate\Support\Str::plural('Night', $nights) }}</span>
+                          </td>
+                          <td class="bk-financial">
+                            <strong>{{ $globalSettings->currency }} {{ number_format($booking->total_amount, 2) }}</strong>
+                            @if ($financialBadge)
+                              <span class="deal-badge {{ $financialBadge['class'] }}">{{ $financialBadge['label'] }}</span>
+                            @endif
+                          </td>
+                          <td><span class="deal-badge {{ $statusMeta['badge'] }}">{{ $statusMeta['label'] }}</span></td>
+                          <td>
+                            <div class="bk-row-actions">
                               @if ($booking->status === 'pending')
                                 <form method="POST" action="{{ route('bookings.confirm', $booking) }}">
                                   @csrf
@@ -106,22 +220,22 @@
                                 </form>
                               @elseif ($booking->status === 'confirmed')
                                 <button type="button" class="btn btn-sm {{ $booking->remaining_balance > 0 ? 'btn-warning' : 'btn-success' }}" data-bs-toggle="modal" data-bs-target="#checkoutModal{{ $booking->id }}">
-                                  <i class="bi bi-box-arrow-right"></i> {{ $booking->remaining_balance > 0 ? 'Collect Balance & Checkout' : 'Checkout' }}
+                                  <i class="bi bi-box-arrow-right"></i> {{ $booking->remaining_balance > 0 ? 'Collect & Checkout' : 'Checkout' }}
                                 </button>
                               @endif
 
                               @if ($booking->status !== 'cancelled' && $booking->status !== 'pending')
-                                <a class="btn btn-sm btn-outline-primary" href="{{ route($booking->status === 'checked_out' ? 'bookings.invoice.final' : 'bookings.invoice.confirmation', $booking) }}" target="_blank" rel="noopener" data-bs-toggle="tooltip" title="Download Invoice / Confirmation PDF" aria-label="Download invoice"><i class="bi bi-file-earmark-pdf"></i></a>
+                                <a class="bk-icon-btn" href="{{ route($booking->status === 'checked_out' ? 'bookings.invoice.final' : 'bookings.invoice.confirmation', $booking) }}" target="_blank" rel="noopener" data-bs-toggle="tooltip" title="Invoice PDF" aria-label="Download invoice"><i class="bi bi-file-earmark-pdf"></i></a>
                               @endif
 
                               @if ($canSendWhatsApp)
-                                <button type="button" class="btn btn-sm btn-outline-success" data-bs-toggle="tooltip" title="Resend via WhatsApp" aria-label="Resend via WhatsApp" @click="sendWhatsApp({{ $booking->id }}, '{{ route('bookings.send-whatsapp', $booking) }}')" :disabled="sendingWhatsApp[{{ $booking->id }}]"><i class="bi bi-whatsapp"></i></button>
+                                <button type="button" class="bk-icon-btn whatsapp" data-bs-toggle="tooltip" title="WhatsApp Message" aria-label="Resend via WhatsApp" @click="sendWhatsApp({{ $booking->id }}, '{{ route('bookings.send-whatsapp', $booking) }}')" :disabled="sendingWhatsApp[{{ $booking->id }}]"><i class="bi bi-whatsapp"></i></button>
                               @endif
 
-                              <button type="button" class="btn btn-sm btn-light" data-bs-toggle="modal" data-bs-target="#quickViewModal{{ $booking->id }}" aria-label="Quick view"><i class="bi bi-eye"></i></button>
+                              <button type="button" class="bk-icon-btn" data-bs-toggle="modal" data-bs-target="#quickViewModal{{ $booking->id }}" title="View Details" aria-label="View details"><i class="bi bi-eye"></i></button>
 
                               <div class="dropdown">
-                                <button class="btn btn-sm btn-light dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="More actions"><i class="bi bi-three-dots-vertical"></i></button>
+                                <button class="bk-icon-btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="More actions"><i class="bi bi-three-dots-vertical"></i></button>
                                 <ul class="dropdown-menu dropdown-menu-end">
                                   <li><a class="dropdown-item" href="{{ route('bookings.edit', $booking) }}"><i class="bi bi-pencil me-2"></i>Edit Booking</a></li>
                                   <li><hr class="dropdown-divider"></li>
@@ -138,7 +252,7 @@
                           </td>
                         </tr>
                       @empty
-                        <tr><td colspan="9" class="text-center text-muted py-4">No bookings yet. Add your first booking to get started.</td></tr>
+                        <tr><td colspan="6" class="text-center text-muted py-4">No bookings match these filters.</td></tr>
                       @endforelse
                     </tbody>
                   </table>
@@ -149,27 +263,38 @@
                 <div class="mdash-booking-list">
                   @forelse ($bookings as $booking)
                     @php
-                      $today = today();
-                      $rowTabs = ['all', ['pending' => 'pending', 'checked_out' => 'completed', 'cancelled' => 'cancelled'][$booking->status] ?? 'active'];
-                      if ($booking->status === 'confirmed' && $booking->check_in->isSameDay($today)) $rowTabs[] = 'today_checkins';
-                      if ($booking->status === 'confirmed' && $booking->check_out->isSameDay($today)) $rowTabs[] = 'today_checkouts';
-                      if ($booking->status === 'confirmed' && (float) $booking->advance_payment < (float) $booking->total_amount) $rowTabs[] = 'balance_due';
-                      $badge = ['pending' => 'pending', 'confirmed' => 'new', 'checked_out' => 'won', 'cancelled' => 'stuck'][$booking->status] ?? 'new';
+                      $nights = $booking->check_in->diffInDays($booking->check_out);
+                      $isInHouse = $booking->status === 'confirmed' && $booking->check_in->lte($today) && $booking->check_out->gte($today);
+                      $statusMeta = match (true) {
+                          $booking->status === 'pending' => ['label' => 'Pending', 'badge' => 'pending'],
+                          $booking->status === 'confirmed' && $isInHouse => ['label' => 'Checked In', 'badge' => 'progress'],
+                          $booking->status === 'confirmed' => ['label' => 'Confirmed', 'badge' => 'new'],
+                          $booking->status === 'checked_out' => ['label' => 'Checked Out', 'badge' => 'won'],
+                          $booking->status === 'cancelled' => ['label' => 'Cancelled', 'badge' => 'stuck'],
+                          default => ['label' => ucfirst($booking->status), 'badge' => 'new'],
+                      };
+                      $financialBadge = match (true) {
+                          in_array($booking->status, ['cancelled', 'pending'], true) => null,
+                          $booking->remaining_balance <= 0 => ['label' => 'Fully Paid', 'class' => 'won'],
+                          default => ['label' => 'Balance Due: ' . $globalSettings->currency . ' ' . number_format($booking->remaining_balance, 2), 'class' => 'pending'],
+                      };
                       $canSendWhatsApp = $booking->customer_phone && in_array($booking->status, ['confirmed', 'checked_out'], true);
                     @endphp
-                    <div class="mdash-booking-card stacked" x-show="@json($rowTabs).includes(tab)">
+                    <div class="mdash-booking-card stacked">
                       <div class="mdash-card-top">
                         <span class="mdash-avatar sm">{{ $booking->customer_initials }}</span>
                         <div class="mdash-booking-info">
                           <strong>{{ $booking->customer_name }}</strong>
-                          <small>{{ $booking->room->name_or_number }} &middot; {{ $booking->check_in->format('d M') }} - {{ $booking->check_out->format('d M Y') }}</small>
+                          <small>{{ $booking->room->name_or_number }} &middot; {{ $booking->check_in->format('d M') }} - {{ $booking->check_out->format('d M Y') }} ({{ $nights }} {{ \Illuminate\Support\Str::plural('Night', $nights) }})</small>
                         </div>
-                        <span class="deal-badge {{ $badge }}">{{ ucfirst(str_replace('_', ' ', $booking->status)) }}</span>
+                        <span class="deal-badge {{ $statusMeta['badge'] }}">{{ $statusMeta['label'] }}</span>
                       </div>
 
                       <div class="mdash-card-meta">
-                        <span>Total <strong>{{ number_format($booking->total_amount, 2) }}</strong></span>
-                        <span>Balance <strong>{{ number_format($booking->remaining_balance, 2) }}</strong></span>
+                        <span>Total <strong>{{ $globalSettings->currency }} {{ number_format($booking->total_amount, 2) }}</strong></span>
+                        @if ($financialBadge)
+                          <span class="deal-badge {{ $financialBadge['class'] }}">{{ $financialBadge['label'] }}</span>
+                        @endif
                       </div>
 
                       @if ($booking->status === 'pending')
@@ -225,7 +350,7 @@
                       </div>
                     </div>
                   @empty
-                    <p class="mdash-empty">No bookings yet. Add your first booking to get started.</p>
+                    <p class="mdash-empty">No bookings match these filters.</p>
                   @endforelse
                 </div>
               </div>
@@ -281,7 +406,15 @@
           @endif
 
           @php
-            $badge = ['pending' => 'pending', 'confirmed' => 'new', 'checked_out' => 'won', 'cancelled' => 'stuck'][$booking->status] ?? 'new';
+            $isInHouse = $booking->status === 'confirmed' && $booking->check_in->lte($today) && $booking->check_out->gte($today);
+            $statusMeta = match (true) {
+                $booking->status === 'pending' => ['label' => 'Pending', 'badge' => 'pending'],
+                $booking->status === 'confirmed' && $isInHouse => ['label' => 'Checked In', 'badge' => 'progress'],
+                $booking->status === 'confirmed' => ['label' => 'Confirmed', 'badge' => 'new'],
+                $booking->status === 'checked_out' => ['label' => 'Checked Out', 'badge' => 'won'],
+                $booking->status === 'cancelled' => ['label' => 'Cancelled', 'badge' => 'stuck'],
+                default => ['label' => ucfirst($booking->status), 'badge' => 'new'],
+            };
           @endphp
           <div class="modal fade" id="quickViewModal{{ $booking->id }}" tabindex="-1" aria-hidden="true">
             <div class="modal-dialog modal-dialog-centered">
@@ -302,7 +435,7 @@
                   @if ($booking->board_type_label)
                     <div class="qv-row"><span>Board Type</span><strong>{{ $booking->board_type_label }}</strong></div>
                   @endif
-                  <div class="qv-row"><span>Status</span><span class="deal-badge {{ $badge }}">{{ ucfirst(str_replace('_', ' ', $booking->status)) }}</span></div>
+                  <div class="qv-row"><span>Status</span><span class="deal-badge {{ $statusMeta['badge'] }}">{{ $statusMeta['label'] }}</span></div>
 
                   <div class="qv-section-label">Payment</div>
                   <div class="qv-row"><span>Total Amount</span><strong>{{ $globalSettings->currency }} {{ number_format($booking->total_amount, 2) }}</strong></div>
@@ -324,9 +457,8 @@
 
 @push('scripts')
 <script>
-    function bookingsPanel(initialTab) {
+    function bookingsPanel() {
         return {
-            tab: initialTab,
             sendingWhatsApp: {},
             async sendWhatsApp(bookingId, url) {
                 if (this.sendingWhatsApp[bookingId]) return;
