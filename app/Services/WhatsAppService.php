@@ -33,30 +33,44 @@ class WhatsAppService
      */
     public function getSessionStatus(): ?string
     {
-        $response = $this->client()->get("/api/sessions/{$this->session}");
-
-        $needsStart = $response->status() === 404
-            || ($response->successful() && $response->json('status') === 'STOPPED');
-
-        if ($needsStart) {
-            $this->startSession();
-
-            sleep(2);
-
+        try {
             $response = $this->client()->get("/api/sessions/{$this->session}");
-        }
 
-        if ($response->failed()) {
-            Log::error('WAHA: failed to fetch session status', [
+            $needsStart = $response->status() === 404
+                || ($response->successful() && $response->json('status') === 'STOPPED');
+
+            if ($needsStart) {
+                $this->startSession();
+
+                sleep(2);
+
+                $response = $this->client()->get("/api/sessions/{$this->session}");
+            }
+
+            if ($response->failed()) {
+                Log::error('WAHA: failed to fetch session status', [
+                    'session' => $this->session,
+                    'status' => $response->status(),
+                    'body' => $response->body(),
+                ]);
+
+                return null;
+            }
+
+            return $response->json('status');
+        } catch (\Throwable $e) {
+            // The WAHA instance itself is unreachable (connection refused,
+            // DNS failure, timeout) rather than just returning an error
+            // response - treated the same as any other failure so callers
+            // never have to distinguish "WAHA said no" from "WAHA isn't
+            // there at all".
+            Log::error('WAHA: session status check failed - service unreachable', [
                 'session' => $this->session,
-                'status' => $response->status(),
-                'body' => $response->body(),
+                'error' => $e->getMessage(),
             ]);
 
             return null;
         }
-
-        return $response->json('status');
     }
 
     /**
@@ -85,25 +99,34 @@ class WhatsAppService
             return null;
         }
 
-        $response = Http::baseUrl($this->baseUrl)
-            ->timeout($this->timeout)
-            ->withHeaders([
-                'x-api-key' => $this->apiKey ?: 'secret',
-                'Accept' => 'image/png',
-            ])
-            ->get("/api/{$this->session}/auth/qr");
+        try {
+            $response = Http::baseUrl($this->baseUrl)
+                ->timeout($this->timeout)
+                ->withHeaders([
+                    'x-api-key' => $this->apiKey ?: 'secret',
+                    'Accept' => 'image/png',
+                ])
+                ->get("/api/{$this->session}/auth/qr");
 
-        if ($response->status() !== 200) {
-            Log::error('WAHA: failed to fetch QR code', [
+            if ($response->status() !== 200) {
+                Log::error('WAHA: failed to fetch QR code', [
+                    'session' => $this->session,
+                    'status' => $response->status(),
+                    'body' => $response->body(),
+                ]);
+
+                return null;
+            }
+
+            return 'data:image/png;base64,'.base64_encode($response->body());
+        } catch (\Throwable $e) {
+            Log::error('WAHA: QR code fetch failed - service unreachable', [
                 'session' => $this->session,
-                'status' => $response->status(),
-                'body' => $response->body(),
+                'error' => $e->getMessage(),
             ]);
 
             return null;
         }
-
-        return 'data:image/png;base64,'.base64_encode($response->body());
     }
 
     /**
@@ -111,21 +134,30 @@ class WhatsAppService
      */
     private function startSession(): bool
     {
-        $response = $this->client()->post('/api/sessions/start', [
-            'name' => $this->session,
-        ]);
+        try {
+            $response = $this->client()->post('/api/sessions/start', [
+                'name' => $this->session,
+            ]);
 
-        if ($response->failed()) {
-            Log::error('WAHA: failed to start session', [
+            if ($response->failed()) {
+                Log::error('WAHA: failed to start session', [
+                    'session' => $this->session,
+                    'status' => $response->status(),
+                    'body' => $response->body(),
+                ]);
+
+                return false;
+            }
+
+            return true;
+        } catch (\Throwable $e) {
+            Log::error('WAHA: session start failed - service unreachable', [
                 'session' => $this->session,
-                'status' => $response->status(),
-                'body' => $response->body(),
+                'error' => $e->getMessage(),
             ]);
 
             return false;
         }
-
-        return true;
     }
 
     /**
@@ -133,19 +165,28 @@ class WhatsAppService
      */
     public function logoutSession(): bool
     {
-        $response = $this->client()->post("/api/sessions/{$this->session}/logout");
+        try {
+            $response = $this->client()->post("/api/sessions/{$this->session}/logout");
 
-        if ($response->failed()) {
-            Log::error('WAHA: failed to logout session', [
+            if ($response->failed()) {
+                Log::error('WAHA: failed to logout session', [
+                    'session' => $this->session,
+                    'status' => $response->status(),
+                    'body' => $response->body(),
+                ]);
+
+                return false;
+            }
+
+            return true;
+        } catch (\Throwable $e) {
+            Log::error('WAHA: session logout failed - service unreachable', [
                 'session' => $this->session,
-                'status' => $response->status(),
-                'body' => $response->body(),
+                'error' => $e->getMessage(),
             ]);
 
             return false;
         }
-
-        return true;
     }
 
     /**
@@ -155,24 +196,34 @@ class WhatsAppService
     {
         $chatId = $this->formatPhoneNumber($phone);
 
-        $response = $this->client()->post('/api/sendText', [
-            'session' => $this->session,
-            'chatId' => $chatId,
-            'text' => $message,
-        ]);
-
-        if ($response->failed()) {
-            Log::error('WAHA: failed to send text message', [
+        try {
+            $response = $this->client()->post('/api/sendText', [
                 'session' => $this->session,
                 'chatId' => $chatId,
-                'status' => $response->status(),
-                'body' => $response->body(),
+                'text' => $message,
+            ]);
+
+            if ($response->failed()) {
+                Log::error('WAHA: failed to send text message', [
+                    'session' => $this->session,
+                    'chatId' => $chatId,
+                    'status' => $response->status(),
+                    'body' => $response->body(),
+                ]);
+
+                return false;
+            }
+
+            return true;
+        } catch (\Throwable $e) {
+            Log::error('WAHA: text message send failed - service unreachable', [
+                'session' => $this->session,
+                'chatId' => $chatId,
+                'error' => $e->getMessage(),
             ]);
 
             return false;
         }
-
-        return true;
     }
 
     /**
@@ -193,30 +244,41 @@ class WhatsAppService
         $mimeType = mime_content_type($filePath) ?: 'application/octet-stream';
         $base64 = base64_encode(file_get_contents($filePath));
 
-        $response = $this->client()->post('/api/sendFile', [
-            'session' => $this->session,
-            'chatId' => $chatId,
-            'caption' => $caption,
-            'file' => [
-                'mimetype' => $mimeType,
-                'filename' => $fileName,
-                'data' => $base64,
-            ],
-        ]);
+        try {
+            $response = $this->client()->post('/api/sendFile', [
+                'session' => $this->session,
+                'chatId' => $chatId,
+                'caption' => $caption,
+                'file' => [
+                    'mimetype' => $mimeType,
+                    'filename' => $fileName,
+                    'data' => $base64,
+                ],
+            ]);
 
-        if ($response->failed()) {
-            Log::error('WAHA: failed to send document', [
+            if ($response->failed()) {
+                Log::error('WAHA: failed to send document', [
+                    'session' => $this->session,
+                    'chatId' => $chatId,
+                    'fileName' => $fileName,
+                    'status' => $response->status(),
+                    'body' => $response->body(),
+                ]);
+
+                return false;
+            }
+
+            return true;
+        } catch (\Throwable $e) {
+            Log::error('WAHA: document send failed - service unreachable', [
                 'session' => $this->session,
                 'chatId' => $chatId,
                 'fileName' => $fileName,
-                'status' => $response->status(),
-                'body' => $response->body(),
+                'error' => $e->getMessage(),
             ]);
 
             return false;
         }
-
-        return true;
     }
 
     /**

@@ -10,6 +10,7 @@ use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
@@ -129,7 +130,11 @@ class BookingController extends Controller
         // Only a confirmed booking gets an immediate WhatsApp confirmation
         // + invoice - a 'pending' one is still awaiting review via confirm().
         if ($booking->status === 'confirmed') {
-            SendBookingWhatsAppJob::dispatch($booking);
+            $this->dispatchAutomatedWhatsApp(
+                fn () => SendBookingWhatsAppJob::dispatch($booking),
+                'booking confirmation',
+                $booking->id
+            );
         }
 
         return redirect()->route('bookings.index')->with('status', 'Booking created successfully.');
@@ -208,8 +213,16 @@ class BookingController extends Controller
         // The booking is now marked as paid in full - send the final
         // invoice immediately, and queue a review request for an hour
         // from now, once the guest has actually had time to leave.
-        SendBookingWhatsAppJob::dispatch($booking);
-        SendPostCheckoutReviewWhatsAppJob::dispatch($booking)->delay(now()->addHour());
+        $this->dispatchAutomatedWhatsApp(
+            fn () => SendBookingWhatsAppJob::dispatch($booking),
+            'checkout final invoice',
+            $booking->id
+        );
+        $this->dispatchAutomatedWhatsApp(
+            fn () => SendPostCheckoutReviewWhatsAppJob::dispatch($booking)->delay(now()->addHour()),
+            'post-checkout review request',
+            $booking->id
+        );
 
         if ($request->wantsJson()) {
             return response()->json([
@@ -239,7 +252,11 @@ class BookingController extends Controller
 
         $booking->update(['status' => 'confirmed']);
 
-        SendBookingWhatsAppJob::dispatch($booking);
+        $this->dispatchAutomatedWhatsApp(
+            fn () => SendBookingWhatsAppJob::dispatch($booking),
+            'booking acceptance',
+            $booking->id
+        );
 
         if ($request->wantsJson()) {
             return response()->json([
@@ -282,6 +299,13 @@ class BookingController extends Controller
      * booking details page. Dispatches the same background job the
      * create/confirm/checkout flows fire automatically, so the message
      * always reflects the booking's current stage.
+     *
+     * Deliberately bypasses the WHATSAPP_AUTO_SEND gate (see
+     * dispatchAutomatedWhatsApp() below) - this is an explicit manual
+     * action, not an automated trigger, so it should always attempt to
+     * send regardless of the auto-send policy. If WAHA itself is
+     * unreachable the dispatched job still fails safely (logged, no
+     * exception) rather than breaking this endpoint.
      */
     public function sendWhatsApp(Booking $booking): JsonResponse
     {
@@ -400,5 +424,29 @@ class BookingController extends Controller
         }
 
         return $validated;
+    }
+
+    /**
+     * Runs an automated WhatsApp dispatch closure only when
+     * WHATSAPP_AUTO_SEND is enabled, so a local environment without WAHA
+     * configured never fails a booking create/confirm/checkout because it
+     * tried to reach WhatsApp. When disabled, the dispatch is skipped
+     * entirely (nothing is queued) and a debug notice is logged instead -
+     * the calling booking operation always proceeds either way.
+     *
+     * Not used by the manual "Resend via WhatsApp" button (sendWhatsApp()
+     * above), which should always attempt to send.
+     */
+    private function dispatchAutomatedWhatsApp(\Closure $dispatch, string $trigger, int $bookingId): void
+    {
+        if (! config('waha.auto_send', false)) {
+            Log::debug("WhatsApp auto-send disabled; skipping automated {$trigger} message.", [
+                'booking_id' => $bookingId,
+            ]);
+
+            return;
+        }
+
+        $dispatch();
     }
 }

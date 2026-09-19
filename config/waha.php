@@ -49,4 +49,25 @@ return [
 
     'timeout' => env('WAHA_TIMEOUT', 30),
 
+    /*
+    |--------------------------------------------------------------------------
+    | Automated WhatsApp Sending
+    |--------------------------------------------------------------------------
+    |
+    | Master switch for every *automated* WhatsApp trigger (booking
+    | confirmations, check-in reminders, checkout invoices, post-checkout
+    | review requests, owner enquiry alerts). Defaults to false so a local
+    | environment without a running WAHA instance never fails a booking
+    | operation just because it tried to reach WhatsApp - flip it on in
+    | .env once WAHA is actually configured and reachable.
+    |
+    | This does not affect the manual "Resend via WhatsApp" button or the
+    | WhatsApp settings/QR-code page, which stay usable either way; those
+    | already fail gracefully (see WhatsAppService) rather than erroring
+    | out if WAHA is unreachable.
+    |
+    */
+
+    'auto_send' => env('WHATSAPP_AUTO_SEND', false),
+
 ];
