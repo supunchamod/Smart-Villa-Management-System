@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Booking Details | Dashora Admin Dashboard')
+@section('title', 'Booking Details | ' . ($globalSettings->villa_name ?? config('app.name')))
 
 @section('content')
         <div class="page-title">
@@ -54,6 +54,10 @@
                 </div>
                 @if ($booking->room)
                   <div class="col-md-6"><small class="text-muted d-block">Room</small><strong>{{ $booking->room->name_or_number }} ({{ $booking->room->type }})</strong></div>
+                  <div class="col-md-6">
+                    <small class="text-muted d-block">Board Basis / Meal Plan</small>
+                    <span class="board-badge {{ $booking->board_type_badge_class }}">{{ $booking->board_type_label }}</span>
+                  </div>
                 @endif
                 <div class="col-md-6"><small class="text-muted d-block">Email</small><strong>{{ $booking->customer_email ?: '—' }}</strong></div>
                 <div class="col-md-6"><small class="text-muted d-block">Phone</small><strong>{{ $booking->customer_phone ?: '—' }}</strong></div>

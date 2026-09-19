@@ -11,6 +11,7 @@ use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
@@ -36,20 +37,84 @@ class BookingController extends Controller
      * just added or submitted always lands at the top of the table,
      * regardless of how far out its stay is.
      *
-     * The quick-filter bar's counts are always computed across every
-     * booking (not just the current page), so they stay accurate
-     * regardless of which page or filter tab is currently showing.
+     * The quick-filter bar's counts and the KPI cards are always computed
+     * across every booking (not just the current page or the active
+     * search/filter), so they stay accurate no matter what's currently
+     * showing in the table.
      */
-    public function index(): View
+    public function index(Request $request): View
     {
         $today = today();
+        $tomorrow = $today->copy()->addDay();
+
+        // Only 'all' / 'active' / 'balance_due' / 'history' are exposed as
+        // filter pills in the UI, but 'pending' stays a valid, directly
+        // linkable value so the "pending enquiries" alert can deep-link
+        // into it without adding a fifth pill.
+        $tab = in_array($request->query('tab'), ['all', 'active', 'balance_due', 'history', 'pending'], true)
+            ? $request->query('tab')
+            : 'all';
+
+        $range = in_array($request->query('range'), ['today', 'week', 'month'], true)
+            ? $request->query('range')
+            : null;
+
+        $bookingsQuery = Booking::query()->with('room')->latest();
+
+        match ($tab) {
+            'active' => $bookingsQuery->where('status', 'confirmed'),
+            'balance_due' => $bookingsQuery->where('status', 'confirmed')->whereColumn('advance_payment', '<', 'total_amount'),
+            'history' => $bookingsQuery->whereIn('status', ['checked_out', 'cancelled']),
+            'pending' => $bookingsQuery->where('status', 'pending'),
+            default => null,
+        };
+
+        if ($search = trim((string) $request->query('search', ''))) {
+            $bookingsQuery->where(function ($query) use ($search) {
+                $query->where('customer_name', 'like', "%{$search}%")
+                    ->orWhere('customer_phone', 'like', "%{$search}%");
+
+                if (ctype_digit($search)) {
+                    $query->orWhere('id', (int) $search);
+                }
+            });
+        }
+
+        if ($roomType = $request->query('room_type')) {
+            $bookingsQuery->whereHas('room', fn ($query) => $query->where('type', $roomType));
+        }
+
+        $type = in_array($request->query('type'), array_keys(Booking::BOOKING_TYPES), true)
+            ? $request->query('type')
+            : 'all';
+
+        if ($type !== 'all') {
+            $bookingsQuery->where('booking_type', $type);
+        }
+
+        match ($range) {
+            'today' => $bookingsQuery->whereDate('check_in', $today),
+            'week' => $bookingsQuery->whereBetween('check_in', [$today, $today->copy()->addDays(7)]),
+            'month' => $bookingsQuery->whereBetween('check_in', [$today->copy()->startOfMonth(), $today->copy()->endOfMonth()]),
+            default => null,
+        };
 
         return view('bookings.index', [
-            'bookings' => Booking::with('room')->latest()->paginate(10),
+            'bookings' => $bookingsQuery->paginate(10)->withQueryString(),
+            'activeTab' => $tab,
+            'activeRange' => $range,
+            'activeType' => $type,
+            'search' => $request->query('search', ''),
+            'roomTypes' => Room::query()->select('type')->distinct()->orderBy('type')->pluck('type'),
+            'selectedRoomType' => $roomType ?? '',
             'pendingBookingsCount' => Booking::where('status', 'pending')->count(),
             'todayCheckInsCount' => Booking::where('status', 'confirmed')->where('booking_type', '!=', 'safari_only')->whereDate('check_in', $today)->count(),
             'todayCheckOutsCount' => Booking::where('status', 'confirmed')->where('booking_type', '!=', 'safari_only')->whereDate('check_out', $today)->count(),
+            'tomorrowCheckInsCount' => Booking::where('status', 'confirmed')->where('booking_type', '!=', 'safari_only')->whereDate('check_in', $tomorrow)->count(),
+            'tomorrowCheckOutsCount' => Booking::where('status', 'confirmed')->where('booking_type', '!=', 'safari_only')->whereDate('check_out', $tomorrow)->count(),
             'balanceDueCount' => Booking::where('status', 'confirmed')->whereColumn('advance_payment', '<', 'total_amount')->count(),
+            'todayArrivals' => Booking::with('room')->where('status', 'confirmed')->where('booking_type', '!=', 'safari_only')->whereDate('check_in', $today)->orderBy('check_in')->get(),
+            'todayDepartures' => Booking::with('room')->where('status', 'confirmed')->where('booking_type', '!=', 'safari_only')->whereDate('check_out', $today)->orderBy('check_out')->get(),
         ]);
     }
 
@@ -75,7 +140,11 @@ class BookingController extends Controller
         // Only a confirmed booking gets an immediate WhatsApp confirmation
         // + invoice - a 'pending' one is still awaiting review via confirm().
         if ($booking->status === 'confirmed') {
-            SendBookingWhatsAppJob::dispatch($booking);
+            $this->dispatchAutomatedWhatsApp(
+                fn () => SendBookingWhatsAppJob::dispatch($booking),
+                'booking confirmation',
+                $booking->id
+            );
         }
 
         return redirect()->route('bookings.index')->with('status', 'Booking created successfully.');
@@ -154,8 +223,16 @@ class BookingController extends Controller
         // The booking is now marked as paid in full - send the final
         // invoice immediately, and queue a review request for an hour
         // from now, once the guest has actually had time to leave.
-        SendBookingWhatsAppJob::dispatch($booking);
-        SendPostCheckoutReviewWhatsAppJob::dispatch($booking)->delay(now()->addHour());
+        $this->dispatchAutomatedWhatsApp(
+            fn () => SendBookingWhatsAppJob::dispatch($booking),
+            'checkout final invoice',
+            $booking->id
+        );
+        $this->dispatchAutomatedWhatsApp(
+            fn () => SendPostCheckoutReviewWhatsAppJob::dispatch($booking)->delay(now()->addHour()),
+            'post-checkout review request',
+            $booking->id
+        );
 
         if ($request->wantsJson()) {
             return response()->json([
@@ -185,7 +262,11 @@ class BookingController extends Controller
 
         $booking->update(['status' => 'confirmed']);
 
-        SendBookingWhatsAppJob::dispatch($booking);
+        $this->dispatchAutomatedWhatsApp(
+            fn () => SendBookingWhatsAppJob::dispatch($booking),
+            'booking acceptance',
+            $booking->id
+        );
 
         if ($request->wantsJson()) {
             return response()->json([
@@ -228,6 +309,13 @@ class BookingController extends Controller
      * booking details page. Dispatches the same background job the
      * create/confirm/checkout flows fire automatically, so the message
      * always reflects the booking's current stage.
+     *
+     * Deliberately bypasses the WHATSAPP_AUTO_SEND gate (see
+     * dispatchAutomatedWhatsApp() below) - this is an explicit manual
+     * action, not an automated trigger, so it should always attempt to
+     * send regardless of the auto-send policy. If WAHA itself is
+     * unreachable the dispatched job still fails safely (logged, no
+     * exception) rather than breaking this endpoint.
      */
     public function sendWhatsApp(Booking $booking): JsonResponse
     {
@@ -346,6 +434,7 @@ class BookingController extends Controller
             'total_amount' => ['required', 'numeric', 'min:0'],
             'advance_payment' => ['required', 'numeric', 'min:0', 'lte:total_amount'],
             'status' => [Rule::in(['pending', 'confirmed', 'checked_out', 'cancelled'])],
+            'board_type' => ['nullable', Rule::in(array_keys(Booking::BOARD_TYPES))],
         ]);
 
         $validated['booking_type'] = $bookingType;
@@ -383,5 +472,29 @@ class BookingController extends Controller
         }
 
         return $validated;
+    }
+
+    /**
+     * Runs an automated WhatsApp dispatch closure only when
+     * WHATSAPP_AUTO_SEND is enabled, so a local environment without WAHA
+     * configured never fails a booking create/confirm/checkout because it
+     * tried to reach WhatsApp. When disabled, the dispatch is skipped
+     * entirely (nothing is queued) and a debug notice is logged instead -
+     * the calling booking operation always proceeds either way.
+     *
+     * Not used by the manual "Resend via WhatsApp" button (sendWhatsApp()
+     * above), which should always attempt to send.
+     */
+    private function dispatchAutomatedWhatsApp(\Closure $dispatch, string $trigger, int $bookingId): void
+    {
+        if (! config('waha.auto_send', false)) {
+            Log::debug("WhatsApp auto-send disabled; skipping automated {$trigger} message.", [
+                'booking_id' => $bookingId,
+            ]);
+
+            return;
+        }
+
+        $dispatch();
     }
 }

@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Access Restricted | Dashora Admin Dashboard')
+@section('title', 'Access Restricted | ' . ($globalSettings->villa_name ?? config('app.name')))
 
 @section('content')
         <div class="page-title">

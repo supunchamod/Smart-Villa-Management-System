@@ -940,6 +940,15 @@ h1 { font-size: clamp(30px, 3.5vw, 42px); margin: 4px 0 8px; font-weight: 700; l
 [data-theme="dark"] .type-badge-safari { color: #fbbf24; }
 [data-theme="dark"] .type-badge-cabana { color: #4ade80; }
 [data-theme="dark"] .type-badge-combo { color: #c4b5fd; }
+.board-badge { display: inline-flex; align-items: center; border-radius: 999px; padding: 3px 10px; font-size: 11px; font-weight: 800; white-space: nowrap; }
+.board-badge-room-only { color: #475569; background: #eef1f6; }
+.board-badge-bb { color: #0369a1; background: #e0f4fd; }
+.board-badge-hb { color: #92400e; background: #fff3d6; }
+.board-badge-fb { color: #6d28d9; background: #f1e9ff; }
+[data-theme="dark"] .board-badge-room-only { color: #cbd5e1; background: rgba(148,163,184,.16); }
+[data-theme="dark"] .board-badge-bb { color: #7dd3fc; background: rgba(14,165,233,.18); }
+[data-theme="dark"] .board-badge-hb { color: #fbbf24; background: rgba(245,158,11,.16); }
+[data-theme="dark"] .board-badge-fb { color: #c4b5fd; background: rgba(139,92,246,.18); }
 .crm-widget { min-height: 100%; }
 .crm-task-list { display: grid; gap: 10px; }
 .crm-task { display: flex; gap: 12px; padding: 12px; border: 1px solid var(--line); border-radius: 8px; background: #f7f9fc; }

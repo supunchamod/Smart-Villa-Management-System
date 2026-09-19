@@ -1,44 +1,189 @@
 @extends('layouts.auth')
 
-@section('title', 'Register | Dashora Admin Dashboard')
+@section('title', 'Register | ' . ($globalSettings->villa_name ?? 'Smart Cabana'))
+
+@push('styles')
+  <link href="{{ asset('assets/css/villa-auth.css') }}" rel="stylesheet">
+@endpush
 
 @section('content')
-  <main class="auth-page auth-cover-page">
-    <section class="auth-cover-visual">
-      <a class="brand auth-brand" href="index.html"><span class="brand-mark">D</span><div><strong>Dashora</strong><small>Admin Suite</small></div></a>
-      <div class="auth-device">
-        <div class="auth-device-top"><span></span><span></span><span></span></div>
-        <div class="auth-device-body">
-          <aside><i></i><i></i><i></i><i></i></aside>
-          <div class="auth-device-screen"><div class="auth-chart"></div><div class="auth-bars"><i></i><i></i><i></i><i></i></div><div class="auth-mini-grid"><span></span><span></span><span></span></div></div>
+  <main class="villa-auth-page">
+    <div class="villa-auth-grid">
+      <section class="villa-auth-showcase">
+        <div class="villa-auth-brand">
+          <span class="villa-auth-brand-mark">
+            @if ($globalSettings->logo_url)
+              <img src="{{ $globalSettings->logo_url }}" alt="{{ $globalSettings->villa_name }}">
+            @else
+              {{ strtoupper(substr($globalSettings->villa_name ?? 'S', 0, 1)) }}
+            @endif
+          </span>
+          <div class="villa-auth-brand-name">
+            <strong>{{ $globalSettings->villa_name ?? 'Smart Cabana' }}</strong>
+            <small>Villa Management Suite</small>
+          </div>
         </div>
-      </div>
-      <div class="auth-cover-copy"><span class="eyebrow">Premium Admin Template</span><h2>Build polished SaaS dashboards faster.</h2><p>Dashora includes responsive layouts, RTL support, dark mode, charts, tables, forms, auth pages, and utility screens.</p></div>
-    </section>
-    <section class="auth-form-panel">
-      <div class="auth-form-wrap">
-        <a class="brand auth-form-brand" href="index.html"><span class="brand-mark">D</span><div><strong>Dashora</strong><small>Admin Suite</small></div></a>
-        <h1>Start your Dashora workspace</h1>
-        <p>Create your account and open the full admin workspace.</p>
-        <form method="POST" action="{{ route('register') }}">
-          @csrf
-          <label class="form-label">Full name</label>
-          <input class="form-control mb-3 @error('name') is-invalid @enderror" name="name" id="name" value="{{ old('name') }}" placeholder="Sara Ahmed" required autofocus>
-          @error('name')<div class="invalid-feedback d-block mb-3">{{ $message }}</div>@enderror
-          <label class="form-label">Email address</label>
-          <input class="form-control mb-3 @error('email') is-invalid @enderror" type="email" name="email" id="email" value="{{ old('email') }}" placeholder="name@example.com" required>
-          @error('email')<div class="invalid-feedback d-block mb-3">{{ $message }}</div>@enderror
-          <label class="form-label">Password</label>
-          <input class="form-control mb-2 @error('password') is-invalid @enderror" type="password" name="password" id="password" placeholder="Password" required>
-          @error('password')<div class="invalid-feedback d-block mb-2">{{ $message }}</div>@enderror
-          <label class="form-label">Confirm password</label>
-          <input class="form-control mb-2" type="password" name="password_confirmation" id="password_confirmation" placeholder="Confirm password" required>
-          <label class="auth-terms"><input type="checkbox" checked required> I agree to privacy policy and terms</label>
-          <button class="btn btn-primary w-100" type="submit">Create Account</button>
-        </form>
-        <div class="auth-divider"><span>or continue with</span></div><div class="auth-social"><button type="button"><i class="bi bi-google"></i></button><button type="button"><i class="bi bi-github"></i></button><button type="button"><i class="bi bi-linkedin"></i></button></div>
-        <div class="auth-links">Already have an account? <a href="{{ route('login') }}">Sign in</a></div>
-      </div>
-    </section>
+
+        <div class="villa-auth-showcase-copy">
+          <span class="villa-auth-eyebrow">Get started</span>
+          <h2>Open your villa's command center.</h2>
+          <p>Create your owner account and unlock the full toolkit for running a profitable, five-star property.</p>
+        </div>
+
+        <div class="villa-auth-features">
+          <div class="villa-auth-feature-card">
+            <span class="villa-auth-feature-icon"><i class="bi bi-calendar2-check"></i></span>
+            <div>
+              <strong>Zero Double Bookings</strong>
+              <p>Real-time calendar sync keeps every reservation conflict-free.</p>
+            </div>
+          </div>
+          <div class="villa-auth-feature-card">
+            <span class="villa-auth-feature-icon"><i class="bi bi-whatsapp"></i></span>
+            <div>
+              <strong>Automated WhatsApp Confirmations</strong>
+              <p>Guests get instant booking and payment confirmations, automatically.</p>
+            </div>
+          </div>
+          <div class="villa-auth-feature-card">
+            <span class="villa-auth-feature-icon"><i class="bi bi-graph-up-arrow"></i></span>
+            <div>
+              <strong>Real-Time Profit Analytics</strong>
+              <p>Track income, expenses, and net profit as they happen.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="villa-auth-form-panel">
+        <div class="villa-auth-form-wrap">
+          <div class="villa-auth-mobile-brand">
+            <span class="villa-auth-brand-mark">
+              @if ($globalSettings->logo_url)
+                <img src="{{ $globalSettings->logo_url }}" alt="{{ $globalSettings->villa_name }}">
+              @else
+                {{ strtoupper(substr($globalSettings->villa_name ?? 'S', 0, 1)) }}
+              @endif
+            </span>
+            <div>
+              <strong>{{ $globalSettings->villa_name ?? 'Smart Cabana' }}</strong>
+              <small>Villa Management Suite</small>
+            </div>
+          </div>
+
+          <div class="villa-auth-form-head">
+            <h1>Create your account</h1>
+            <p>Set up your owner account to open the full admin workspace.</p>
+          </div>
+
+          <form method="POST" action="{{ route('register') }}">
+            @csrf
+
+            <div class="villa-auth-field">
+              <label class="villa-auth-label" for="name">Full name</label>
+              <div class="villa-auth-input-wrap @error('name') is-invalid @enderror">
+                <span class="villa-auth-input-icon"><i class="bi bi-person"></i></span>
+                <input
+                  class="villa-auth-input"
+                  type="text"
+                  name="name"
+                  id="name"
+                  value="{{ old('name') }}"
+                  placeholder="Sara Ahmed"
+                  autocomplete="name"
+                  required
+                  autofocus
+                >
+              </div>
+              @error('name')
+                <p class="villa-auth-field-error">{{ $message }}</p>
+              @enderror
+            </div>
+
+            <div class="villa-auth-field">
+              <label class="villa-auth-label" for="email">Email address</label>
+              <div class="villa-auth-input-wrap @error('email') is-invalid @enderror">
+                <span class="villa-auth-input-icon"><i class="bi bi-envelope"></i></span>
+                <input
+                  class="villa-auth-input"
+                  type="email"
+                  name="email"
+                  id="email"
+                  value="{{ old('email') }}"
+                  placeholder="you@example.com"
+                  autocomplete="email"
+                  required
+                >
+              </div>
+              @error('email')
+                <p class="villa-auth-field-error">{{ $message }}</p>
+              @enderror
+            </div>
+
+            <div class="villa-auth-field" x-data="{ showPassword: false }">
+              <label class="villa-auth-label" for="password">Password</label>
+              <div class="villa-auth-input-wrap @error('password') is-invalid @enderror">
+                <span class="villa-auth-input-icon"><i class="bi bi-lock"></i></span>
+                <input
+                  class="villa-auth-input"
+                  :type="showPassword ? 'text' : 'password'"
+                  name="password"
+                  id="password"
+                  placeholder="Create a password"
+                  autocomplete="new-password"
+                  required
+                >
+                <button
+                  type="button"
+                  class="villa-auth-toggle-visibility"
+                  @click="showPassword = !showPassword"
+                  :aria-label="showPassword ? 'Hide password' : 'Show password'"
+                >
+                  <i class="bi" :class="showPassword ? 'bi-eye-slash' : 'bi-eye'"></i>
+                </button>
+              </div>
+              @error('password')
+                <p class="villa-auth-field-error">{{ $message }}</p>
+              @enderror
+            </div>
+
+            <div class="villa-auth-field" x-data="{ showPassword: false }">
+              <label class="villa-auth-label" for="password_confirmation">Confirm password</label>
+              <div class="villa-auth-input-wrap">
+                <span class="villa-auth-input-icon"><i class="bi bi-shield-lock"></i></span>
+                <input
+                  class="villa-auth-input"
+                  :type="showPassword ? 'text' : 'password'"
+                  name="password_confirmation"
+                  id="password_confirmation"
+                  placeholder="Confirm your password"
+                  autocomplete="new-password"
+                  required
+                >
+                <button
+                  type="button"
+                  class="villa-auth-toggle-visibility"
+                  @click="showPassword = !showPassword"
+                  :aria-label="showPassword ? 'Hide password' : 'Show password'"
+                >
+                  <i class="bi" :class="showPassword ? 'bi-eye-slash' : 'bi-eye'"></i>
+                </button>
+              </div>
+            </div>
+
+            <label class="villa-auth-terms">
+              <input type="checkbox" required>
+              I agree to the privacy policy and terms of service.
+            </label>
+
+            <button type="submit" class="villa-auth-submit">
+              Create account <i class="bi bi-arrow-right"></i>
+            </button>
+          </form>
+
+          <p class="villa-auth-switch">Already have an account? <a href="{{ route('login') }}">Sign in</a></p>
+        </div>
+      </section>
+    </div>
   </main>
 @endsection

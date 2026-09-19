@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>@yield('title', 'Dashora Admin Dashboard')</title>
-  <meta name="description" content="Dashora premium responsive HTML admin dashboard template.">
+  <title>@yield('title', ($globalSettings->villa_name ?? config('app.name')) . ' Admin Dashboard')</title>
+  <meta name="description" content="{{ ($globalSettings->villa_name ?? config('app.name')) . ' property management dashboard.' }}">
   <link rel="icon" type="image/svg+xml" href="{{ asset('assets/img/favicon.svg') }}">
   <link rel="shortcut icon" href="{{ asset('assets/img/favicon.svg') }}">
   <link href="{{ asset('assets/vendor/bootstrap/css/bootstrap.min.css') }}" rel="stylesheet">
@@ -16,6 +16,7 @@
   @yield('content')
   <script src="{{ asset('assets/vendor/bootstrap/js/bootstrap.bundle.min.js') }}"></script>
   <script src="{{ asset('assets/vendor/chart/chart.umd.min.js') }}"></script>
+  <script defer src="{{ asset('assets/vendor/alpinejs/alpine.min.js') }}"></script>
   @stack('scripts')
   <script src="{{ asset('assets/js/main.js') }}"></script>
 </body>

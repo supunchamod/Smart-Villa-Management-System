@@ -22,6 +22,13 @@ class SendBookingWhatsAppNotifications extends Command
 
     public function handle(WhatsAppService $whatsapp): int
     {
+        if (! config('waha.auto_send', false)) {
+            Log::debug('bookings:send-whatsapp-notifications: WhatsApp auto-send disabled; skipping this run.');
+            $this->info('WhatsApp auto-send is disabled (WHATSAPP_AUTO_SEND=false) - skipping.');
+
+            return self::SUCCESS;
+        }
+
         $settings = Setting::current();
 
         $reminders = $this->sendPreCheckinReminders($whatsapp, $settings);

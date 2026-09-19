@@ -11,6 +11,7 @@ use App\Models\Setting;
 use Carbon\Carbon;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
@@ -232,7 +233,19 @@ class PublicBookingController extends Controller
 
         $reference = 'INQ-'.str_pad((string) $booking->id, 6, '0', STR_PAD_LEFT);
 
-        SendOwnerEnquiryWhatsAppJob::dispatch($booking);
+        // This enquiry alert is an automated trigger, gated the same way
+        // as the admin-side automated sends (see
+        // BookingController::dispatchAutomatedWhatsApp()) - skipped with a
+        // debug log when WHATSAPP_AUTO_SEND is disabled, so a guest's
+        // booking submission never fails just because WhatsApp isn't
+        // reachable from this environment.
+        if (config('waha.auto_send', false)) {
+            SendOwnerEnquiryWhatsAppJob::dispatch($booking);
+        } else {
+            Log::debug('WhatsApp auto-send disabled; skipping automated owner enquiry alert.', [
+                'booking_id' => $booking->id,
+            ]);
+        }
 
         return redirect(route('public.villa', $slug).'#booking-confirmation')
             ->with('bookingSubmitted', true)

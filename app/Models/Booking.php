@@ -26,6 +26,50 @@ class Booking extends Model
     ];
 
     /**
+     * Board type -> display label for the internal admin "Add/Edit
+     * Booking" form and everywhere else a booking's board type needs a
+     * human-readable name. Deliberately the same value vocabulary as
+     * PublicBookingController::BOARD_TYPE_LABELS (cabana_only/half_board/
+     * full_board), so a booking's board_type means the same thing
+     * regardless of whether staff or a guest created it - just with
+     * fuller, abbreviation-suffixed labels suited to admin UI rather than
+     * guest-facing copy. bed_and_breakfast is admin-only for now: the
+     * public villa page's pricing tiers have no bed_and_breakfast_price
+     * column yet, so it isn't offered there.
+     */
+    public const BOARD_TYPES = [
+        'cabana_only' => 'Cabana Only (Room Only)',
+        'bed_and_breakfast' => 'Bed & Breakfast (BB)',
+        'half_board' => 'Half Board (HB)',
+        'full_board' => 'Full Board (FB)',
+    ];
+
+    /**
+     * Board type -> short label for the compact pill shown under the room
+     * name (Manage Bookings table, mobile cards). BOARD_TYPES' labels are
+     * sized for a dropdown ("Bed & Breakfast (BB)"), too wide for a badge.
+     */
+    private const BOARD_TYPE_BADGE_LABELS = [
+        'cabana_only' => 'Cabana Only',
+        'bed_and_breakfast' => 'B&B',
+        'half_board' => 'HB',
+        'full_board' => 'FB',
+    ];
+
+    /**
+     * Board type -> the CSS badge modifier class used to color its pill
+     * consistently everywhere it's shown (Manage Bookings table, quick
+     * view modal). Kept separate from BOARD_TYPES so the labels above can
+     * change without touching styling.
+     */
+    private const BOARD_TYPE_BADGE_CLASSES = [
+        'cabana_only' => 'board-badge-room-only',
+        'bed_and_breakfast' => 'board-badge-bb',
+        'half_board' => 'board-badge-hb',
+        'full_board' => 'board-badge-fb',
+    ];
+
+    /**
      * The attributes that are mass assignable.
      *
      * @var list<string>
@@ -178,15 +222,40 @@ class Booking extends Model
     }
 
     /**
-     * Human-readable board type - "cabana_only" -> "Cabana Only", etc.
-     * Null for bookings made before the meal-plan feature existed, or
-     * created without one via the internal admin form.
+     * Human-readable board type, e.g. "Bed & Breakfast (BB)" for a known
+     * BOARD_TYPES value. Falls back to a generic title-cased version of
+     * whatever's stored (e.g. a value from before this list existed)
+     * rather than showing nothing. Null only when board_type itself is
+     * null, which no longer happens for new bookings now that the column
+     * defaults to 'cabana_only', but can still be true for rows written
+     * directly rather than through the model (a raw DB seed, for
+     * instance).
      */
     protected function boardTypeLabel(): Attribute
     {
         return Attribute::get(fn () => $this->board_type
-            ? str(str_replace('_', ' ', $this->board_type))->title()->toString()
+            ? (self::BOARD_TYPES[$this->board_type] ?? str(str_replace('_', ' ', $this->board_type))->title()->toString())
             : null);
+    }
+
+    /**
+     * The CSS badge modifier class for this booking's board type pill,
+     * defaulting to the "Cabana Only" styling for a null or unrecognized
+     * value so a badge always renders something sensible.
+     */
+    protected function boardTypeBadgeClass(): Attribute
+    {
+        return Attribute::get(fn () => self::BOARD_TYPE_BADGE_CLASSES[$this->board_type] ?? 'board-badge-room-only');
+    }
+
+    /**
+     * Short label for the board type pill (e.g. "HB"), as opposed to
+     * board_type_label's fuller "Half Board (HB)" used in the form
+     * dropdown, invoice, and quick view modal.
+     */
+    protected function boardTypeBadgeLabel(): Attribute
+    {
+        return Attribute::get(fn () => self::BOARD_TYPE_BADGE_LABELS[$this->board_type] ?? 'Cabana Only');
     }
 
     /**

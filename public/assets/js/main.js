@@ -20,23 +20,24 @@
       return true;
     }
   };
-  const storedTheme = storage.get('dashora-theme');
+  const storedTheme = storage.get('app-theme');
   if (storedTheme) document.documentElement.dataset.theme = storedTheme;
-  const storedDir = storage.get('dashora-dir');
+  const storedDir = storage.get('app-dir');
   if (storedDir) {
     document.documentElement.setAttribute('dir', storedDir);
     document.documentElement.setAttribute('lang', storedDir === 'rtl' ? 'ar' : 'en');
   }
-  const storedLayout = storage.get('dashora-layout') || 'default';
+  const storedLayout = storage.get('app-layout') || 'default';
   document.body.dataset.layout = storedLayout;
 
   document.querySelectorAll('.topbar').forEach((topbar) => {
     if (topbar.querySelector('.topbar-brand')) return;
+    const villaName = document.body.dataset.villaName || 'Dashboard';
     const brand = document.createElement('a');
     brand.className = 'topbar-brand';
-    brand.href = 'index.html';
-    brand.setAttribute('aria-label', 'Dashora dashboard');
-    brand.innerHTML = '<span class="brand-mark">D</span>';
+    brand.href = document.body.dataset.dashboardUrl || '#';
+    brand.setAttribute('aria-label', villaName + ' dashboard');
+    brand.innerHTML = '<span class="brand-mark">' + villaName.charAt(0).toUpperCase() + '</span>';
     const search = topbar.querySelector('.command-search-trigger');
     const sidebarToggle = topbar.querySelector('[data-sidebar-toggle]');
     topbar.insertBefore(brand, sidebarToggle || search || topbar.firstChild);
@@ -171,7 +172,7 @@
     button.addEventListener('click', () => {
       const next = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
       document.documentElement.dataset.theme = next;
-      storage.set('dashora-theme', next);
+      storage.set('app-theme', next);
     });
   });
 
@@ -181,7 +182,7 @@
       const next = current === 'rtl' ? 'ltr' : 'rtl';
       document.documentElement.setAttribute('dir', next);
       document.documentElement.setAttribute('lang', next === 'rtl' ? 'ar' : 'en');
-      storage.set('dashora-dir', next);
+      storage.set('app-dir', next);
     });
   });
 
@@ -261,7 +262,7 @@
     button.addEventListener('click', () => {
       const layout = button.dataset.layoutOption || 'default';
       document.body.dataset.layout = layout;
-      storage.set('dashora-layout', layout);
+      storage.set('app-layout', layout);
       syncLayoutButtons();
     });
   });
@@ -356,7 +357,7 @@
     ],
     ecommerce: [
       ['Customer', 'text', 'Nexa Analytics'],
-      ['Product', 'text', 'Dashora Pro License'],
+      ['Product', 'text', 'Premium Stay Package'],
       ['Quantity', 'number', '2'],
       ['Channel', 'select', 'Website|Marketplace|Retail|Partner']
     ],
@@ -660,7 +661,7 @@
   });
   applyMailFilters();
 
-  const calendarEl = document.getElementById('dashoraCalendar');
+  const calendarEl = document.getElementById('villaCalendar');
   const calendarToday = new Date();
   const calendarYear = calendarToday.getFullYear();
   const calendarMonth = calendarToday.getMonth();
@@ -1017,10 +1018,10 @@
   if (!window.Chart) return;
 
   const legendGapPlugin = {
-    id: 'dashoraLegendGap',
+    id: 'chartLegendGap',
     beforeInit(chart) {
       const legend = chart.legend;
-      if (!legend || legend._dashoraGapApplied) return;
+      if (!legend || legend._legendGapApplied) return;
       const originalFit = legend.fit;
       legend.fit = function fit() {
         originalFit.bind(legend)();
@@ -1029,7 +1030,7 @@
           legend.height += 14;
         }
       };
-      legend._dashoraGapApplied = true;
+      legend._legendGapApplied = true;
     }
   };
 
