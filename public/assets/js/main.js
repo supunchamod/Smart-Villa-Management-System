@@ -990,6 +990,8 @@
   document.querySelectorAll('form:not(#createForm):not([data-chat-form]):not([data-live-form])').forEach((form) => {
     const action = form.getAttribute('action');
     if (action && action !== '#') return;
+    // Real forms whose action is set later by Alpine (:action / x-bind:action) have no action attribute yet at this point.
+    if (form.hasAttribute(':action') || form.hasAttribute('x-bind:action')) return;
     form.addEventListener('submit', (event) => {
       event.preventDefault();
       let feedback = form.querySelector('[data-demo-form-feedback]');

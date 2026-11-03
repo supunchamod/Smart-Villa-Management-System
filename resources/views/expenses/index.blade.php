@@ -154,11 +154,13 @@
   <div class="modal fade" id="expenseModal" tabindex="-1" aria-labelledby="expenseModalTitle" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-fullscreen-sm-down ex-dialog">
       <div class="modal-content dash-modal">
-        <form method="POST" :action="formAction" @submit="submit($event)" class="ex-form">
+        {{-- data-live-form: main.js's "static demo" shim cancels the submit of any form without a real action attribute at load time; this form's action is set by Alpine, so it must opt out. --}}
+        <form method="POST" :action="formAction" @submit="submit($event)" class="ex-form" data-live-form>
           @csrf
           <template x-if="form.id"><input type="hidden" name="_method" value="PUT"></template>
           <input type="hidden" name="expense_id" :value="form.id">
           @foreach ($filters as $key => $value)@if ($value !== '' && $value !== 'all')<input type="hidden" name="{{ $key }}" value="{{ $value }}">@endif @endforeach
+          <input type="hidden" name="expense_type" :value="linked ? 'booking' : 'general'">
           <input type="hidden" name="booking_id" :value="linked && form.booking ? form.booking.id : ''">
 
           <div class="modal-header">

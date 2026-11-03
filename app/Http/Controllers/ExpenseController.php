@@ -198,10 +198,17 @@ class ExpenseController extends Controller
             'description' => ['nullable', 'string', 'max:1000'],
             'expense_date' => ['required', 'date'],
             // Blank = a general villa expense; set = a direct cost for that booking.
-            'booking_id' => ['nullable', 'integer', 'exists:bookings,id'],
+            'expense_type' => ['nullable', 'in:general,booking'],
+            'booking_id' => ['nullable', 'required_if:expense_type,booking', 'integer', 'exists:bookings,id'],
+        ], [
+            'booking_id.required_if' => 'Choose the booking this cost belongs to, or switch to a general expense.',
         ]);
 
-        $validated['booking_id'] = $validated['booking_id'] ?? null;
+        // A "general" expense is never linked, even if a stale booking id was submitted.
+        $bookingId = ($validated['expense_type'] ?? null) === 'general' ? null : ($validated['booking_id'] ?? null);
+
+        unset($validated['expense_type']);
+        $validated['booking_id'] = $bookingId;
 
         return $validated;
     }
