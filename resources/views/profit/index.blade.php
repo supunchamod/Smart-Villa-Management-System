@@ -153,7 +153,7 @@
               </thead>
               <tbody>
                 @foreach ($bookingProfits as $row)
-                  @php($b = $row['booking'])
+                  @php $b = $row['booking']; @endphp
                   <tr>
                     <td>
                       <a href="{{ route('bookings.show', $b) }}"><strong>#{{ $b->id }} · {{ $b->customer_name }}</strong></a><br>
