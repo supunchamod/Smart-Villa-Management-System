@@ -25,6 +25,8 @@
         x-data="checkoutModal(@js([
             'currency' => $currency,
             'baseAmount' => (float) $booking->total_amount,
+            // Extra charges already on the booking (e.g. safari lunch / drone) - part of the bill, not editable here.
+            'existing' => $booking->extras->map(fn ($extra) => ['name' => $extra->item_name, 'detail' => $extra->quantity > 1 ? $extra->quantity.' × '.number_format((float) $extra->unit_price, 2) : null, 'amount' => (float) $extra->line_total])->values()->all(),
             'advance' => (float) $booking->advance_payment,
             'saved' => $booking->expenses->map(fn ($expense) => $expense->toListItem())->values()->all(),
             'today' => today()->toDateString(),
@@ -144,6 +146,12 @@
 
           <div class="co-summary">
             <div class="co-sum-row"><span>Room charges</span><span class="co-num" x-text="money(baseAmount)"></span></div>
+            <template x-for="(item, i) in existing" :key="'ex' + i">
+              <div class="co-sum-row co-sum-item">
+                <span class="co-sum-item-name" x-text="item.name + (item.detail ? ' (' + item.detail + ')' : '')"></span>
+                <span class="co-num" x-text="money(item.amount)"></span>
+              </div>
+            </template>
             <template x-for="item in billedItems" :key="item.key">
               <div class="co-sum-row co-sum-item">
                 <span class="co-sum-item-name" x-text="item.name.trim() + (item.quantity > 1 ? ' × ' + item.quantity : '')"></span>
@@ -195,6 +203,7 @@
         let nextKey = 0;
         return {
             baseAmount: config.baseAmount,
+            existing: config.existing || [],
             advance: config.advance,
             currency: config.currency,
             presets: ['Meals', 'BBQ', 'Safari Jeep', 'Beverages', 'Laundry'],
@@ -255,8 +264,11 @@
             get extrasTotal() {
                 return this.items.reduce((sum, item) => sum + this.lineTotal(item), 0);
             },
+            get existingTotal() {
+                return this.existing.reduce((sum, item) => sum + (Number(item.amount) || 0), 0);
+            },
             get subtotal() {
-                return this.baseAmount + this.extrasTotal;
+                return this.baseAmount + this.existingTotal + this.extrasTotal;
             },
             get balance() {
                 return Math.round((this.subtotal - this.advance) * 100) / 100;

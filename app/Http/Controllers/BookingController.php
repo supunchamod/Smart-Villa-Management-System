@@ -15,8 +15,10 @@ use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
@@ -32,6 +34,12 @@ class BookingController extends Controller
      * Status -> calendar color, kept in one place so the list badges and
      * the FullCalendar feed always agree.
      */
+    /**
+     * "Balance due": the advance does not yet cover the room/package charge
+     * plus every extra charge on the booking.
+     */
+    private const BALANCE_DUE_SQL = 'advance_payment < total_amount + COALESCE((SELECT SUM(booking_extras.quantity * booking_extras.unit_price) FROM booking_extras WHERE booking_extras.booking_id = bookings.id), 0)';
+
     private const STATUS_COLORS = [
         'pending' => '#f6a642',
         'confirmed' => '#5278ff',
@@ -72,7 +80,7 @@ class BookingController extends Controller
 
         match ($tab) {
             'active' => $bookingsQuery->where('status', 'confirmed'),
-            'balance_due' => $bookingsQuery->where('status', 'confirmed')->whereColumn('advance_payment', '<', 'total_amount'),
+            'balance_due' => $bookingsQuery->where('status', 'confirmed')->whereRaw(self::BALANCE_DUE_SQL),
             'history' => $bookingsQuery->whereIn('status', ['checked_out', 'cancelled']),
             'pending' => $bookingsQuery->where('status', 'pending'),
             default => null,
@@ -121,7 +129,7 @@ class BookingController extends Controller
             'todayCheckOutsCount' => Booking::where('status', 'confirmed')->where('booking_type', '!=', 'safari_only')->whereDate('check_out', $today)->count(),
             'tomorrowCheckInsCount' => Booking::where('status', 'confirmed')->where('booking_type', '!=', 'safari_only')->whereDate('check_in', $tomorrow)->count(),
             'tomorrowCheckOutsCount' => Booking::where('status', 'confirmed')->where('booking_type', '!=', 'safari_only')->whereDate('check_out', $tomorrow)->count(),
-            'balanceDueCount' => Booking::where('status', 'confirmed')->whereColumn('advance_payment', '<', 'total_amount')->count(),
+            'balanceDueCount' => Booking::where('status', 'confirmed')->whereRaw(self::BALANCE_DUE_SQL)->count(),
             'todayArrivals' => Booking::with('room')->where('status', 'confirmed')->where('booking_type', '!=', 'safari_only')->whereDate('check_in', $today)->orderBy('check_in')->get(),
             'todayDepartures' => Booking::with('room')->where('status', 'confirmed')->where('booking_type', '!=', 'safari_only')->whereDate('check_out', $today)->orderBy('check_out')->get(),
         ]);
@@ -143,8 +151,15 @@ class BookingController extends Controller
     public function store(Request $request): RedirectResponse
     {
         $validated = $this->validateBooking($request);
+        $charges = Arr::only($validated, ['lunch_charge', 'drone_charge']);
+        $data = Arr::except($validated, ['lunch_charge', 'drone_charge']);
 
-        $booking = $this->saveWithAvailabilityCheck($validated, fn () => Booking::create($validated));
+        $booking = $this->saveWithAvailabilityCheck($data, function () use ($data, $charges) {
+            $booking = Booking::create($data);
+            $this->syncSafariCharges($booking, $data, $charges);
+
+            return $booking;
+        });
 
         // Only a confirmed booking gets an immediate WhatsApp confirmation
         // + invoice - a 'pending' one is still awaiting review via confirm().
@@ -187,7 +202,13 @@ class BookingController extends Controller
     {
         $validated = $this->validateBooking($request, $booking);
 
-        $this->saveWithAvailabilityCheck($validated, fn () => $booking->update($validated), $booking);
+        $charges = Arr::only($validated, ['lunch_charge', 'drone_charge']);
+        $data = Arr::except($validated, ['lunch_charge', 'drone_charge']);
+
+        $this->saveWithAvailabilityCheck($data, function () use ($booking, $data, $charges) {
+            $booking->update($data);
+            $this->syncSafariCharges($booking, $data, $charges);
+        }, $booking);
 
         return redirect()->route('bookings.index')->with('status', 'Booking updated successfully.');
     }
@@ -260,7 +281,9 @@ class BookingController extends Controller
                 'unit_price' => round((float) $row['unit_price'], 2),
             ]);
 
-            $extrasTotal = round($extras->sum(fn (array $row) => $row['quantity'] * $row['unit_price']), 2);
+            // Extras already on the booking (e.g. a safari's lunch / drone charges) plus any added now.
+            $existingExtrasTotal = round((float) $locked->extras()->get()->sum(fn ($extra) => $extra->line_total), 2);
+            $extrasTotal = round($existingExtrasTotal + $extras->sum(fn (array $row) => $row['quantity'] * $row['unit_price']), 2);
             $settlement = round((float) $locked->total_amount + $extrasTotal - (float) $locked->advance_payment, 2);
 
             if ($settlement > 0 && empty($validated['payment_method'])) {
@@ -602,10 +625,23 @@ class BookingController extends Controller
             'customer_phone' => ['nullable', 'string', 'max:30', new PhoneNumber],
             'special_notes' => ['nullable', 'string', 'max:2000'],
             'total_amount' => ['required', 'numeric', 'min:0'],
-            'advance_payment' => ['required', 'numeric', 'min:0', 'lte:total_amount'],
+            'advance_payment' => ['required', 'numeric', 'min:0'],
+            // Optional safari add-on prices; saved as itemised extra charges.
+            'lunch_charge' => [$isSafariOnly && $request->boolean('include_lunch') ? 'required' : 'nullable', 'numeric', 'min:0', 'max:99999999'],
+            'drone_charge' => [$isSafariOnly && $request->boolean('include_drone_videos') ? 'required' : 'nullable', 'numeric', 'min:0', 'max:99999999'],
             'status' => [Rule::in(['pending', 'confirmed', 'checked_out', 'cancelled'])],
             'board_type' => ['nullable', Rule::in(array_keys(Booking::BOARD_TYPES))],
         ]);
+
+        // The advance may cover the whole bill: room/package charge plus the safari extras.
+        $safariExtras = ($isSafariOnly && $request->boolean('include_lunch') ? (float) ($validated['lunch_charge'] ?? 0) : 0.0)
+            + ($isSafariOnly && $request->boolean('include_drone_videos') ? (float) ($validated['drone_charge'] ?? 0) : 0.0);
+
+        if ((float) $validated['advance_payment'] > (float) $validated['total_amount'] + $safariExtras) {
+            throw ValidationException::withMessages([
+                'advance_payment' => 'The advance payment cannot be more than the total amount'.($safariExtras > 0 ? ' plus the extra charges.' : '.'),
+            ]);
+        }
 
         $validated['booking_type'] = $bookingType;
         $validated['status'] = $validated['status'] ?? 'confirmed';
@@ -640,6 +676,46 @@ class BookingController extends Controller
         }
 
         return $validated;
+    }
+
+    /**
+     * Keep the safari add-ons in step with the booking's itemised extra
+     * charges: "Lunch Service" and "Drone Video Shooting" rows exist exactly
+     * when the add-on is ticked and has a charge, so they appear on every
+     * bill/invoice and in the balance due. Checked-out bookings are left
+     * alone (their bill is already settled). Also drops the cached
+     * confirmation PDF so the invoice reflects the new amounts.
+     *
+     * @param  array<string, mixed>  $data
+     * @param  array<string, mixed>  $charges
+     */
+    private function syncSafariCharges(Booking $booking, array $data, array $charges): void
+    {
+        if ($booking->status === 'checked_out') {
+            return;
+        }
+
+        $addons = [
+            Booking::LUNCH_ITEM => [(bool) ($data['include_lunch'] ?? false), $charges['lunch_charge'] ?? null],
+            Booking::DRONE_ITEM => [(bool) ($data['include_drone_videos'] ?? false), $charges['drone_charge'] ?? null],
+        ];
+
+        foreach ($addons as $item => [$included, $amount]) {
+            $amount = round((float) $amount, 2);
+            $row = $booking->extras()->where('item_name', $item)->first();
+
+            if ($included && $amount > 0) {
+                $row
+                    ? $row->update(['quantity' => 1, 'unit_price' => $amount])
+                    : $booking->extras()->create(['item_name' => $item, 'quantity' => 1, 'unit_price' => $amount]);
+            } else {
+                $row?->delete();
+            }
+        }
+
+        $booking->unsetRelation('extras');
+
+        Storage::disk('public')->delete("invoices/invoice-confirmation-{$booking->id}.pdf");
     }
 
     /**

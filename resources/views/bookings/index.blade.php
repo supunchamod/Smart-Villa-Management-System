@@ -230,7 +230,7 @@
                             @endif
                           </td>
                           <td class="bk-financial">
-                            <strong>{{ $globalSettings->currency }} {{ number_format($booking->total_amount, 2) }}</strong>
+                            <strong>{{ $globalSettings->currency }} {{ number_format($booking->grand_total, 2) }}</strong>
                             @if ($financialBadge)
                               <span class="deal-badge {{ $financialBadge['class'] }}">{{ $financialBadge['label'] }}</span>
                             @endif
@@ -330,7 +330,7 @@
                       @endif
 
                       <div class="mdash-card-meta">
-                        <span>Total <strong>{{ $globalSettings->currency }} {{ number_format($booking->total_amount, 2) }}</strong></span>
+                        <span>Total <strong>{{ $globalSettings->currency }} {{ number_format($booking->grand_total, 2) }}</strong></span>
                         @if ($financialBadge)
                           <span class="deal-badge {{ $financialBadge['class'] }}">{{ $financialBadge['label'] }}</span>
                         @endif

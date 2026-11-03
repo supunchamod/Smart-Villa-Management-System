@@ -8,6 +8,10 @@
       total: {{ (float) old('total_amount', $booking->total_amount ?? 0) }},
       advance: {{ (float) old('advance_payment', $booking->advance_payment ?? 0) }},
       bookingType: '{{ $bookingType }}',
+      lunch: @js((bool) old('include_lunch', $booking->include_lunch ?? false)),
+      drone: @js((bool) old('include_drone_videos', $booking->include_drone_videos ?? false)),
+      lunchAmount: @js(old('lunch_charge', $booking->lunch_charge ?? '')),
+      droneAmount: @js(old('drone_charge', $booking->drone_charge ?? '')),
   })"
 >
   @if ($globalSettings->is_safari_enabled)
@@ -126,14 +130,24 @@
   </div>
   <div class="col-md-6" x-show="bookingType === 'safari_only'">
     <div class="form-check form-switch">
-      <input class="form-check-input" type="checkbox" role="switch" id="includeLunch" name="include_lunch" value="1" @checked(old('include_lunch', $booking->include_lunch ?? false))>
+      <input class="form-check-input" type="checkbox" role="switch" id="includeLunch" name="include_lunch" value="1" x-model="lunch">
       <label class="form-check-label" for="includeLunch">Include lunch</label>
+    </div>
+    <div class="mt-2" x-show="lunch" x-cloak>
+      <label class="form-label" for="lunchCharge">Lunch Charge Amount (LKR)</label>
+      <input id="lunchCharge" class="form-control @error('lunch_charge') is-invalid @enderror" type="number" min="0" step="0.01" inputmode="decimal" name="lunch_charge" x-model="lunchAmount" placeholder="0.00" :required="bookingType === 'safari_only' && lunch">
+      @error('lunch_charge')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror
     </div>
   </div>
   <div class="col-md-6" x-show="bookingType === 'safari_only'">
     <div class="form-check form-switch">
-      <input class="form-check-input" type="checkbox" role="switch" id="includeDrone" name="include_drone_videos" value="1" @checked(old('include_drone_videos', $booking->include_drone_videos ?? false))>
+      <input class="form-check-input" type="checkbox" role="switch" id="includeDrone" name="include_drone_videos" value="1" x-model="drone">
       <label class="form-check-label" for="includeDrone">Include drone videos</label>
+    </div>
+    <div class="mt-2" x-show="drone" x-cloak>
+      <label class="form-label" for="droneCharge">Drone Video Charge Amount (LKR)</label>
+      <input id="droneCharge" class="form-control @error('drone_charge') is-invalid @enderror" type="number" min="0" step="0.01" inputmode="decimal" name="drone_charge" x-model="droneAmount" placeholder="0.00" :required="bookingType === 'safari_only' && drone">
+      @error('drone_charge')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror
     </div>
   </div>
 
@@ -169,6 +183,7 @@
   <div class="col-md-4">
     <label class="form-label">Remaining balance</label>
     <input class="form-control" type="text" x-bind:value="balance" disabled>
+    <small class="text-muted" x-show="extraCharges > 0" x-cloak>Includes <span x-text="extraCharges.toFixed(2)"></span> in lunch / drone extra charges.</small>
   </div>
 
   {{-- Shown for every booking type (accommodation, safari, full package). --}}
@@ -193,8 +208,17 @@
             advance: config.advance,
             roomAmount: '',
             safariAmount: '',
+            lunch: !!config.lunch,
+            drone: !!config.drone,
+            lunchAmount: config.lunchAmount,
+            droneAmount: config.droneAmount,
+            // Safari add-on prices are billed as extra charges on top of the total amount.
+            get extraCharges() {
+                if (this.bookingType !== 'safari_only') return 0;
+                return (this.lunch ? parseFloat(this.lunchAmount) || 0 : 0) + (this.drone ? parseFloat(this.droneAmount) || 0 : 0);
+            },
             get balance() {
-                return (this.total - this.advance).toFixed(2);
+                return (this.total + this.extraCharges - this.advance).toFixed(2);
             },
             applyCombinedTotal() {
                 const room = parseFloat(this.roomAmount) || 0;

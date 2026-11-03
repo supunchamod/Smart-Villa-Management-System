@@ -102,7 +102,7 @@ class ProfitController extends Controller
         // Independent of the summary range above, same reasoning as the
         // trend chart - "what's coming up" shouldn't disappear just because
         // the manager is looking at "Today" or a past custom range.
-        $upcomingBookings = Booking::with('room')->upcoming()->limit(self::UPCOMING_BOOKINGS_LIMIT)->get();
+        $upcomingBookings = Booking::with(['room', 'extras'])->upcoming()->limit(self::UPCOMING_BOOKINGS_LIMIT)->get();
 
         return view('profit.index', [
             'range' => $range,

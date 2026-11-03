@@ -290,7 +290,7 @@
                   <strong class="pa-upcoming-title">{{ $booking->room_label }}</strong>
                   <small class="pa-upcoming-meta">Guest: {{ $booking->customer_name }} &bull; {{ $booking->booking_type === 'safari_only' ? 'Safari' : $nights.' Night'.($nights === 1 ? '' : 's') }}</small>
                 </div>
-                <span class="pa-upcoming-revenue">{{ $globalSettings->currency }} {{ number_format($booking->total_amount, 0) }}</span>
+                <span class="pa-upcoming-revenue">{{ $globalSettings->currency }} {{ number_format($booking->grand_total, 0) }}</span>
               </div>
             @empty
               <p class="pa-empty">No upcoming check-ins scheduled.</p>

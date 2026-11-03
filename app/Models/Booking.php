@@ -20,6 +20,14 @@ class Booking extends Model
      *
      * @var array<string, string>
      */
+    /**
+     * Item names of the safari add-ons that are stored as itemised extra
+     * charges (booking_extras rows) so they flow into every bill and balance.
+     */
+    public const LUNCH_ITEM = 'Lunch Service';
+
+    public const DRONE_ITEM = 'Drone Video Shooting';
+
     public const BOOKING_TYPES = [
         'accommodation_only' => 'Accommodation Only',
         'safari_only' => 'Safari Only',
@@ -282,6 +290,20 @@ class Booking extends Model
     protected function pickupTimeShort(): Attribute
     {
         return Attribute::get(fn () => $this->pickup_time ? substr((string) $this->pickup_time, 0, 5) : null);
+    }
+
+    /**
+     * Amounts of the safari lunch / drone add-ons, read back from the
+     * booking's extra charges (null when that add-on has no charge).
+     */
+    protected function lunchCharge(): Attribute
+    {
+        return Attribute::get(fn () => ($row = $this->extras->firstWhere('item_name', self::LUNCH_ITEM)) ? (float) $row->unit_price : null);
+    }
+
+    protected function droneCharge(): Attribute
+    {
+        return Attribute::get(fn () => ($row = $this->extras->firstWhere('item_name', self::DRONE_ITEM)) ? (float) $row->unit_price : null);
     }
 
     protected function roomLabel(): Attribute
