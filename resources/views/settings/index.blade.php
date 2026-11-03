@@ -75,6 +75,8 @@
           <div class="col-12"><button class="btn btn-primary" type="submit">Save Changes</button></div>
         </form></div></div><div class="col-xl-4"><div class="panel"><div class="panel-head"><div><h2>Activity Timeline</h2><p>Live operational events</p></div></div><div class="timeline"><div class="timeline-item"><span></span><div><strong>New enterprise lead assigned to CRM pipeline</strong><small>2 min ago</small></div></div><div class="timeline-item"><span></span><div><strong>Invoice #DS-1024 was paid successfully</strong><small>18 min ago</small></div></div><div class="timeline-item"><span></span><div><strong>Inventory alert triggered for Pro License</strong><small>43 min ago</small></div></div><div class="timeline-item"><span></span><div><strong>Q2 executive report generated</strong><small>1 hr ago</small></div></div></div></div></div></div>
 
+        {{-- Temporarily hidden with the other Landing Page UI (config/features.php: FEATURE_LANDING_PAGE_UI). --}}
+        @if (config('features.landing_page_ui'))
         <div class="row g-4 mt-1">
           <div class="col-12">
             <div class="panel">
@@ -131,4 +133,5 @@
             </div>
           </div>
         </div>
+        @endif
 @endsection
