@@ -1799,3 +1799,63 @@ h1 { font-size: clamp(30px, 3.5vw, 42px); margin: 4px 0 8px; font-weight: 700; l
   .bd-stat:not(.bd-stat-total) { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 12px 14px; }
   .bd-stat:not(.bd-stat-total) strong { margin-top: 0; font-size: 18px; }
 }
+
+/* ---- Booking "View Details" modal + guest bill ----
+   .vb-sheet uses fixed light colours and no media queries on purpose: it is also the
+   source for the exported PNG, which must look the same on any screen or theme. */
+.vb-dialog { max-width: 760px; }
+.vb-dialog .dash-modal { overflow: hidden; }
+.vb-body { background: #eef1f6; padding: 20px; }
+[data-theme="dark"] .vb-body { background: rgba(255, 255, 255, .04); }
+.vb-sheet { background: #fff; color: #1f2937; border-radius: 12px; padding: 28px; box-shadow: 0 6px 24px rgba(15, 23, 42, .10); font-size: 13px; line-height: 1.5; border-top: 5px solid #5278ff; }
+.vb-sheet.vb-export { width: 720px; border-radius: 0; box-shadow: none; padding: 36px; }
+.vb-head { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 16px 24px; padding-bottom: 18px; border-bottom: 1px solid #e5e7eb; }
+.vb-brand { display: flex; align-items: center; gap: 12px; min-width: 0; flex: 1 1 260px; }
+.vb-logo { height: 46px; width: auto; max-width: 120px; object-fit: contain; }
+.vb-villa { font-size: 19px; font-weight: 800; color: #111827; line-height: 1.2; }
+.vb-contact { margin-top: 3px; color: #6b7280; font-size: 12px; }
+.vb-doc { text-align: right; flex: 0 0 auto; margin-left: auto; }
+.vb-doc-title { font-size: 20px; font-weight: 800; letter-spacing: .04em; color: #5278ff; }
+.vb-doc-meta { color: #6b7280; font-size: 12px; }
+.vb-parties { display: flex; flex-wrap: wrap; gap: 16px 28px; padding: 18px 0; }
+.vb-party { flex: 1 1 220px; min-width: 0; }
+.vb-label { margin-bottom: 4px; color: #9ca3af; font-size: 10.5px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
+.vb-strong { font-weight: 800; color: #111827; overflow-wrap: anywhere; }
+.vb-muted { color: #6b7280; overflow-wrap: anywhere; }
+.vb-items { border: 1px solid #e5e7eb; border-radius: 10px; overflow: hidden; }
+.vb-items-head { display: flex; justify-content: space-between; padding: 9px 14px; background: #f3f4f6; color: #374151; font-size: 10.5px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
+.vb-group { padding: 7px 14px; background: #fafafa; border-top: 1px solid #e5e7eb; color: #6b7280; font-size: 10.5px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
+.vb-item { display: flex; justify-content: space-between; align-items: flex-start; gap: 14px; padding: 11px 14px; border-top: 1px solid #e5e7eb; }
+.vb-items-head + .vb-item { border-top: 0; }
+.vb-item-main { min-width: 0; }
+.vb-item-main strong { display: block; font-weight: 700; color: #111827; overflow-wrap: anywhere; }
+.vb-item-main small { display: block; color: #6b7280; font-size: 11.5px; }
+.vb-item-amt { flex: 0 0 auto; font-weight: 800; color: #111827; white-space: nowrap; }
+.vb-totals { margin: 16px 0 0 auto; max-width: 340px; }
+.vb-row { display: flex; justify-content: space-between; gap: 14px; padding: 5px 0; color: #6b7280; font-weight: 600; }
+.vb-row span:last-child { white-space: nowrap; }
+.vb-row-sub { color: #111827; font-weight: 800; border-top: 1px solid #e5e7eb; margin-top: 4px; padding-top: 9px; }
+.vb-due { display: flex; justify-content: space-between; align-items: center; gap: 14px; margin-top: 8px; padding: 12px 14px; border-radius: 10px; background: #fff0ee; color: #dc2626; font-weight: 800; }
+.vb-due strong { font-size: 19px; white-space: nowrap; }
+.vb-due.is-paid { background: #eaf8ee; color: #1f8a3b; }
+.vb-foot { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; margin-top: 18px; padding-top: 14px; border-top: 1px dashed #d1d5db; }
+.vb-status { display: inline-block; padding: 4px 12px; border: 2px solid; border-radius: 999px; font-size: 11px; font-weight: 900; letter-spacing: .06em; text-transform: uppercase; }
+.vb-status-paid { color: #1f8a3b; border-color: #1f8a3b; }
+.vb-status-partial { color: #b45309; border-color: #d97706; }
+.vb-status-unpaid { color: #dc2626; border-color: #dc2626; }
+.vb-thanks { margin-top: 16px; text-align: center; color: #9ca3af; font-size: 11.5px; }
+
+.vb-footer { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-start; gap: 10px; padding: 14px 20px; }
+.vb-footer .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; margin: 0; min-height: 42px; }
+.vb-footer-links { display: flex; flex: 1 1 100%; justify-content: flex-end; gap: 16px; font-size: 13px; font-weight: 700; }
+.vb-footer-links a { color: var(--muted); text-decoration: none; }
+.vb-footer-links a:hover { color: #5278ff; }
+.vb-error { flex: 1 1 100%; margin: 0; color: #dc2626; font-size: 13px; font-weight: 700; }
+@media (max-width: 767.98px) {
+  .vb-body { padding: 12px; }
+  .vb-sheet:not(.vb-export) { padding: 20px 16px; }
+  .vb-sheet:not(.vb-export) .vb-doc { text-align: left; margin-left: 0; flex-basis: 100%; }
+  .vb-footer { flex-direction: column; align-items: stretch; padding: 12px 16px calc(12px + env(safe-area-inset-bottom)); }
+  .vb-footer .btn { width: 100%; min-height: 46px; }
+  .vb-footer-links { margin: 4px 0 0; justify-content: center; }
+}

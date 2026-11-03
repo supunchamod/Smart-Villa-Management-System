@@ -408,69 +408,7 @@
             @include('bookings._checkout-modal', ['booking' => $booking, 'modalId' => 'checkoutModal'.$booking->id])
           @endif
 
-          @php
-            $isInHouse = $booking->booking_type !== 'safari_only' && $booking->status === 'confirmed' && $booking->check_in->lte($today) && $booking->check_out->gte($today);
-            $statusMeta = match (true) {
-                $booking->status === 'pending' => ['label' => 'Pending', 'badge' => 'pending'],
-                $booking->status === 'confirmed' && $isInHouse => ['label' => 'Checked In', 'badge' => 'progress'],
-                $booking->status === 'confirmed' => ['label' => 'Confirmed', 'badge' => 'new'],
-                $booking->status === 'checked_out' => ['label' => 'Checked Out', 'badge' => 'won'],
-                $booking->status === 'cancelled' => ['label' => 'Cancelled', 'badge' => 'stuck'],
-                default => ['label' => ucfirst($booking->status), 'badge' => 'new'],
-            };
-          @endphp
-          <div class="modal fade" id="quickViewModal{{ $booking->id }}" tabindex="-1" aria-hidden="true">
-            <div class="modal-dialog modal-dialog-centered">
-              <div class="modal-content dash-modal">
-                <div class="modal-header">
-                  <div><span class="eyebrow">Quick View</span><h2 class="modal-title">{{ $booking->customer_name }}</h2></div>
-                  <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                  <div class="qv-section-label">Guest</div>
-                  <div class="qv-row"><span>Phone</span><strong>{{ $booking->customer_phone ?: '—' }}</strong></div>
-                  <div class="qv-row"><span>Email</span><strong>{{ $booking->customer_email ?: '—' }}</strong></div>
-
-                  @if ($globalSettings->is_safari_enabled)
-                    <div class="qv-row"><span>Booking Type</span><strong>{{ $booking->booking_type_label }}</strong></div>
-                  @endif
-
-                  @if ($booking->room)
-                    <div class="qv-section-label">Stay</div>
-                    <div class="qv-row"><span>Cabana</span><strong>{{ $booking->room->name_or_number }}</strong></div>
-                    <div class="qv-row"><span>Check-in</span><strong>{{ $booking->check_in->format('d M Y') }}</strong></div>
-                    <div class="qv-row"><span>Check-out</span><strong>{{ $booking->check_out->format('d M Y') }}</strong></div>
-                    @if ($booking->board_type_label)
-                      <div class="qv-row"><span>Board Type</span><span class="board-badge {{ $booking->board_type_badge_class }}">{{ $booking->board_type_label }}</span></div>
-                    @endif
-                  @endif
-
-                  @if ($booking->booking_type !== 'accommodation_only')
-                    <div class="qv-section-label">Safari</div>
-                    <div class="qv-row"><span>Tour</span><strong>{{ $booking->safari_tour_name }}</strong></div>
-                    <div class="qv-row"><span>Safari Date</span><strong>{{ optional($booking->safari_date)->format('d M Y') }}</strong></div>
-                    @if ($booking->safari_vehicle_details)
-                      <div class="qv-row"><span>Vehicle</span><strong>{{ $booking->safari_vehicle_details }}</strong></div>
-                    @endif
-                  @endif
-
-                  <div class="qv-row"><span>Status</span><span class="deal-badge {{ $statusMeta['badge'] }}">{{ $statusMeta['label'] }}</span></div>
-
-                  <div class="qv-section-label">Payment</div>
-                  <div class="qv-row"><span>Total Amount</span><strong>{{ $globalSettings->currency }} {{ number_format($booking->total_amount, 2) }}</strong></div>
-                  <div class="qv-row"><span>Advance Paid</span><strong>{{ $globalSettings->currency }} {{ number_format($booking->advance_payment, 2) }}</strong></div>
-                  <div class="qv-row"><span>Balance Due</span><strong>{{ $globalSettings->currency }} {{ number_format($booking->remaining_balance, 2) }}</strong></div>
-                  <div class="qv-row"><span>Payment Status</span><strong>{{ $booking->payment_status_label }}</strong></div>
-                </div>
-                <div class="modal-footer">
-                  <a class="btn btn-light" href="{{ route('bookings.edit', $booking) }}"><i class="bi bi-pencil"></i> Edit</a>
-                  @if ($booking->status !== 'cancelled')
-                    <a class="btn btn-outline-primary" href="{{ route($booking->status === 'checked_out' ? 'bookings.invoice.final' : 'bookings.invoice.confirmation', $booking) }}" target="_blank" rel="noopener"><i class="bi bi-file-earmark-pdf"></i> Download PDF</a>
-                  @endif
-                </div>
-              </div>
-            </div>
-          </div>
+          @include('bookings._details-modal', ['booking' => $booking])
         @endforeach
 @endsection
 
