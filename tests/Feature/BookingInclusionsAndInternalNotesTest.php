@@ -148,4 +148,48 @@ class BookingInclusionsAndInternalNotesTest extends TestCase
             ->assertSee('Included Services / Features')
             ->assertSee('Add Custom Inclusion');
     }
+
+    public function test_a_booking_without_inclusions_has_no_includes_section_on_any_guest_output(): void
+    {
+        $booking = $this->createBooking(['inclusions' => []]);
+
+        $this->actingAs($this->owner)
+            ->get(route('bookings.invoice.view', [$booking, 'confirmation']))
+            ->assertOk()
+            ->assertDontSee('Includes / Services Provided')
+            ->assertDontSee('Services Provided');
+
+        $pdfHtml = view('invoices.pdf', ['booking' => $booking->load(['room', 'extras']), 'stage' => 'final'])->render();
+        $this->assertStringNotContainsString('Includes / Services Provided', $pdfHtml);
+
+        $job = new SendBookingWhatsAppJob($booking);
+        $method = new ReflectionMethod($job, 'caption');
+        $method->setAccessible(true);
+        $this->assertStringNotContainsString('Includes', $method->invoke($job, $booking, 'confirmation'));
+    }
+
+    public function test_clearing_the_inclusions_on_edit_removes_them_from_the_invoice(): void
+    {
+        $booking = $this->createBooking();
+        $this->assertNotEmpty($booking->all_inclusions);
+
+        // The form submits no inclusions[] at all when the optional section is switched off.
+        $this->actingAs($this->owner)
+            ->put(route('bookings.update', $booking), collect($this->payload())->except('inclusions')->all())
+            ->assertSessionHasNoErrors();
+
+        $this->assertNull($booking->fresh()->inclusions);
+
+        $this->actingAs($this->owner)
+            ->get(route('bookings.invoice.view', [$booking, 'confirmation']))
+            ->assertDontSee('Includes / Services Provided');
+    }
+
+    public function test_the_inclusions_section_is_an_optional_switch_on_the_form(): void
+    {
+        $this->actingAs($this->owner)
+            ->get(route('bookings.create'))
+            ->assertOk()
+            ->assertSee('Add Inclusions / Services Provided');
+    }
 }

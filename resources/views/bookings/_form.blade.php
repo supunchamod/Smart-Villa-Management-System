@@ -175,7 +175,14 @@
   {{-- Included services / features: printed on the guest invoice under "Includes / Services Provided". All booking types. --}}
   <div class="col-12">
     <hr class="my-1">
-    <h3 class="h6 mb-2"><i class="bi bi-check2-square"></i> Included Services / Features</h3>
+    <div class="form-check form-switch">
+      <input class="form-check-input" type="checkbox" role="switch" id="addInclusions" x-model="showIncl">
+      <label class="form-check-label fw-bold" for="addInclusions"><i class="bi bi-check2-square"></i> Add Inclusions / Services Provided <small class="text-muted fw-normal">(optional)</small></label>
+    </div>
+    <p class="text-muted small mt-1 mb-0" x-show="!showIncl">Leave this off if no specific services are included - the invoice then has no "Includes" section.</p>
+
+    {{-- Disabled while the switch is off, so nothing from this section is submitted (any saved inclusions are cleared). --}}
+    <fieldset :disabled="!showIncl" x-show="showIncl" x-cloak class="mt-2">
     <p class="text-muted small mb-2">Tick what is included for the guest. These are printed on the invoice and confirmation.</p>
     <div class="incl-grid">
       @foreach ($inclusionOptions as $option)
@@ -198,6 +205,7 @@
       <input type="text" class="form-control" x-model="customInput" @keydown.enter.prevent="addCustom()" placeholder="Type a custom inclusion, e.g. Airport transfer" maxlength="100" aria-label="Custom inclusion">
       <button type="button" class="btn btn-light" @click="addCustom()" :disabled="!customInput.trim()"><i class="bi bi-plus-lg"></i> Add Custom Inclusion</button>
     </div>
+    </fieldset>
     @error('inclusions')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror
   </div>
 
@@ -243,6 +251,8 @@
             selected: config.selected || [],
             customs: config.customs || [],
             customInput: '',
+            // Collapsed unless the booking already has inclusions (or the form is redisplayed with some).
+            showIncl: (config.selected || []).length + (config.customs || []).length > 0,
             addCustom() {
                 const value = this.customInput.trim().replace(/\s+/g, ' ');
                 if (!value) return;
