@@ -109,9 +109,9 @@
           </div>
         </div>
 
-        <div class="row g-4">
+        <div class="row g-4 bk-row">
           <div class="col-12">
-            <div class="panel" x-data="bookingsPanel()">
+            <div class="panel bk-panel" x-data="bookingsPanel()">
               <div class="panel-head"><div><h2>All Bookings</h2><p>Reservations across all rooms and cabanas</p></div></div>
 
               {{-- Search & filters --}}
@@ -348,43 +348,30 @@
                           </form>
                         </div>
                       @elseif ($booking->status === 'confirmed')
-                        <a
-                          href="{{ route('bookings.invoice.confirmation', $booking) }}"
-                          class="mdash-action-btn mdash-action-btn-primary"
-                          target="_blank"
-                          rel="noopener"
-                        ><i class="bi bi-file-earmark-arrow-down"></i> Download Confirmation PDF</a>
-
                         <button
                           type="button"
                           class="mdash-action-btn {{ $booking->remaining_balance > 0 ? 'mdash-action-btn-amber' : 'mdash-action-btn-success' }}"
                           data-bs-toggle="modal"
                           data-bs-target="#checkoutModal{{ $booking->id }}"
                         ><i class="bi bi-box-arrow-right"></i> {{ $booking->remaining_balance > 0 ? 'Collect Balance & Checkout' : 'Checkout' }}</button>
-
-                        @if ($canSendWhatsApp)
-                          <button type="button" class="mdash-action-btn mdash-action-btn-whatsapp" @click="sendWhatsApp({{ $booking->id }}, '{{ route('bookings.send-whatsapp', $booking) }}')" :disabled="sendingWhatsApp[{{ $booking->id }}]"><i class="bi bi-whatsapp"></i> <span x-text="sendingWhatsApp[{{ $booking->id }}] ? 'Sending…' : 'Resend via WhatsApp'"></span></button>
-                        @endif
-                      @elseif ($booking->status === 'checked_out')
-                        <a
-                          href="{{ route('bookings.invoice.final', $booking) }}"
-                          class="mdash-action-btn mdash-action-btn-success"
-                          target="_blank"
-                          rel="noopener"
-                        ><i class="bi bi-file-earmark-check"></i> Download Final Invoice PDF</a>
-
-                        @if ($canSendWhatsApp)
-                          <button type="button" class="mdash-action-btn mdash-action-btn-whatsapp" @click="sendWhatsApp({{ $booking->id }}, '{{ route('bookings.send-whatsapp', $booking) }}')" :disabled="sendingWhatsApp[{{ $booking->id }}]"><i class="bi bi-whatsapp"></i> <span x-text="sendingWhatsApp[{{ $booking->id }}] ? 'Sending…' : 'Resend via WhatsApp'"></span></button>
-                        @endif
                       @endif
 
-                      <div class="mdash-card-actions">
-                        <button class="mdash-icon-btn" type="button" data-bs-toggle="modal" data-bs-target="#quickViewModal{{ $booking->id }}" aria-label="Quick view"><i class="bi bi-eye"></i></button>
-                        <a class="mdash-icon-btn" href="{{ route('bookings.edit', $booking) }}" aria-label="Edit booking"><i class="bi bi-pencil"></i></a>
-                        <form method="POST" action="{{ route('bookings.destroy', $booking) }}" onsubmit="return confirm('Delete this booking?');">
+                      {{-- One compact row of icon actions: view, edit, invoice PDF, WhatsApp, and delete (pushed right) --}}
+                      <div class="bk-m-actions">
+                        <button class="mdash-icon-btn" type="button" data-bs-toggle="modal" data-bs-target="#quickViewModal{{ $booking->id }}" title="View details" aria-label="View details"><i class="bi bi-eye"></i></button>
+                        <a class="mdash-icon-btn" href="{{ route('bookings.edit', $booking) }}" title="Edit booking" aria-label="Edit booking"><i class="bi bi-pencil"></i></a>
+                        @if ($booking->status === 'confirmed')
+                          <a class="mdash-icon-btn primary" href="{{ route('bookings.invoice.confirmation', $booking) }}" target="_blank" rel="noopener" title="Confirmation invoice (PDF)" aria-label="Download confirmation invoice PDF"><i class="bi bi-file-earmark-arrow-down"></i></a>
+                        @elseif ($booking->status === 'checked_out')
+                          <a class="mdash-icon-btn primary" href="{{ route('bookings.invoice.final', $booking) }}" target="_blank" rel="noopener" title="Final invoice (PDF)" aria-label="Download final invoice PDF"><i class="bi bi-file-earmark-check"></i></a>
+                        @endif
+                        @if ($canSendWhatsApp)
+                          <button type="button" class="mdash-icon-btn bk-m-wa" title="Resend via WhatsApp" aria-label="Resend via WhatsApp" @click="sendWhatsApp({{ $booking->id }}, '{{ route('bookings.send-whatsapp', $booking) }}')" :disabled="sendingWhatsApp[{{ $booking->id }}]"><i class="bi" :class="sendingWhatsApp[{{ $booking->id }}] ? 'bi-hourglass-split' : 'bi-whatsapp'"></i></button>
+                        @endif
+                        <form class="bk-m-delete" method="POST" action="{{ route('bookings.destroy', $booking) }}" onsubmit="return confirm('Delete this booking?');">
                           @csrf
                           @method('DELETE')
-                          <button class="mdash-icon-btn danger" type="submit" aria-label="Delete booking"><i class="bi bi-trash"></i></button>
+                          <button class="mdash-icon-btn danger" type="submit" title="Delete booking" aria-label="Delete booking"><i class="bi bi-trash"></i></button>
                         </form>
                       </div>
                     </div>

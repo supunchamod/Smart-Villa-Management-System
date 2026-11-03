@@ -46,9 +46,6 @@
   .bk-kpi-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 
-@media (max-width: 575px) {
-  .bk-kpi-grid { grid-template-columns: 1fr; }
-}
 
 .bk-kpi-card {
   display: flex;
@@ -212,3 +209,48 @@
 .bk-icon-btn:hover { color: var(--primary); border-color: rgba(82, 120, 255, .35); }
 .bk-icon-btn.whatsapp:hover { color: #1a7a34; border-color: rgba(47, 168, 79, .35); }
 .bk-icon-btn:disabled { opacity: .5; cursor: not-allowed; }
+
+/* ---- Manage Bookings: mobile card actions (one compact icon row) ---- */
+.bk-m-actions { display: flex; align-items: center; gap: 8px; }
+.bk-m-actions .mdash-icon-btn { width: 40px; height: 40px; border-radius: 12px; font-size: 15px; }
+.bk-m-delete { margin: 0 0 0 auto; }
+.bk-m-wa { background: rgba(37, 211, 102, .14); border-color: transparent; color: #128c4a; }
+[data-theme="dark"] .bk-m-wa { background: rgba(37, 211, 102, .2); color: #4ade80; }
+.bk-m-wa:disabled { opacity: .6; cursor: progress; }
+
+/* ---- Manage Bookings: edge-to-edge list on phones ---- */
+@media (max-width: 767.98px) {
+  /* style.css shrinks every top-level .row by 16px on phones; this list should use the full width. */
+  .content > .bk-row { width: 100%; }
+  .bk-row { --bs-gutter-x: 0; --bs-gutter-y: 0; margin-inline: 0; }
+  .bk-row > .col-12 { padding-inline: 0; }
+  .bk-panel { width: calc(100% + 32px); max-width: none; margin-inline: -16px; padding: 14px 12px; border-radius: 0; border-inline: 0; box-shadow: none; }
+  .bk-panel .panel-head { min-height: 0; margin-bottom: 12px; }
+  .bk-panel .panel-head h2 { font-size: 18px; }
+  .bk-filter-bar { gap: 8px; margin-bottom: 12px; }
+  .bk-search-wrap { flex: 1 1 100%; min-width: 0; }
+  .bk-filter-selects { display: grid; grid-template-columns: 1fr 1fr; width: 100%; gap: 8px; }
+  .bk-filter-selects select { min-width: 0; width: 100%; }
+  .bk-filter-selects .btn, .bk-filter-selects .bk-clear-filters { grid-column: 1 / -1; text-align: center; }
+  /* Status / type pills scroll sideways instead of wrapping into several rows. */
+  .bk-pills { flex-wrap: nowrap; overflow-x: auto; margin: 0 -12px 12px; padding: 0 12px 4px; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+  .bk-pills::-webkit-scrollbar { display: none; }
+  .bk-pill { flex: 0 0 auto; padding: 8px 14px; white-space: nowrap; }
+  .bk-panel .mdash-booking-list { gap: 10px; }
+  .bk-panel .mdash-booking-card { padding: 14px; box-shadow: 0 1px 2px rgba(21, 23, 28, .05); }
+}
+
+/* Phones: a compact 2x2 summary so arrivals/departures are visible without scrolling. */
+@media (max-width: 575px) {
+  .bk-kpi-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin-bottom: 14px; }
+  .bk-kpi-card { gap: 4px; padding: 12px; border-radius: 12px; }
+  .bk-kpi-head { align-items: center; gap: 8px; }
+  .bk-kpi-head > div { min-width: 0; }
+  .bk-kpi-label { font-size: 11px; line-height: 1.25; }
+  .bk-kpi-label i { display: none; }
+  .bk-kpi-count { margin-top: 2px; font-size: 26px; }
+  .bk-kpi-icon { width: 34px; height: 34px; flex: 0 0 34px; border-radius: 10px; font-size: 16px; }
+  /* Names and hints are one tap away in the list below; keep only the essentials here. */
+  .bk-kpi-list, .bk-kpi-empty, .bk-kpi-more { display: none; }
+  .bk-kpi-alert { margin: 0; padding: 4px 8px; font-size: 11px; }
+}
