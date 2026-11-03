@@ -48,7 +48,8 @@
     </div>
   @endif
 
-  <div class="col-md-6">
+  {{-- Not applicable to a safari-only trip (no room, no meal plan). --}}
+  <div class="col-md-6" x-show="bookingType !== 'safari_only'">
     <label class="form-label">Board Basis / Meal Plan</label>
     <select class="form-select @error('board_type') is-invalid @enderror" name="board_type">
       @foreach (\App\Models\Booking::BOARD_TYPES as $value => $label)
@@ -102,6 +103,38 @@
     <label class="form-label">Vehicle details</label>
     <input class="form-control @error('safari_vehicle_details') is-invalid @enderror" name="safari_vehicle_details" value="{{ old('safari_vehicle_details', $booking->safari_vehicle_details ?? '') }}" placeholder="Jeep #3 — Driver: Sunil">
     @error('safari_vehicle_details')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror
+  </div>
+
+  {{-- Safari-only trip logistics --}}
+  <template x-if="bookingType === 'safari_only'">
+    <div class="col-12"><hr><h3 class="h6 mb-0"><i class="bi bi-geo-alt"></i> Safari Trip Details</h3></div>
+  </template>
+  <div class="col-md-6" x-show="bookingType === 'safari_only'">
+    <label class="form-label">Pickup location</label>
+    <input class="form-control @error('pickup_location') is-invalid @enderror" name="pickup_location" value="{{ old('pickup_location', $booking->pickup_location ?? '') }}" placeholder="e.g. Star Moon Cabana, Kalupahana" maxlength="255">
+    @error('pickup_location')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror
+  </div>
+  <div class="col-md-3 col-6" x-show="bookingType === 'safari_only'">
+    <label class="form-label">Pickup time</label>
+    <input class="form-control @error('pickup_time') is-invalid @enderror" type="time" name="pickup_time" value="{{ old('pickup_time', $booking->pickup_time_short ?? '') }}">
+    @error('pickup_time')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror
+  </div>
+  <div class="col-md-3 col-6" x-show="bookingType === 'safari_only'">
+    <label class="form-label">Group size (pax)</label>
+    <input class="form-control @error('group_pax_size') is-invalid @enderror" type="number" min="1" max="500" step="1" inputmode="numeric" name="group_pax_size" value="{{ old('group_pax_size', $booking->group_pax_size ?? '') }}" placeholder="e.g. 4" :required="bookingType === 'safari_only'">
+    @error('group_pax_size')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror
+  </div>
+  <div class="col-md-6" x-show="bookingType === 'safari_only'">
+    <div class="form-check form-switch">
+      <input class="form-check-input" type="checkbox" role="switch" id="includeLunch" name="include_lunch" value="1" @checked(old('include_lunch', $booking->include_lunch ?? false))>
+      <label class="form-check-label" for="includeLunch">Include lunch</label>
+    </div>
+  </div>
+  <div class="col-md-6" x-show="bookingType === 'safari_only'">
+    <div class="form-check form-switch">
+      <input class="form-check-input" type="checkbox" role="switch" id="includeDrone" name="include_drone_videos" value="1" @checked(old('include_drone_videos', $booking->include_drone_videos ?? false))>
+      <label class="form-check-label" for="includeDrone">Include drone videos</label>
+    </div>
   </div>
 
   <template x-if="bookingType === 'full_package'">

@@ -81,6 +81,11 @@ class Booking extends Model
         'safari_tour_name',
         'safari_date',
         'safari_vehicle_details',
+        'pickup_location',
+        'pickup_time',
+        'group_pax_size',
+        'include_lunch',
+        'include_drone_videos',
         'customer_name',
         'customer_email',
         'customer_phone',
@@ -116,6 +121,9 @@ class Booking extends Model
             'check_in' => 'date',
             'check_out' => 'date',
             'safari_date' => 'date',
+            'group_pax_size' => 'integer',
+            'include_lunch' => 'boolean',
+            'include_drone_videos' => 'boolean',
             'total_amount' => 'decimal:2',
             'advance_payment' => 'decimal:2',
             'final_settlement_amount' => 'decimal:2',
@@ -268,6 +276,14 @@ class Booking extends Model
      * assume $booking->room existed reads this instead, so a safari-only
      * booking (nullable room_id) never causes a null-property crash.
      */
+    /**
+     * Pickup time as HH:MM (the column is a TIME, stored as HH:MM:SS).
+     */
+    protected function pickupTimeShort(): Attribute
+    {
+        return Attribute::get(fn () => $this->pickup_time ? substr((string) $this->pickup_time, 0, 5) : null);
+    }
+
     protected function roomLabel(): Attribute
     {
         return Attribute::get(fn () => $this->room?->name_or_number ?? $this->safari_tour_name ?? 'Safari Booking');

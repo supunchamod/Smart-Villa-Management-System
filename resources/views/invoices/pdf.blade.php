@@ -69,12 +69,21 @@
                     @if ($booking->safari_vehicle_details)
                         <div>Vehicle: {{ $booking->safari_vehicle_details }}</div>
                     @endif
+                    @if ($booking->pickup_location || $booking->pickup_time)
+                        <div>Pickup: {{ $booking->pickup_location }}@if ($booking->pickup_time) at {{ $booking->pickup_time_short }}@endif</div>
+                    @endif
+                    @if ($booking->group_pax_size)
+                        <div>Group size: {{ $booking->group_pax_size }} pax</div>
+                    @endif
+                    @if ($booking->include_lunch || $booking->include_drone_videos)
+                        <div>Includes: {{ collect([$booking->include_lunch ? 'Lunch' : null, $booking->include_drone_videos ? 'Drone videos' : null])->filter()->implode(', ') }}</div>
+                    @endif
                 @endif
                 @if ($booking->booking_type !== 'safari_only')
                     <div>Check-in: {{ $booking->check_in->format('d M Y') }}</div>
                     <div>Check-out: {{ $booking->check_out->format('d M Y') }}</div>
                 @endif
-                @if ($booking->board_type_label)
+                @if ($booking->board_type_label && $booking->booking_type !== 'safari_only')
                     <div>Board Type: {{ $booking->board_type_label }}</div>
                 @endif
             </td>

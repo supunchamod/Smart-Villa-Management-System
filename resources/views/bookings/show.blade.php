@@ -123,6 +123,21 @@
               <dl class="bd-fields">
                 <div class="bd-field"><dt><i class="bi bi-compass"></i>Tour</dt><dd>{{ $booking->safari_tour_name }}</dd></div>
                 <div class="bd-field"><dt><i class="bi bi-calendar-event"></i>Date</dt><dd>{{ optional($booking->safari_date)->format('D, d M Y') }}</dd></div>
+                @if ($booking->pickup_location)
+                  <div class="bd-field bd-field-wide"><dt><i class="bi bi-geo-alt"></i>Pickup location</dt><dd>{{ $booking->pickup_location }}</dd></div>
+                @endif
+                @if ($booking->pickup_time)
+                  <div class="bd-field"><dt><i class="bi bi-clock"></i>Pickup time</dt><dd>{{ $booking->pickup_time_short }}</dd></div>
+                @endif
+                @if ($booking->group_pax_size)
+                  <div class="bd-field"><dt><i class="bi bi-people"></i>Group size</dt><dd>{{ $booking->group_pax_size }} pax</dd></div>
+                @endif
+                @if ($booking->booking_type === 'safari_only')
+                  <div class="bd-field bd-field-wide"><dt><i class="bi bi-check2-square"></i>Inclusions</dt><dd>
+                    <span class="bd-incl {{ $booking->include_lunch ? 'on' : '' }}"><i class="bi bi-{{ $booking->include_lunch ? 'check-circle-fill' : 'dash-circle' }}"></i> Lunch</span>
+                    <span class="bd-incl {{ $booking->include_drone_videos ? 'on' : '' }}"><i class="bi bi-{{ $booking->include_drone_videos ? 'check-circle-fill' : 'dash-circle' }}"></i> Drone videos</span>
+                  </dd></div>
+                @endif
                 @if ($booking->safari_vehicle_details)
                   <div class="bd-field bd-field-wide"><dt><i class="bi bi-truck"></i>Vehicle</dt><dd>{{ $booking->safari_vehicle_details }}</dd></div>
                 @endif

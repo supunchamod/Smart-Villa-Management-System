@@ -96,6 +96,9 @@
               @if ($hasSafari && $booking->safari_tour_name)
                 <div class="vb-strong">{{ $booking->safari_tour_name }}</div>
                 <div class="vb-muted">{{ optional($booking->safari_date)->format('d M Y') }}@if ($booking->safari_vehicle_details) · {{ $booking->safari_vehicle_details }}@endif</div>
+                @if ($booking->pickup_location || $booking->pickup_time)<div class="vb-muted">Pickup: {{ $booking->pickup_location }}@if ($booking->pickup_time) at {{ $booking->pickup_time_short }}@endif</div>@endif
+                @if ($booking->group_pax_size)<div class="vb-muted">{{ $booking->group_pax_size }} pax</div>@endif
+                @if ($booking->include_lunch || $booking->include_drone_videos)<div class="vb-muted">Includes: {{ collect([$booking->include_lunch ? 'Lunch' : null, $booking->include_drone_videos ? 'Drone videos' : null])->filter()->implode(', ') }}</div>@endif
               @endif
             </div>
           </div>

@@ -582,6 +582,7 @@ class BookingController extends Controller
 
         $needsRoom = $bookingType !== 'safari_only';
         $needsSafari = $bookingType !== 'accommodation_only';
+        $isSafariOnly = $bookingType === 'safari_only';
 
         $validated = $request->validate([
             'room_id' => [$needsRoom ? 'required' : 'nullable', 'exists:rooms,id'],
@@ -590,6 +591,12 @@ class BookingController extends Controller
             'safari_tour_name' => [$needsSafari ? 'required' : 'nullable', 'string', 'max:255'],
             'safari_date' => [$needsSafari ? 'required' : 'nullable', 'date'],
             'safari_vehicle_details' => ['nullable', 'string', 'max:255'],
+            // Safari-only trip logistics (ignored / cleared for every other booking type).
+            'pickup_location' => ['nullable', 'string', 'max:255'],
+            'pickup_time' => ['nullable', 'date_format:H:i'],
+            'group_pax_size' => [$isSafariOnly ? 'required' : 'nullable', 'integer', 'min:1', 'max:500'],
+            'include_lunch' => ['nullable', 'boolean'],
+            'include_drone_videos' => ['nullable', 'boolean'],
             'customer_name' => ['required', 'string', 'max:255'],
             'customer_email' => ['nullable', 'email', 'max:255'],
             'customer_phone' => ['nullable', 'string', 'max:30', new PhoneNumber],
@@ -611,6 +618,19 @@ class BookingController extends Controller
             $validated['room_id'] = null;
             $validated['check_in'] = $validated['safari_date'];
             $validated['check_out'] = $validated['safari_date'];
+        }
+
+        if ($isSafariOnly) {
+            // A safari-only trip has no room, so no board basis / meal plan either.
+            $validated['board_type'] = null;
+            $validated['include_lunch'] = $request->boolean('include_lunch');
+            $validated['include_drone_videos'] = $request->boolean('include_drone_videos');
+        } else {
+            $validated['pickup_location'] = null;
+            $validated['pickup_time'] = null;
+            $validated['group_pax_size'] = null;
+            $validated['include_lunch'] = false;
+            $validated['include_drone_videos'] = false;
         }
 
         if (! $needsSafari) {

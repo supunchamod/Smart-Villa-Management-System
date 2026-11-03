@@ -140,6 +140,21 @@
                 <template x-if="b.safari">
                   <div class="bd-field"><dt><i class="bi bi-calendar-event"></i>Safari date</dt><dd x-text="b.safari.date"></dd></div>
                 </template>
+                <template x-if="b.safari && b.safari.pickup_location">
+                  <div class="bd-field bd-field-wide"><dt><i class="bi bi-geo-alt"></i>Pickup location</dt><dd x-text="b.safari.pickup_location"></dd></div>
+                </template>
+                <template x-if="b.safari && b.safari.pickup_time">
+                  <div class="bd-field"><dt><i class="bi bi-clock"></i>Pickup time</dt><dd x-text="b.safari.pickup_time"></dd></div>
+                </template>
+                <template x-if="b.safari && b.safari.group_pax">
+                  <div class="bd-field"><dt><i class="bi bi-people"></i>Group size</dt><dd x-text="b.safari.group_pax + ' pax'"></dd></div>
+                </template>
+                <template x-if="b.safari && b.safari.only">
+                  <div class="bd-field bd-field-wide"><dt><i class="bi bi-check2-square"></i>Inclusions</dt><dd>
+                    <span class="bd-incl" :class="{ on: b.safari.lunch }"><i class="bi" :class="b.safari.lunch ? 'bi-check-circle-fill' : 'bi-dash-circle'"></i> Lunch</span>
+                    <span class="bd-incl" :class="{ on: b.safari.drone }"><i class="bi" :class="b.safari.drone ? 'bi-check-circle-fill' : 'bi-dash-circle'"></i> Drone videos</span>
+                  </dd></div>
+                </template>
                 <template x-if="b.safari && b.safari.vehicle">
                   <div class="bd-field bd-field-wide"><dt><i class="bi bi-truck"></i>Vehicle</dt><dd x-text="b.safari.vehicle"></dd></div>
                 </template>
@@ -241,6 +256,9 @@
                     : '';
                 const safari = b.safari
                     ? `<div class="vb-strong">${esc(b.safari.tour)}</div><div class="vb-muted">${esc(b.safari.date || '')}${b.safari.vehicle ? ' · ' + esc(b.safari.vehicle) : ''}</div>`
+                      + ((b.safari.pickup_location || b.safari.pickup_time) ? `<div class="vb-muted">Pickup: ${esc(b.safari.pickup_location || '')}${b.safari.pickup_time ? ' at ' + esc(b.safari.pickup_time) : ''}</div>` : '')
+                      + (b.safari.group_pax ? `<div class="vb-muted">${esc(b.safari.group_pax)} pax</div>` : '')
+                      + ((b.safari.lunch || b.safari.drone) ? `<div class="vb-muted">Includes: ${[b.safari.lunch ? 'Lunch' : '', b.safari.drone ? 'Drone videos' : ''].filter(Boolean).join(', ')}</div>` : '')
                     : '';
                 const item = (name, detail, amount) => `<div class="vb-item"><div class="vb-item-main"><strong>${esc(name)}</strong>${detail ? `<small>${esc(detail)}</small>` : ''}</div><span class="vb-item-amt">${esc(amount)}</span></div>`;
                 const extras = b.extras.length

@@ -2032,3 +2032,7 @@ a.ex-badge-booking:hover { background: rgba(47, 168, 79, .24); color: #1f8a3b; }
 .vc-notes h3 { margin: 0 0 6px; font-size: 14px; font-weight: 800; }
 .vc-notes h3 i { color: #b45309; margin-right: 4px; }
 .vc-notes p { margin: 0; font-size: 14px; line-height: 1.5; white-space: pre-line; overflow-wrap: anywhere; }
+
+/* Safari inclusions (lunch / drone videos) */
+.bd-incl { display: inline-flex; align-items: center; gap: 6px; margin: 0 8px 4px 0; padding: 3px 10px; border-radius: 999px; background: var(--surface-2); border: 1px solid var(--line); color: var(--muted); font-size: 13px; font-weight: 700; }
+.bd-incl.on { background: rgba(47, 168, 79, .14); border-color: transparent; color: #1f8a3b; }
