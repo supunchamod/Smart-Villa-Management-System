@@ -125,16 +125,17 @@
 
     <table class="totals-table">
         <tr>
-            <td class="label">Room Charges</td>
+            <td class="label">{{ $isStay ? 'Room Charges' : 'Safari Charges' }}</td>
             <td class="value">{{ $money($booking->total_amount) }}</td>
         </tr>
-        @if ($booking->extras->isNotEmpty())
-            <tr>
-                <td class="label">Extra Charges</td>
-                <td class="value">{{ $money($booking->extras_total) }}</td>
+        {{-- Every extra charge is listed by name with its own amount; there is no single lumped "Extra charges" line. --}}
+        @foreach ($booking->extras as $extra)
+            <tr class="extra-line">
+                <td class="label">{{ $extra->item_name }}@if ($extra->quantity > 1) × {{ $extra->quantity }}@endif</td>
+                <td class="value">{{ $money($extra->line_total) }}</td>
             </tr>
-        @endif
-        <tr>
+        @endforeach
+        <tr class="subtotal-line">
             <td class="label">Subtotal</td>
             <td class="value">{{ $money($booking->grand_total) }}</td>
         </tr>

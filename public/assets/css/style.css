@@ -1626,7 +1626,7 @@ h1 { font-size: clamp(30px, 3.5vw, 42px); margin: 4px 0 8px; font-weight: 700; l
 /* Bill summary */
 .co-summary { margin-bottom: 24px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); overflow: hidden; box-shadow: 0 1px 2px rgba(15, 23, 42, .05); }
 .co-sum-row { display: flex; justify-content: space-between; align-items: baseline; gap: 16px; padding: 10px 18px; color: var(--muted); font-weight: 700; }
-.co-sum-row + .co-sum-row { border-top: 1px solid var(--line); }
+.co-sum-row ~ .co-sum-row { border-top: 1px solid var(--line); }
 .co-sum-sub { color: var(--text); font-weight: 800; background: var(--surface-2, #f7f9fc); }
 .co-sum-due { display: flex; justify-content: space-between; align-items: center; gap: 16px; padding: 16px 18px; background: #5278ff; color: #fff; font-weight: 900; }
 .co-sum-due span { white-space: nowrap; font-size: 13px; text-transform: uppercase; letter-spacing: .06em; opacity: .9; }
@@ -1663,3 +1663,20 @@ h1 { font-size: clamp(30px, 3.5vw, 42px); margin: 4px 0 8px; font-weight: 700; l
   .co-sum-due strong { margin-left: auto; }
   .co-sum-due strong { font-size: 20px; }
 }
+
+/* ---- Modal stacking ----
+   The sticky .topbar sits at z-index 1090, above Bootstrap's default modal (1055) and
+   backdrop (1050), so it used to paint over the top of every modal (title / close button).
+   Keep modals and their backdrop above the topbar, sidebar and bottom nav; toasts above modals. */
+.modal-backdrop { z-index: 1390; }
+.modal { z-index: 1400; }
+.toast-container { z-index: 1500; }
+
+/* Breathing room above/below the checkout dialog on desktop so it never touches the viewport edge. */
+@media (min-width: 768px) {
+  .co-dialog { --bs-modal-margin: 1.75rem; }
+  .co-dialog.modal-dialog-scrollable { height: calc(100% - (var(--bs-modal-margin) * 2)); }
+}
+
+.co-sum-item { padding-top: 8px; padding-bottom: 8px; font-size: 13px; }
+.co-sum-item-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }

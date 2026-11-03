@@ -136,8 +136,18 @@ class SendBookingWhatsAppJob implements ShouldQueue
             "🏡 Room: {$booking->room_label}",
             '📅 Check-in: '.$booking->check_in->format('d M Y'),
             '📅 Check-out: '.$booking->check_out->format('d M Y'),
-            "💰 Total: {$currency} ".number_format($booking->grand_total, 2),
         ];
+
+        if ($booking->extras->isNotEmpty()) {
+            $lines[] = '🧾 Room charges: '.$currency.' '.number_format((float) $booking->total_amount, 2);
+
+            foreach ($booking->extras as $extra) {
+                $quantity = $extra->quantity > 1 ? " × {$extra->quantity}" : '';
+                $lines[] = "   • {$extra->item_name}{$quantity}: {$currency} ".number_format($extra->line_total, 2);
+            }
+        }
+
+        $lines[] = "💰 Total: {$currency} ".number_format($booking->grand_total, 2);
 
         if ($isFinal) {
             $lines[] = "💳 Paid in Full - Thank you!";

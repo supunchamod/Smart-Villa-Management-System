@@ -93,7 +93,12 @@
 
           <div class="co-summary">
             <div class="co-sum-row"><span>Room charges</span><span class="co-num" x-text="money(baseAmount)"></span></div>
-            <div class="co-sum-row" x-show="extrasTotal > 0"><span>Extra charges</span><span class="co-num" x-text="money(extrasTotal)"></span></div>
+            <template x-for="item in billedItems" :key="item.key">
+              <div class="co-sum-row co-sum-item">
+                <span class="co-sum-item-name" x-text="item.name.trim() + (item.quantity > 1 ? ' × ' + item.quantity : '')"></span>
+                <span class="co-num" x-text="money(lineTotal(item))"></span>
+              </div>
+            </template>
             <div class="co-sum-row co-sum-sub"><span>Subtotal</span><strong class="co-num" x-text="money(subtotal)"></strong></div>
             <div class="co-sum-row"><span>Less: advance paid</span><span class="co-num" x-text="'− ' + money(advance)"></span></div>
             <div class="co-sum-due" :class="{ 'is-settled': balance <= 0 }">
@@ -159,6 +164,10 @@
             },
             lineTotal(item) {
                 return (Number(item.quantity) || 0) * (Number(item.price) || 0);
+            },
+            // Extras that will appear on the bill: named, with an amount.
+            get billedItems() {
+                return this.items.filter((item) => String(item.name).trim() && this.lineTotal(item) > 0);
             },
             get extrasTotal() {
                 return this.items.reduce((sum, item) => sum + this.lineTotal(item), 0);

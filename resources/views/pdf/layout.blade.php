@@ -183,6 +183,9 @@
     .items-table tr.extra-row td { padding-top: 9px; padding-bottom: 9px; }
     .items-table tr.group-row td { background: #fafafa; font-size: 11px; text-transform: uppercase; letter-spacing: .05em; color: #6b7280; padding: 7px 12px; }
     .totals-table .grand.settled td { border-top-color: #2fa84f; }
+    .totals-table .extra-line .label { font-size: 12px; }
+    .totals-table .extra-line .value { font-weight: normal; font-size: 12px; }
+    .totals-table .subtotal-line td { border-top: 1px solid #d1d5db; padding-top: 8px; }
     .method-note { margin-top: 6px; text-align: right; color: #6b7280; font-size: 12px; }
 
     @isset($web)
