@@ -1579,37 +1579,87 @@ h1 { font-size: clamp(30px, 3.5vw, 42px); margin: 4px 0 8px; font-weight: 700; l
 }
 
 /* ---- Checkout & payment modal ---- */
-.co-meta { display: flex; flex-wrap: wrap; gap: 4px 14px; margin-top: 4px; color: var(--muted); font-size: 13px; font-weight: 700; }
-.co-section { margin-bottom: 18px; }
-.co-section-title { display: flex; align-items: baseline; gap: 10px; margin-bottom: 10px; font-weight: 900; font-size: 13px; text-transform: uppercase; letter-spacing: .05em; }
-.co-section-title small { color: var(--muted); font-weight: 700; text-transform: none; letter-spacing: 0; }
-.co-line { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 12px 14px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface-2, #f7f9fc); }
-.co-line small { display: block; color: var(--muted); font-weight: 700; }
-.co-chips { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; }
-.co-chip { border: 1px dashed var(--line); background: transparent; color: inherit; border-radius: 999px; padding: 5px 12px; font-size: 13px; font-weight: 800; cursor: pointer; }
-.co-chip:hover { border-color: #5278ff; color: #5278ff; }
-.co-empty { padding: 14px; border: 1px dashed var(--line); border-radius: 8px; color: var(--muted); font-size: 13px; text-align: center; }
-.co-rows { display: grid; gap: 8px; }
-.co-row { display: grid; grid-template-columns: minmax(0, 2.2fr) 70px minmax(0, 1fr) minmax(0, 1fr) 32px; gap: 8px; align-items: center; }
-.co-row-head { color: var(--muted); font-size: 11px; font-weight: 900; text-transform: uppercase; letter-spacing: .05em; }
-.co-row-total { text-align: right; font-weight: 900; font-size: 14px; }
-.co-remove { border: 0; background: transparent; color: #dc2626; width: 32px; height: 32px; border-radius: 6px; cursor: pointer; }
-.co-remove:hover { background: rgba(220, 38, 38, .1); }
-.co-summary { margin-bottom: 18px; padding: 14px 16px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface-2, #f7f9fc); }
-.co-sum-row { display: flex; justify-content: space-between; padding: 4px 0; color: var(--muted); font-weight: 700; }
-.co-sum-sub { border-top: 1px solid var(--line); margin-top: 6px; padding-top: 8px; color: inherit; }
-.co-sum-due { border-top: 2px solid currentColor; margin-top: 8px; padding-top: 10px; color: inherit; font-size: 20px; font-weight: 900; }
-.co-sum-due.is-settled { color: #2fa84f; }
-.co-sum-note { margin-top: 6px; color: var(--muted); font-size: 12px; }
+/* The <form> wraps header/body/footer, so it has to carry Bootstrap's scrollable-modal flex
+   layout itself - otherwise .modal-body never becomes the scroll container and the bottom of
+   the modal (payment method + footer buttons) is clipped. */
+.co-dialog form { display: flex; flex-direction: column; flex: 1 1 auto; min-height: 0; max-height: 100%; overflow: hidden; }
+.co-dialog .modal-header, .co-dialog .modal-footer { flex-shrink: 0; }
+.co-dialog .modal-body { flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain; -webkit-overflow-scrolling: touch; padding: 20px 24px 8px; }
+.co-row input[type="number"] { -moz-appearance: textfield; appearance: textfield; }
+.co-row input[type="number"]::-webkit-outer-spin-button, .co-row input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+.co-dialog .modal-header { align-items: flex-start; padding: 20px 24px 16px; }
+.co-dialog .modal-footer { padding: 14px 24px; gap: 10px; }
+.co-meta { display: flex; flex-wrap: wrap; gap: 6px 16px; margin-top: 8px; color: var(--muted); font-size: 13px; font-weight: 700; line-height: 1.4; }
+.co-meta span { display: inline-flex; align-items: center; gap: 6px; }
+.co-section { margin-bottom: 24px; }
+.co-section-title { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 12px; margin-bottom: 12px; font-weight: 900; font-size: 12px; line-height: 1.4; text-transform: uppercase; letter-spacing: .06em; }
+.co-section-title span { white-space: nowrap; }
+.co-section-title small { color: var(--muted); font-weight: 700; text-transform: none; letter-spacing: 0; font-size: 12px; }
+.co-line { display: flex; justify-content: space-between; align-items: center; gap: 16px; padding: 14px 16px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface-2, #f7f9fc); }
+.co-line-main { min-width: 0; }
+.co-line-main strong { display: block; line-height: 1.3; }
+.co-line-main small { display: block; margin-top: 2px; color: var(--muted); font-weight: 700; font-size: 12px; line-height: 1.4; }
+.co-amount { white-space: nowrap; font-variant-numeric: tabular-nums; }
+
+/* Quick-add pills */
+.co-chips { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; }
+.co-chip { display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--line); background: var(--surface-2, #f7f9fc); color: inherit; border-radius: 999px; padding: 7px 14px; font-size: 13px; font-weight: 800; line-height: 1; cursor: pointer; transition: background-color .15s ease, border-color .15s ease, color .15s ease, transform .1s ease, box-shadow .15s ease; }
+.co-chip i { font-size: 12px; color: #5278ff; transition: color .15s ease; }
+.co-chip:hover { background: #5278ff; border-color: #5278ff; color: #fff; box-shadow: 0 4px 12px rgba(82, 120, 255, .28); }
+.co-chip:hover i { color: #fff; }
+.co-chip:active { transform: scale(.96); }
+.co-chip:focus-visible { outline: 2px solid #5278ff; outline-offset: 2px; }
+.co-chip-add { border-style: dashed; border-color: #5278ff; background: transparent; color: #5278ff; }
+.co-empty { padding: 16px; border: 1px dashed var(--line); border-radius: 12px; color: var(--muted); font-size: 13px; line-height: 1.5; text-align: center; }
+
+/* Extra-charge rows: one table-like row on desktop, a stacked card on phones */
+.co-rows { display: grid; gap: 10px; }
+.co-row { display: grid; grid-template-columns: minmax(0, 2.4fr) 76px minmax(0, 1.1fr) minmax(104px, 1fr) 36px; gap: 10px; align-items: center; }
+.co-row-head { color: var(--muted); font-size: 11px; font-weight: 900; text-transform: uppercase; letter-spacing: .06em; padding: 0 2px; }
+.co-row:not(.co-row-head) .form-control { min-height: 40px; font-size: 14px; }
+.co-field { display: block; margin: 0; min-width: 0; }
+.co-field::before { display: none; }
+.co-row-total { text-align: right; font-weight: 900; font-size: 14px; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.co-remove { display: inline-flex; align-items: center; justify-content: center; border: 0; background: transparent; color: #dc2626; width: 36px; height: 36px; border-radius: 8px; cursor: pointer; transition: background-color .15s ease; }
+.co-remove:hover { background: rgba(220, 38, 38, .12); }
+
+/* Bill summary */
+.co-summary { margin-bottom: 24px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); overflow: hidden; box-shadow: 0 1px 2px rgba(15, 23, 42, .05); }
+.co-sum-row { display: flex; justify-content: space-between; align-items: baseline; gap: 16px; padding: 10px 18px; color: var(--muted); font-weight: 700; }
+.co-sum-row + .co-sum-row { border-top: 1px solid var(--line); }
+.co-sum-sub { color: var(--text); font-weight: 800; background: var(--surface-2, #f7f9fc); }
+.co-sum-due { display: flex; justify-content: space-between; align-items: center; gap: 16px; padding: 16px 18px; background: #5278ff; color: #fff; font-weight: 900; }
+.co-sum-due span { white-space: nowrap; font-size: 13px; text-transform: uppercase; letter-spacing: .06em; opacity: .9; }
+.co-sum-due strong { font-size: 24px; line-height: 1.1; white-space: nowrap; }
+.co-sum-due.is-settled { background: #2fa84f; }
+.co-sum-note { padding: 10px 18px; border-top: 1px solid var(--line); color: var(--muted); font-size: 12px; line-height: 1.5; }
+.co-num { font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+/* Payment method */
 .co-methods { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
 .co-method { position: relative; margin: 0; cursor: pointer; }
-.co-method input { position: absolute; opacity: 0; inset: 0; cursor: pointer; }
-.co-method span { display: flex; align-items: center; justify-content: center; gap: 8px; padding: 12px 8px; border: 2px solid var(--line); border-radius: 8px; font-weight: 800; text-align: center; }
-.co-method input:checked + span { border-color: #5278ff; background: rgba(82, 120, 255, .08); color: #5278ff; }
+.co-method input { position: absolute; opacity: 0; inset: 0; width: 100%; height: 100%; cursor: pointer; }
+.co-method span { display: flex; align-items: center; justify-content: center; gap: 8px; min-height: 48px; padding: 10px 8px; border: 2px solid var(--line); border-radius: 12px; font-weight: 800; text-align: center; transition: border-color .15s ease, background-color .15s ease, color .15s ease; }
+.co-method:hover span { border-color: #5278ff; }
+.co-method input:checked + span { border-color: #5278ff; background: rgba(82, 120, 255, .10); color: #5278ff; }
 .co-method input:focus-visible + span { outline: 2px solid #5278ff; outline-offset: 2px; }
-@media (max-width: 640px) {
-  .co-row { grid-template-columns: 1fr 70px 1fr; }
+
+@media (max-width: 767.98px) {
+  .co-dialog .modal-body { padding: 16px 16px 4px; }
+  .co-dialog .modal-header { padding: 16px; }
+  .co-dialog .modal-footer { padding: 12px 16px calc(12px + env(safe-area-inset-bottom)); flex-direction: column-reverse; align-items: stretch; }
+  .co-dialog .modal-footer .btn { width: 100%; min-height: 46px; margin: 0; }
+  .co-section { margin-bottom: 20px; }
   .co-row-head { display: none; }
-  .co-row-total { grid-column: 1 / 3; text-align: left; }
+  .co-row { grid-template-columns: 64px minmax(0, 1fr) 118px; grid-template-areas: "name name remove" "qty price total"; gap: 8px 10px; padding: 12px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface-2, #f7f9fc); align-items: end; }
+  .co-name { grid-area: name; }
+  .co-remove { grid-area: remove; align-self: center; justify-self: end; }
+  .co-qty { grid-area: qty; }
+  .co-price { grid-area: price; }
+  .co-row-total { grid-area: total; align-self: end; padding-bottom: 9px; }
+  .co-field::before { display: block; content: attr(data-label); margin-bottom: 3px; color: var(--muted); font-size: 11px; font-weight: 900; text-transform: uppercase; letter-spacing: .05em; }
   .co-methods { grid-template-columns: 1fr; }
+  .co-sum-due { padding: 14px 16px; flex-wrap: wrap; row-gap: 2px; }
+  .co-sum-due strong { margin-left: auto; }
+  .co-sum-due strong { font-size: 20px; }
 }

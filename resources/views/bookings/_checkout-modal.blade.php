@@ -17,7 +17,7 @@
         : 'Safari booking';
 @endphp
 <div class="modal fade" id="{{ $modalId }}" tabindex="-1" aria-hidden="true">
-  <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-lg">
+  <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-lg modal-fullscreen-sm-down co-dialog">
     <div class="modal-content dash-modal">
       <form
         method="POST"
@@ -48,54 +48,57 @@
           <div class="co-section">
             <div class="co-section-title">Room charges</div>
             <div class="co-line">
-              <div>
+              <div class="co-line-main">
                 <strong>{{ $booking->room ? $booking->room->name_or_number : $booking->safari_tour_name }}</strong>
                 <small>{{ $baseLabel }}</small>
               </div>
-              <strong x-text="money(baseAmount)"></strong>
+              <strong class="co-amount" x-text="money(baseAmount)"></strong>
             </div>
           </div>
 
           <div class="co-section">
             <div class="co-section-title">
-              Extra charges
+              <span>Extra charges</span>
               <small>Anything consumed during the stay</small>
             </div>
 
             <div class="co-chips">
               <template x-for="preset in presets" :key="preset">
-                <button type="button" class="co-chip" @click="addItem(preset)"><i class="bi bi-plus-lg"></i> <span x-text="preset"></span></button>
+                <button type="button" class="co-chip" @click="addItem(preset)"><i class="bi bi-plus-lg"></i><span x-text="preset"></span></button>
               </template>
+              <button type="button" class="co-chip co-chip-add" @click="addItem('')"><i class="bi bi-plus-circle"></i><span>Add custom item</span></button>
             </div>
 
             <div class="co-empty" x-show="items.length === 0">No extra charges added. Use a quick-add button above, or add a custom item.</div>
 
             <div class="co-rows" x-show="items.length > 0">
-              <div class="co-row co-row-head">
+              <div class="co-row co-row-head" aria-hidden="true">
                 <span>Item</span><span>Qty</span><span>Unit price</span><span class="text-end">Amount</span><span></span>
               </div>
               <template x-for="(item, index) in items" :key="item.key">
                 <div class="co-row">
-                  <input type="text" class="form-control form-control-sm" :name="`extras[${index}][item_name]`" x-model="item.name" placeholder="Item name (e.g. Dinner)" maxlength="120" required>
-                  <input type="number" class="form-control form-control-sm" :name="`extras[${index}][quantity]`" x-model.number="item.quantity" min="1" max="999" step="1" required>
-                  <input type="number" class="form-control form-control-sm" :name="`extras[${index}][unit_price]`" x-model.number="item.price" min="0" step="0.01" placeholder="0.00" required>
+                  <input type="text" class="form-control co-name" :name="`extras[${index}][item_name]`" x-model="item.name" placeholder="Item name (e.g. Dinner)" aria-label="Item name" maxlength="120" required>
+                  <label class="co-field co-qty" data-label="Qty">
+                    <input type="number" class="form-control" :name="`extras[${index}][quantity]`" x-model.number="item.quantity" min="1" max="999" step="1" inputmode="numeric" aria-label="Quantity" required>
+                  </label>
+                  <label class="co-field co-price" data-label="Unit price">
+                    <input type="number" class="form-control" :name="`extras[${index}][unit_price]`" x-model.number="item.price" min="0" step="0.01" inputmode="decimal" placeholder="0.00" aria-label="Unit price" required>
+                  </label>
                   <span class="co-row-total" x-text="money(lineTotal(item))"></span>
-                  <button type="button" class="co-remove" @click="removeItem(index)" aria-label="Remove item"><i class="bi bi-x-lg"></i></button>
+                  <button type="button" class="co-remove" @click="removeItem(index)" aria-label="Remove item"><i class="bi bi-trash3"></i></button>
                 </div>
               </template>
             </div>
-
-            <button type="button" class="btn btn-sm btn-light mt-2" @click="addItem('')"><i class="bi bi-plus-circle"></i> Add custom item</button>
           </div>
 
           <div class="co-summary">
-            <div class="co-sum-row"><span>Room charges</span><span x-text="money(baseAmount)"></span></div>
-            <div class="co-sum-row" x-show="extrasTotal > 0"><span>Extra charges</span><span x-text="money(extrasTotal)"></span></div>
-            <div class="co-sum-row co-sum-sub"><span>Subtotal</span><strong x-text="money(subtotal)"></strong></div>
-            <div class="co-sum-row"><span>Less: advance paid</span><span x-text="'− ' + money(advance)"></span></div>
-            <div class="co-sum-row co-sum-due" :class="{ 'is-settled': balance <= 0 }">
+            <div class="co-sum-row"><span>Room charges</span><span class="co-num" x-text="money(baseAmount)"></span></div>
+            <div class="co-sum-row" x-show="extrasTotal > 0"><span>Extra charges</span><span class="co-num" x-text="money(extrasTotal)"></span></div>
+            <div class="co-sum-row co-sum-sub"><span>Subtotal</span><strong class="co-num" x-text="money(subtotal)"></strong></div>
+            <div class="co-sum-row"><span>Less: advance paid</span><span class="co-num" x-text="'− ' + money(advance)"></span></div>
+            <div class="co-sum-due" :class="{ 'is-settled': balance <= 0 }">
               <span>Balance due</span>
-              <strong x-text="money(Math.max(balance, 0))"></strong>
+              <strong class="co-num" x-text="money(Math.max(balance, 0))"></strong>
             </div>
             <div class="co-sum-note" x-show="balance < 0">The advance already covers this bill by <span x-text="money(-balance)"></span>. No balance is collected.</div>
           </div>
