@@ -51,7 +51,7 @@
                         <td>{{ $row['date']->format('d M Y') }}</td>
                         <td>{{ $row['type'] }}</td>
                         <td>{{ $row['booking']->customer_name }}</td>
-                        <td>{{ $row['booking']->room->name_or_number }}</td>
+                        <td></td>
                         <td class="text-right">{{ $globalSettings->currency }} {{ number_format($row['amount'], 2) }}</td>
                     </tr>
                 @empty

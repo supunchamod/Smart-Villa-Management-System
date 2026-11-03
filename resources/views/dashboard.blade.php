@@ -159,7 +159,7 @@
                 $paymentIcon = $paymentKey === 'advance' ? 'bi-wallet2' : 'bi-check2-circle';
               @endphp
               <tr x-show="filter === 'all' || filter === '{{ $paymentKey }}'">
-                <td><strong>{{ $payment['booking']->customer_name }} ({{ $payment['booking']->room->name_or_number }})</strong></td>
+                <td><strong>{{ $payment['booking']->customer_name }}</strong></td>
                 <td>{{ $payment['date']->format('d M Y, h:i A') }}</td>
                 <td><span class="deal-badge won">PAID &middot; {{ $globalSettings->currency }} {{ number_format($payment['amount'], 2) }}</span></td>
                 <td><span class="person-line"><span class="rep-avatar"><i class="bi {{ $paymentIcon }}"></i></span><span>{{ $payment['type'] }}</span></span></td>

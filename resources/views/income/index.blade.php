@@ -56,7 +56,7 @@
                         <td>{{ $row['date']->format('d M Y') }}</td>
                         <td><span class="deal-badge {{ $row['type'] === 'Advance Payment' ? 'new' : 'won' }}">{{ $row['type'] }}</span></td>
                         <td>{{ $row['booking']->customer_name }}</td>
-                        <td>{{ $row['booking']->room->name_or_number }}</td>
+                        <td></td>
                         <td class="text-end">{{ number_format($row['amount'], 2) }}</td>
                       </tr>
                     @empty
