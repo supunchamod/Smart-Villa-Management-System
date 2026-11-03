@@ -10,6 +10,7 @@ use App\Http\Controllers\IncomeController;
 use App\Http\Controllers\InvoiceController;
 use App\Http\Controllers\LandingPageController;
 use App\Http\Controllers\PageController;
+use App\Http\Controllers\PartnerBookingController;
 use App\Http\Controllers\ProfitController;
 use App\Http\Controllers\PublicBookingController;
 use App\Http\Controllers\ReportController;
@@ -60,6 +61,11 @@ Route::middleware('auth')->group(function () {
         // maintenance needs the same permission as managing bookings.
         Route::resource('rooms', RoomController::class)->except('show');
         Route::patch('/rooms/{room}/toggle-status', [RoomController::class, 'toggleStatus'])->name('rooms.toggle-status');
+
+        // External resort / hotel / cabana arrangements behind Full Package bookings.
+        Route::get('/partner-bookings', [PartnerBookingController::class, 'index'])->name('partner-bookings.index');
+        Route::post('/partner-bookings/{partnerBooking}/advance', [PartnerBookingController::class, 'recordAdvance'])->name('partner-bookings.advance');
+        Route::post('/partner-bookings/{partnerBooking}/settle', [PartnerBookingController::class, 'settle'])->name('partner-bookings.settle');
 
         Route::get('/calendar', [PageController::class, 'calendar'])->name('calendar');
         Route::get('/api/bookings', [BookingController::class, 'calendarFeed'])->name('bookings.calendar');

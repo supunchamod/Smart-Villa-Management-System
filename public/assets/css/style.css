@@ -2059,3 +2059,39 @@ a.ex-badge-booking:hover { background: rgba(47, 168, 79, .24); color: #1f8a3b; }
 .vb-incl li { position: relative; padding-left: 16px; color: #374151; font-size: 13px; overflow-wrap: anywhere; }
 .vb-incl li::before { content: "\2713"; position: absolute; left: 0; color: #1f8a3b; font-weight: 900; }
 .vc-internal-tag { display: inline-block; margin-left: 8px; padding: 2px 9px; border-radius: 999px; background: rgba(245, 158, 11, .2); color: #92400e; font-size: 10.5px; font-weight: 800; letter-spacing: .04em; text-transform: uppercase; vertical-align: middle; }
+
+/* Partner-resort expense rows are managed in Partner Resort Bookings: show a lock instead of delete */
+.co-locked, .vc-cost-lock, .bd-exp-lock { display: inline-flex; align-items: center; justify-content: center; width: 34px; height: 34px; color: var(--muted); font-size: 14px; }
+
+/* ---- Partner Resort Bookings ---- */
+.pb-kpis { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.pb-kpi-red { background: rgba(220, 38, 38, .12); color: #dc2626; }
+.pb-kpi-alert { border-color: rgba(220, 38, 38, .45); box-shadow: 0 0 0 3px rgba(220, 38, 38, .10), 0 8px 22px rgba(32, 44, 80, .05); }
+.pb-pills { margin-bottom: 14px; }
+.pb-pill-count { display: inline-block; min-width: 20px; margin-left: 4px; padding: 0 6px; border-radius: 999px; background: rgba(15, 23, 42, .08); font-size: 11px; line-height: 18px; text-align: center; }
+.bk-pill.active .pb-pill-count { background: rgba(255, 255, 255, .28); }
+.pb-table td { vertical-align: middle; }
+.pb-row-alert { background: rgba(220, 38, 38, .06); box-shadow: inset 4px 0 0 #dc2626; }
+.pb-flag { position: relative; padding-left: 22px; }
+.pb-flag::before { content: ""; position: absolute; left: 10px; top: 50%; width: 7px; height: 7px; margin-top: -3.5px; border-radius: 50%; background: #dc2626; animation: pb-pulse 1.6s ease-in-out infinite; }
+@keyframes pb-pulse { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: .35; transform: scale(.7); } }
+.pb-cards { display: grid; gap: 10px; }
+.pb-card { padding: 14px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); }
+.pb-card-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
+.pb-card-partner { margin: 10px 0 8px; font-weight: 700; }
+.pb-card-nums { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin-bottom: 12px; padding: 10px; border-radius: 10px; background: var(--surface-2); }
+.pb-card-nums span { font-size: 11px; color: var(--muted); font-weight: 700; }
+.pb-card-nums strong { display: block; margin-top: 2px; color: var(--text); font-size: 13px; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.pb-sum { border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
+.pb-sum-row, .pb-sum-due { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; padding: 10px 14px; }
+.pb-sum-row + .pb-sum-row { border-top: 1px solid var(--line); }
+.pb-sum-row span { color: var(--muted); font-weight: 700; }
+.pb-sum-row strong { text-align: right; overflow-wrap: anywhere; font-variant-numeric: tabular-nums; }
+.pb-sum-due { background: #5278ff; color: #fff; font-weight: 800; }
+.pb-sum-due strong { font-size: 20px; white-space: nowrap; }
+.pb-note { margin: 12px 0 0; color: #dc2626; font-size: 13px; font-weight: 700; }
+@media (max-width: 1199.98px) { .pb-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 575.98px) { .pb-kpis { grid-template-columns: 1fr; gap: 10px; } }
+
+.nav-link .nav-count { margin-left: auto; min-width: 20px; padding: 0 6px; border-radius: 999px; background: #dc2626; color: #fff; font-size: 11px; font-weight: 800; line-height: 20px; text-align: center; }
+.bd-partner .bd-total-row a { font-weight: 800; font-size: 13px; }

@@ -127,6 +127,9 @@
               </td>
               <td class="text-end ex-amount">{{ number_format($expense->amount, 2) }}</td>
               <td>
+                @if ($expense->isPartnerPayment())
+                  <a class="ex-badge ex-badge-general" href="{{ route('partner-bookings.index') }}" title="Managed in Partner Resort Bookings"><i class="bi bi-lock-fill"></i> Partner payment</a>
+                @else
                 <div class="d-flex gap-2 justify-content-end">
                   <button type="button" class="btn btn-sm btn-light" aria-label="Edit expense" @click="openEdit(@js($payload))"><i class="bi bi-pencil"></i></button>
                   <form method="POST" action="{{ route('expenses.destroy', $expense) }}" onsubmit="return confirm('Delete this expense?');">
@@ -136,6 +139,7 @@
                     <button class="btn btn-sm btn-light text-danger" type="submit" aria-label="Delete expense"><i class="bi bi-trash"></i></button>
                   </form>
                 </div>
+                @endif
               </td>
             </tr>
           @empty

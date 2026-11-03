@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class Booking extends Model
 {
@@ -176,12 +177,20 @@ class Booking extends Model
         // The expenses foreign key cascades on MySQL/PostgreSQL, but SQLite can't add an
         // enforced foreign key to an existing table - so remove a booking's costs here too
         // rather than leaving orphaned direct costs behind in the profit reports.
-        static::deleting(fn (Booking $booking) => $booking->expenses()->delete());
+        static::deleting(function (Booking $booking) {
+            $booking->expenses()->delete();
+            $booking->partnerBooking()->delete();
+        });
     }
 
     public function room(): BelongsTo
     {
         return $this->belongsTo(Room::class);
+    }
+
+    public function partnerBooking(): HasOne
+    {
+        return $this->hasOne(PartnerBooking::class);
     }
 
     public function extras(): HasMany

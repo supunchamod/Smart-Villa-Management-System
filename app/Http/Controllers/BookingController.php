@@ -8,6 +8,7 @@ use App\Models\Booking;
 use App\Models\Room;
 use App\Models\Setting;
 use App\Rules\PhoneNumber;
+use App\Services\PartnerBookingService;
 use App\Services\RoomAvailability;
 use App\Support\AutomatedWhatsApp;
 use App\Support\BookingDetails;
@@ -26,8 +27,10 @@ use Symfony\Component\HttpFoundation\Response;
 
 class BookingController extends Controller
 {
-    public function __construct(private readonly RoomAvailability $availability)
-    {
+    public function __construct(
+        private readonly RoomAvailability $availability,
+        private readonly PartnerBookingService $partners,
+    ) {
     }
 
     /**
@@ -157,6 +160,8 @@ class BookingController extends Controller
         $booking = $this->saveWithAvailabilityCheck($data, function () use ($data, $charges) {
             $booking = Booking::create($data);
             $this->syncSafariCharges($booking, $data, $charges);
+            // A Full Package registers in Partner Resort Bookings as "Pending Advance".
+            $this->partners->syncRegistration($booking);
 
             return $booking;
         });
@@ -208,6 +213,7 @@ class BookingController extends Controller
         $this->saveWithAvailabilityCheck($data, function () use ($booking, $data, $charges) {
             $booking->update($data);
             $this->syncSafariCharges($booking, $data, $charges);
+            $this->partners->syncRegistration($booking);
         }, $booking);
 
         return redirect()->route('bookings.index')->with('status', 'Booking updated successfully.');

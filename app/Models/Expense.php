@@ -29,6 +29,8 @@ class Expense extends Model
 
     protected $fillable = [
         'booking_id',
+        'partner_booking_id',
+        'partner_stage',
         'category',
         'amount',
         'description',
@@ -51,6 +53,15 @@ class Expense extends Model
     /**
      * General operating expenses (not linked to a booking).
      */
+    /**
+     * True for the advance / final-settlement rows that Partner Resort
+     * Bookings creates, which are kept in step with that module.
+     */
+    public function isPartnerPayment(): bool
+    {
+        return $this->partner_booking_id !== null;
+    }
+
     public function scopeGeneral(Builder $query): Builder
     {
         return $query->whereNull('booking_id');
@@ -78,6 +89,8 @@ class Expense extends Model
             'amount' => (float) $this->amount,
             'date' => $this->expense_date->format('d M Y'),
             'url' => route('bookings.expenses.destroy', $this),
+            // Created by Partner Resort Bookings: managed there, not editable or deletable here.
+            'locked' => $this->partner_booking_id !== null,
         ];
     }
 }

@@ -227,6 +227,18 @@
               <div class="bd-total-row bd-internal-profit {{ $booking->booking_profit < 0 ? 'is-loss' : '' }}"><span>Profit on this booking</span><span class="bd-internal-amt">{{ $money($booking->booking_profit) }}</span></div>
             </div>
 
+            @if ($booking->partnerBooking)
+              @php $pb = $booking->partnerBooking; $pbMeta = $pb->stage_meta; @endphp
+              <div class="bd-internal bd-partner">
+                <div class="bd-internal-title"><i class="bi bi-buildings"></i> Partner resort</div>
+                <div class="bd-total-row"><span>{{ $pb->partner_name ?: 'Partner not assigned yet' }}</span><span class="deal-badge {{ $pbMeta['class'] }}">{{ $pbMeta['label'] }}</span></div>
+                @if ($pb->agreed_cost !== null)
+                  <div class="bd-total-row"><span>Agreed cost / advance paid</span><span class="bd-internal-amt">{{ $money($pb->agreed_cost) }} / {{ $money($pb->advance_paid) }}</span></div>
+                @endif
+                <div class="bd-total-row"><a href="{{ route('partner-bookings.index', ['search' => '#'.$booking->id]) }}">Manage in Partner Resort Bookings &rarr;</a></div>
+              </div>
+            @endif
+
             @if ($isCheckedOut && ($booking->payment_method || $booking->checked_out_at))
               <p class="bd-paid-note">
                 <i class="bi bi-check-circle-fill"></i>
@@ -259,11 +271,15 @@
                 <small class="bd-exp-date">{{ $expense->expense_date->format('d M Y') }}</small>
               </div>
               <span class="bd-line-amount">{{ $money($expense->amount) }}</span>
+              @if ($expense->isPartnerPayment())
+                <span class="bd-exp-lock" title="Partner resort payment - managed in Partner Resort Bookings"><i class="bi bi-lock-fill"></i></span>
+              @else
               <form method="POST" action="{{ route('bookings.expenses.destroy', $expense) }}" onsubmit="return confirm('Delete this expense?');">
                 @csrf
                 @method('DELETE')
                 <button type="submit" class="bd-exp-delete" aria-label="Delete expense"><i class="bi bi-trash3"></i></button>
               </form>
+              @endif
             </li>
           @endforeach
         </ul>

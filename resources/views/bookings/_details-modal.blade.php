@@ -179,7 +179,7 @@
                   <small class="vc-cost-date" x-text="cost.date"></small>
                 </div>
                 <span class="vc-cost-amt" x-text="money(cost.amount)"></span>
-                <button type="button" class="vc-cost-del" @click="deleteCost(cost)" :disabled="deleting === cost.id" aria-label="Delete expense"><i class="bi bi-trash3"></i></button>
+                <span class="vc-cost-lock" x-show="cost.locked" title="Partner resort payment - managed in Partner Resort Bookings"><i class="bi bi-lock-fill"></i></span><button type="button" class="vc-cost-del" x-show="!cost.locked" @click="deleteCost(cost)" :disabled="deleting === cost.id" aria-label="Delete expense"><i class="bi bi-trash3"></i></button>
               </li>
             </template>
           </ul>

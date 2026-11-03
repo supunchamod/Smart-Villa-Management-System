@@ -42,6 +42,10 @@ class BookingExpenseController extends Controller
         // This endpoint only manages booking-linked costs.
         abort_if($expense->booking_id === null, 404);
 
+        if ($expense->isPartnerPayment()) {
+            return $this->reply($request, false, 'This is a partner resort payment. Manage it in Partner Resort Bookings.', 422);
+        }
+
         $expense->delete();
 
         return $this->reply($request, true, 'Booking expense removed.');

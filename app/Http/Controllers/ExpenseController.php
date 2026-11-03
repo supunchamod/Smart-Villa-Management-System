@@ -73,6 +73,10 @@ class ExpenseController extends Controller
      */
     public function update(Request $request, Expense $expense): RedirectResponse
     {
+        if ($expense->isPartnerPayment()) {
+            return back()->with('error', 'This is a partner resort payment. Change it in Partner Resort Bookings.');
+        }
+
         $expense->update($this->validated($request));
 
         return redirect()->route('expenses.index', $this->keepFilters($request))->with('status', 'Expense updated successfully.');
@@ -83,6 +87,10 @@ class ExpenseController extends Controller
      */
     public function destroy(Request $request, Expense $expense): RedirectResponse
     {
+        if ($expense->isPartnerPayment()) {
+            return back()->with('error', 'This is a partner resort payment. Change it in Partner Resort Bookings.');
+        }
+
         $expense->delete();
 
         return redirect()->route('expenses.index', $this->keepFilters($request))->with('status', 'Expense deleted successfully.');

@@ -108,7 +108,7 @@
                 <li class="co-saved-row">
                   <div class="co-saved-main"><strong x-text="cost.category"></strong><small x-show="cost.description" x-text="cost.description"></small><small class="co-saved-date" x-text="cost.date"></small></div>
                   <span class="co-num" x-text="money(cost.amount)"></span>
-                  <button type="button" class="co-remove" @click="deleteSaved(cost)" :disabled="deleting === cost.id" aria-label="Delete expense"><i class="bi bi-trash3"></i></button>
+                  <span class="co-locked" x-show="cost.locked" title="Partner resort payment - managed in Partner Resort Bookings"><i class="bi bi-lock-fill"></i></span><button type="button" class="co-remove" x-show="!cost.locked" @click="deleteSaved(cost)" :disabled="deleting === cost.id" aria-label="Delete expense"><i class="bi bi-trash3"></i></button>
                 </li>
               </template>
             </ul>

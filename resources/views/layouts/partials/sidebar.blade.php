@@ -16,6 +16,8 @@
           <a class="nav-link {{ request()->routeIs('bookings.create') ? 'active' : '' }}" href="{{ route('bookings.create') }}"><i class="bi bi-journal-plus"></i><span>Add Bookings</span></a>
           <a class="nav-link {{ request()->routeIs('bookings.*') && ! request()->routeIs('bookings.create') ? 'active' : '' }}" href="{{ route('bookings.index') }}"><i class="bi bi-journal-check"></i><span>Manage Bookings</span></a>
           <a class="nav-link {{ request()->routeIs('calendar') ? 'active' : '' }}" href="{{ route('calendar') }}"><i class="bi bi-calendar3"></i><span>Bookings Calendar</span></a>
+          @php $partnerAttention = \App\Models\PartnerBooking::needsAttentionCount(); @endphp
+          <a class="nav-link {{ request()->routeIs('partner-bookings.*') ? 'active' : '' }}" href="{{ route('partner-bookings.index') }}"><i class="bi bi-buildings"></i><span>Partner Resort Bookings</span>@if ($partnerAttention > 0)<span class="nav-count" title="{{ $partnerAttention }} need action">{{ $partnerAttention }}</span>@endif</a>
           @if (config('features.landing_page_ui'))
           <a class="nav-link {{ request()->routeIs('landing-page.*') ? 'active' : '' }}" href="{{ route('landing-page.index') }}"><i class="bi bi-easel"></i><span>Landing Page</span></a>
           @endif
