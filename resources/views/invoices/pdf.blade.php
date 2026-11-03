@@ -77,9 +77,6 @@
                     @if ($booking->group_pax_size)
                         <div>Group size: {{ $booking->group_pax_size }} pax</div>
                     @endif
-                    @if ($booking->include_lunch || $booking->include_drone_videos)
-                        <div>Includes: {{ collect([$booking->include_lunch ? 'Lunch' : null, $booking->include_drone_videos ? 'Drone videos' : null])->filter()->implode(', ') }}</div>
-                    @endif
                 @endif
                 @if ($booking->booking_type !== 'safari_only')
                     <div>Check-in: {{ $booking->check_in->format('d M Y') }}</div>
@@ -91,6 +88,23 @@
             </td>
         </tr>
     </table>
+
+    {{-- Guest-facing: what the booking includes. (Internal staff notes are deliberately never printed here.) --}}
+    @if (count($booking->all_inclusions) > 0)
+        <div class="incl-box">
+            <div class="section-label">Includes / Services Provided</div>
+            <table class="incl-table">
+                @foreach (array_chunk($booking->all_inclusions, 2) as $pair)
+                    <tr>
+                        @foreach ($pair as $item)
+                            <td>&bull; {{ $item }}</td>
+                        @endforeach
+                        @if (count($pair) === 1)<td></td>@endif
+                    </tr>
+                @endforeach
+            </table>
+        </div>
+    @endif
 
     @php
         $currency = $globalSettings->currency;

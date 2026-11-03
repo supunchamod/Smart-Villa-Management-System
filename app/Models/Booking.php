@@ -46,6 +46,21 @@ class Booking extends Model
      * public villa page's pricing tiers have no bed_and_breakfast_price
      * column yet, so it isn't offered there.
      */
+    /**
+     * Pre-defined services staff can tick as "included" in a booking. Staff
+     * can also add any custom item; both are stored in the inclusions list.
+     */
+    public const INCLUSION_OPTIONS = [
+        'Breakfast',
+        'Lunch',
+        'Dinner',
+        'Safari Tour',
+        'Welcome Drink',
+        'Bed & Evening Tea',
+        'Drone Videos',
+        'Entrance Tickets',
+    ];
+
     public const BOARD_TYPES = [
         'cabana_only' => 'Cabana Only (Room Only)',
         'bed_and_breakfast' => 'Bed & Breakfast (BB)',
@@ -99,6 +114,7 @@ class Booking extends Model
         'customer_email',
         'customer_phone',
         'special_notes',
+        'inclusions',
         'check_in',
         'check_out',
         'total_amount',
@@ -131,6 +147,7 @@ class Booking extends Model
             'check_out' => 'date',
             'safari_date' => 'date',
             'group_pax_size' => 'integer',
+            'inclusions' => 'array',
             'include_lunch' => 'boolean',
             'include_drone_videos' => 'boolean',
             'total_amount' => 'decimal:2',
@@ -305,6 +322,35 @@ class Booking extends Model
     protected function droneCharge(): Attribute
     {
         return Attribute::get(fn () => ($row = $this->extras->firstWhere('item_name', self::DRONE_ITEM)) ? (float) $row->unit_price : null);
+    }
+
+    /**
+     * Everything shown under "Includes / Services Provided": the ticked and
+     * custom inclusions plus the safari lunch / drone add-ons (which have
+     * their own priced toggles), without duplicates.
+     *
+     * @return array<int, string>
+     */
+    protected function allInclusions(): Attribute
+    {
+        return Attribute::get(function () {
+            $items = collect($this->inclusions ?? []);
+
+            if ($this->include_lunch) {
+                $items->push('Lunch');
+            }
+
+            if ($this->include_drone_videos) {
+                $items->push('Drone Videos');
+            }
+
+            return $items
+                ->map(fn ($item) => trim((string) $item))
+                ->filter()
+                ->unique(fn ($item) => mb_strtolower($item))
+                ->values()
+                ->all();
+        });
     }
 
     protected function roomLabel(): Attribute

@@ -161,8 +161,13 @@
               </dl>
             </div>
 
+            <div class="bd-group" x-show="b.inclusions && b.inclusions.length">
+              <h3>Includes / Services provided</h3>
+              <div><template x-for="item in b.inclusions" :key="item"><span class="bd-incl on"><i class="bi bi-check-circle-fill"></i> <span x-text="item"></span></span></template></div>
+            </div>
+
             <div class="bd-group" x-show="b.special_notes">
-              <h3>Special notes</h3>
+              <h3><i class="bi bi-lock-fill"></i> Special notes <span class="vc-internal-tag">Internal · staff only</span></h3>
               <p class="bd-notes"><i class="bi bi-chat-left-text"></i><span x-text="b.special_notes"></span></p>
             </div>
 
@@ -258,7 +263,7 @@
                     ? `<div class="vb-strong">${esc(b.safari.tour)}</div><div class="vb-muted">${esc(b.safari.date || '')}${b.safari.vehicle ? ' · ' + esc(b.safari.vehicle) : ''}</div>`
                       + ((b.safari.pickup_location || b.safari.pickup_time) ? `<div class="vb-muted">Pickup: ${esc(b.safari.pickup_location || '')}${b.safari.pickup_time ? ' at ' + esc(b.safari.pickup_time) : ''}</div>` : '')
                       + (b.safari.group_pax ? `<div class="vb-muted">${esc(b.safari.group_pax)} pax</div>` : '')
-                      + ((b.safari.lunch || b.safari.drone) ? `<div class="vb-muted">Includes: ${[b.safari.lunch ? 'Lunch' : '', b.safari.drone ? 'Drone videos' : ''].filter(Boolean).join(', ')}</div>` : '')
+
                     : '';
                 const item = (name, detail, amount) => `<div class="vb-item"><div class="vb-item-main"><strong>${esc(name)}</strong>${detail ? `<small>${esc(detail)}</small>` : ''}</div><span class="vb-item-amt">${esc(amount)}</span></div>`;
                 const extras = b.extras.length
@@ -275,6 +280,7 @@
                     <div class="vb-party"><div class="vb-label">Billed to</div><div class="vb-strong">${esc(b.customer_name)}</div>${b.customer_phone ? `<div class="vb-muted">${esc(b.customer_phone)}</div>` : ''}${b.customer_email ? `<div class="vb-muted">${esc(b.customer_email)}</div>` : ''}</div>
                     <div class="vb-party"><div class="vb-label">${b.is_stay ? 'Stay details' : 'Safari details'}</div>${b.is_stay ? `<div class="vb-strong">${esc(b.room)}${b.room_type ? ` <span class="vb-muted">· ${esc(b.room_type)}</span>` : ''}</div>` : ''}${stay}${safari}</div>
                   </div>
+                  ${(b.inclusions && b.inclusions.length) ? `<div class="vb-incl"><div class="vb-label">Includes / Services Provided</div><ul>${b.inclusions.map((i) => `<li>${esc(i)}</li>`).join('')}</ul></div>` : ''}
                   <div class="vb-items"><div class="vb-items-head"><span>Description</span><span>Amount</span></div>${item(b.room_charges_label, b.room_charges_detail, b.room_charges)}${extras}</div>
                   <div class="vb-totals">
                     <div class="vb-row vb-row-sub"><span>Subtotal</span><span>${esc(b.total_amount)}</span></div>

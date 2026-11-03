@@ -98,10 +98,16 @@
                 <div class="vb-muted">{{ optional($booking->safari_date)->format('d M Y') }}@if ($booking->safari_vehicle_details) · {{ $booking->safari_vehicle_details }}@endif</div>
                 @if ($booking->pickup_location || $booking->pickup_time)<div class="vb-muted">Pickup: {{ $booking->pickup_location }}@if ($booking->pickup_time) at {{ $booking->pickup_time_short }}@endif</div>@endif
                 @if ($booking->group_pax_size)<div class="vb-muted">{{ $booking->group_pax_size }} pax</div>@endif
-                @if ($booking->include_lunch || $booking->include_drone_videos)<div class="vb-muted">Includes: {{ collect([$booking->include_lunch ? 'Lunch' : null, $booking->include_drone_videos ? 'Drone videos' : null])->filter()->implode(', ') }}</div>@endif
               @endif
             </div>
           </div>
+
+          @if (count($booking->all_inclusions) > 0)
+            <div class="vb-incl">
+              <div class="vb-label">Includes / Services Provided</div>
+              <ul>@foreach ($booking->all_inclusions as $item)<li>{{ $item }}</li>@endforeach</ul>
+            </div>
+          @endif
 
           <div class="vb-items">
             <div class="vb-items-head"><span>Description</span><span>Amount</span></div>
@@ -149,7 +155,7 @@
 
         @if ($booking->special_notes)
           <section class="vc-notes">
-            <h3><i class="bi bi-chat-left-text"></i> Special Notes</h3>
+            <h3><i class="bi bi-lock-fill"></i> Special Notes <span class="vc-internal-tag">Internal · staff only</span></h3>
             <p>{{ $booking->special_notes }}</p>
           </section>
         @endif

@@ -146,9 +146,15 @@
               </dl>
             </div>
           @endif
+          @if (count($booking->all_inclusions) > 0)
+            <div class="bd-group">
+              <h3>Includes / Services provided</h3>
+              <div>@foreach ($booking->all_inclusions as $item)<span class="bd-incl on"><i class="bi bi-check-circle-fill"></i> {{ $item }}</span>@endforeach</div>
+            </div>
+          @endif
           @if ($booking->special_notes)
             <div class="bd-group">
-              <h3>Special notes</h3>
+              <h3><i class="bi bi-lock-fill"></i> Special notes <span class="vc-internal-tag">Internal · staff only</span></h3>
               <p class="bd-notes"><i class="bi bi-chat-left-text"></i><span>{{ $booking->special_notes }}</span></p>
             </div>
           @endif

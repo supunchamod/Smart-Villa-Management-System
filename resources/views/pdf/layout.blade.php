@@ -178,6 +178,9 @@
         text-transform: uppercase;
     }
 
+    .incl-box { margin-top: 18px; padding: 12px 14px; border: 1px solid #e5e7eb; border-radius: 6px; background: #fafafa; }
+    .incl-table { margin-top: 4px; }
+    .incl-table td { width: 50%; padding: 2px 0; font-size: 12.5px; color: #374151; }
     .section-gap { margin-top: 14px; }
     .items-table td.sub { color: #6b7280; font-size: 11px; padding-top: 0; border-bottom: none; }
     .items-table tr.extra-row td { padding-top: 9px; padding-bottom: 9px; }

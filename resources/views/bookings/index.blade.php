@@ -208,6 +208,9 @@
                                 <small>#{{ $booking->id }}@if($booking->customer_phone) &middot; {{ $booking->customer_phone }}@endif</small>
                               </div>
                             </div>
+                            @if ($booking->special_notes)
+                              <div class="bk-note" title="Internal note (staff only): {{ $booking->special_notes }}"><i class="bi bi-lock-fill"></i><span>{{ \Illuminate\Support\Str::limit($booking->special_notes, 70) }}</span></div>
+                            @endif
                           </td>
                           <td>
                             @if ($globalSettings->is_safari_enabled)
@@ -327,6 +330,10 @@
                         <div class="mdash-card-top">
                           <span class="type-badge {{ $typeBadgeClass }}"><i class="bi bi-{{ $typeIcon }}"></i> {{ $booking->booking_type_label }}</span>
                         </div>
+                      @endif
+
+                      @if ($booking->special_notes)
+                        <div class="bk-note bk-note-card"><i class="bi bi-lock-fill"></i><span><strong>Internal note:</strong> {{ \Illuminate\Support\Str::limit($booking->special_notes, 140) }}</span></div>
                       @endif
 
                       <div class="mdash-card-meta">

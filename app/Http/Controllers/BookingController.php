@@ -628,7 +628,10 @@ class BookingController extends Controller
             'customer_name' => ['required', 'string', 'max:255'],
             'customer_email' => ['nullable', 'email', 'max:255'],
             'customer_phone' => ['nullable', 'string', 'max:30', new PhoneNumber],
+            // Internal staff reminders - never shown on guest invoices, bills or messages.
             'special_notes' => ['nullable', 'string', 'max:2000'],
+            'inclusions' => ['nullable', 'array', 'max:40'],
+            'inclusions.*' => ['nullable', 'string', 'max:100'],
             'total_amount' => ['required', 'numeric', 'min:0'],
             'advance_payment' => ['required', 'numeric', 'min:0'],
             // Optional safari add-on prices; saved as itemised extra charges.
@@ -647,6 +650,17 @@ class BookingController extends Controller
                 'advance_payment' => 'The advance payment cannot be more than the total amount'.($safariExtras > 0 ? ' plus the extra charges.' : '.'),
             ]);
         }
+
+        // Inclusions: trimmed, de-duplicated (case-insensitive), blanks dropped. A safari-only booking
+        // gets Lunch / Drone Videos from its own priced toggles, so they aren't stored twice.
+        $inclusions = collect($validated['inclusions'] ?? [])
+            ->map(fn ($item) => trim((string) $item))
+            ->filter()
+            ->unique(fn ($item) => mb_strtolower($item))
+            ->when($isSafariOnly, fn ($items) => $items->reject(fn ($item) => in_array(mb_strtolower($item), ['lunch', 'drone videos'], true)))
+            ->values()
+            ->all();
+        $validated['inclusions'] = $inclusions ?: null;
 
         $validated['booking_type'] = $bookingType;
         $validated['status'] = $validated['status'] ?? 'confirmed';

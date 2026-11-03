@@ -1,6 +1,12 @@
 @php
     $isEdit = isset($booking);
     $bookingType = old('booking_type', $booking->booking_type ?? 'accommodation_only');
+
+    // Included services: ticked pre-defined options, plus any custom items staff typed in.
+    $inclusionOptions = \App\Models\Booking::INCLUSION_OPTIONS;
+    $savedInclusions = collect(old('inclusions', $booking->inclusions ?? []))->map(fn ($item) => trim((string) $item))->filter()->values()->all();
+    $selectedInclusions = array_values(array_intersect($inclusionOptions, $savedInclusions));
+    $customInclusions = array_values(array_udiff($savedInclusions, $inclusionOptions, 'strcasecmp'));
 @endphp
 <div
   class="row g-3"
@@ -12,6 +18,9 @@
       drone: @js((bool) old('include_drone_videos', $booking->include_drone_videos ?? false)),
       lunchAmount: @js(old('lunch_charge', $booking->lunch_charge ?? '')),
       droneAmount: @js(old('drone_charge', $booking->drone_charge ?? '')),
+      options: @js($inclusionOptions),
+      selected: @js($selectedInclusions),
+      customs: @js($customInclusions),
   })"
 >
   @if ($globalSettings->is_safari_enabled)
@@ -163,6 +172,35 @@
     </div>
   </div>
 
+  {{-- Included services / features: printed on the guest invoice under "Includes / Services Provided". All booking types. --}}
+  <div class="col-12">
+    <hr class="my-1">
+    <h3 class="h6 mb-2"><i class="bi bi-check2-square"></i> Included Services / Features</h3>
+    <p class="text-muted small mb-2">Tick what is included for the guest. These are printed on the invoice and confirmation.</p>
+    <div class="incl-grid">
+      @foreach ($inclusionOptions as $option)
+        @php $isSafariToggle = in_array($option, ['Lunch', 'Drone Videos'], true); @endphp
+        <label class="incl-chip" @if ($isSafariToggle) x-show="bookingType !== 'safari_only'" @endif>
+          <input type="checkbox" name="inclusions[]" value="{{ $option }}" x-model="selected">
+          <span>{{ $option }}</span>
+        </label>
+      @endforeach
+      <template x-for="(custom, index) in customs" :key="custom">
+        <span class="incl-chip custom on">
+          <input type="hidden" name="inclusions[]" :value="custom">
+          <span x-text="custom"></span>
+          <button type="button" class="incl-remove" @click="removeCustom(index)" :aria-label="'Remove ' + custom"><i class="bi bi-x-lg"></i></button>
+        </span>
+      </template>
+    </div>
+    <p class="text-muted small mt-2 mb-0" x-show="bookingType === 'safari_only'" x-cloak>Lunch and drone videos for a safari-only booking are set with their own switches above (so they can carry a charge).</p>
+    <div class="incl-add">
+      <input type="text" class="form-control" x-model="customInput" @keydown.enter.prevent="addCustom()" placeholder="Type a custom inclusion, e.g. Airport transfer" maxlength="100" aria-label="Custom inclusion">
+      <button type="button" class="btn btn-light" @click="addCustom()" :disabled="!customInput.trim()"><i class="bi bi-plus-lg"></i> Add Custom Inclusion</button>
+    </div>
+    @error('inclusions')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror
+  </div>
+
   <div class="col-12"><hr class="my-1"><h3 class="h6 mb-0"><i class="bi bi-cash-coin"></i> Billing</h3></div>
   <div class="col-md-4">
     <label class="form-label">Total amount</label>
@@ -180,10 +218,11 @@
     <small class="text-muted" x-show="extraCharges > 0" x-cloak>Includes <span x-text="extraCharges.toFixed(2)"></span> in lunch / drone extra charges.</small>
   </div>
 
-  {{-- Shown for every booking type (accommodation, safari, full package). --}}
+  {{-- Internal staff reminders. Deliberately never rendered on guest invoices, image bills or messages. --}}
   <div class="col-12">
-    <label class="form-label" for="specialNotes">Special Notes <small class="text-muted">(guest requests, dietary needs, arrival time, celebrations… optional)</small></label>
-    <textarea id="specialNotes" class="form-control @error('special_notes') is-invalid @enderror" name="special_notes" rows="3" maxlength="2000" placeholder="e.g. Vegetarian meals, arriving after 9 PM, anniversary surprise…">{{ old('special_notes', $booking->special_notes ?? '') }}</textarea>
+    <label class="form-label" for="specialNotes"><i class="bi bi-lock"></i> Special Notes <small class="text-muted">(Internal Use Only - Not Visible to Guest)</small></label>
+    <textarea id="specialNotes" class="form-control @error('special_notes') is-invalid @enderror" name="special_notes" rows="3" maxlength="2000" placeholder="e.g. Guest is a VIP, prefers a quiet cabana, balance to be collected in cash…">{{ old('special_notes', $booking->special_notes ?? '') }}</textarea>
+    <div class="form-text">These notes are for internal staff reminders only and will NEVER be shown on the guest's invoice or receipt.</div>
     @error('special_notes')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror
   </div>
 
@@ -200,6 +239,26 @@
             bookingType: config.bookingType,
             total: config.total,
             advance: config.advance,
+            options: config.options || [],
+            selected: config.selected || [],
+            customs: config.customs || [],
+            customInput: '',
+            addCustom() {
+                const value = this.customInput.trim().replace(/\s+/g, ' ');
+                if (!value) return;
+                const lower = value.toLowerCase();
+                const known = this.options.find((o) => o.toLowerCase() === lower);
+                if (known) {
+                    // Typing a pre-defined item just ticks it.
+                    if (!this.selected.includes(known)) this.selected.push(known);
+                } else if (!this.customs.some((c) => c.toLowerCase() === lower)) {
+                    this.customs.push(value);
+                }
+                this.customInput = '';
+            },
+            removeCustom(index) {
+                this.customs.splice(index, 1);
+            },
             lunch: !!config.lunch,
             drone: !!config.drone,
             lunchAmount: config.lunchAmount,

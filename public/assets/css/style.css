@@ -2036,3 +2036,26 @@ a.ex-badge-booking:hover { background: rgba(47, 168, 79, .24); color: #1f8a3b; }
 /* Safari inclusions (lunch / drone videos) */
 .bd-incl { display: inline-flex; align-items: center; gap: 6px; margin: 0 8px 4px 0; padding: 3px 10px; border-radius: 999px; background: var(--surface-2); border: 1px solid var(--line); color: var(--muted); font-size: 13px; font-weight: 700; }
 .bd-incl.on { background: rgba(47, 168, 79, .14); border-color: transparent; color: #1f8a3b; }
+
+/* ---- Booking form: included services ---- */
+.incl-grid { display: flex; flex-wrap: wrap; gap: 8px; }
+.incl-chip { position: relative; display: inline-flex; align-items: center; gap: 8px; margin: 0; padding: 7px 14px; border: 1px solid var(--line); border-radius: 999px; background: var(--surface-2); font-size: 13.5px; font-weight: 700; cursor: pointer; user-select: none; transition: background-color .15s ease, border-color .15s ease, color .15s ease; }
+.incl-chip input[type="checkbox"] { position: absolute; opacity: 0; inset: 0; width: 100%; height: 100%; margin: 0; cursor: pointer; }
+.incl-chip:hover { border-color: #5278ff; }
+.incl-chip:has(input:checked), .incl-chip.on { background: rgba(47, 168, 79, .14); border-color: transparent; color: #1f8a3b; }
+.incl-chip:has(input:checked)::before, .incl-chip.on::before { content: "\2713"; font-weight: 900; }
+.incl-chip:has(input:focus-visible) { outline: 2px solid #5278ff; outline-offset: 2px; }
+.incl-chip.custom { cursor: default; }
+.incl-remove { border: 0; background: transparent; color: inherit; padding: 0 0 0 2px; font-size: 11px; line-height: 1; opacity: .7; cursor: pointer; }
+.incl-remove:hover { opacity: 1; color: #dc2626; }
+.incl-add { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+.incl-add .form-control { flex: 1 1 240px; min-height: 40px; }
+.incl-add .btn { flex: 0 0 auto; }
+@media (max-width: 575.98px) { .incl-add .btn { flex: 1 1 100%; } }
+
+/* Guest bill: includes / services provided */
+.vb-incl { margin: 0 0 14px; }
+.vb-incl ul { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 2px 16px; margin: 4px 0 0; padding: 0; list-style: none; }
+.vb-incl li { position: relative; padding-left: 16px; color: #374151; font-size: 13px; overflow-wrap: anywhere; }
+.vb-incl li::before { content: "\2713"; position: absolute; left: 0; color: #1f8a3b; font-weight: 900; }
+.vc-internal-tag { display: inline-block; margin-left: 8px; padding: 2px 9px; border-radius: 999px; background: rgba(245, 158, 11, .2); color: #92400e; font-size: 10.5px; font-weight: 800; letter-spacing: .04em; text-transform: uppercase; vertical-align: middle; }

@@ -147,6 +147,10 @@ class SendBookingWhatsAppJob implements ShouldQueue
             }
         }
 
+        if (count($booking->all_inclusions) > 0) {
+            $lines[] = '✅ Includes: '.implode(', ', $booking->all_inclusions);
+        }
+
         $lines[] = "💰 Total: {$currency} ".number_format($booking->grand_total, 2);
 
         if ($isFinal) {

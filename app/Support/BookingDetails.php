@@ -51,7 +51,9 @@ class BookingDetails
             'initials' => $booking->customer_initials,
             'customer_phone' => $booking->customer_phone,
             'customer_email' => $booking->customer_email,
+            // Staff-only: shown in the admin popup, never in the bill built from this payload.
             'special_notes' => $booking->special_notes,
+            'inclusions' => $booking->all_inclusions,
             'room' => $booking->room_label,
             'room_type' => $booking->room?->type,
             'stay_label' => $booking->room ? 'Room / Cabana' : ($booking->stay_hotel_name ? 'Stay hotel' : 'Tour'),

@@ -254,3 +254,10 @@
   .bk-kpi-list, .bk-kpi-empty, .bk-kpi-more { display: none; }
   .bk-kpi-alert { margin: 0; padding: 4px 8px; font-size: 11px; }
 }
+
+/* Internal (staff-only) booking note shown in the list */
+.bk-note { display: flex; align-items: flex-start; gap: 6px; max-width: 280px; margin-top: 6px; padding: 4px 9px; border-radius: 8px; background: rgba(245, 158, 11, .12); border: 1px solid rgba(245, 158, 11, .28); color: #92400e; font-size: 12px; font-weight: 600; line-height: 1.4; }
+.bk-note i { flex: 0 0 auto; margin-top: 2px; font-size: 11px; }
+.bk-note span { min-width: 0; overflow-wrap: anywhere; }
+.bk-note-card { max-width: none; margin-top: 0; padding: 8px 10px; font-size: 12.5px; }
+[data-theme="dark"] .bk-note { color: #fbbf24; }
