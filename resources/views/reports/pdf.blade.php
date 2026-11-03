@@ -96,6 +96,14 @@
         @endif
         @if ($reportType !== 'income')
             <tr>
+                <td class="label">General Operating Expenses</td>
+                <td class="value">{{ $globalSettings->currency }} {{ number_format($generalExpenses, 2) }}</td>
+            </tr>
+            <tr>
+                <td class="label">Booking Direct Costs</td>
+                <td class="value">{{ $globalSettings->currency }} {{ number_format($bookingExpenses, 2) }}</td>
+            </tr>
+            <tr>
                 <td class="label">Total Expenses</td>
                 <td class="value">{{ $globalSettings->currency }} {{ number_format($totalExpenses, 2) }}</td>
             </tr>

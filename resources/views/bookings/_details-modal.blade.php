@@ -41,8 +41,8 @@
         'currency' => $currency,
         'revenue' => (float) $booking->grand_total,
         'storeUrl' => $booking->status === 'cancelled' ? null : route('bookings.expenses.store', $booking),
-        'costs' => $booking->bookingExpenses->map(fn ($expense) => $expense->toListItem())->values()->all(),
-        'categories' => \App\Models\BookingExpense::CATEGORIES,
+        'costs' => $booking->expenses->map(fn ($expense) => $expense->toListItem())->values()->all(),
+        'categories' => \App\Models\Expense::BOOKING_CATEGORIES,
         'today' => today()->toDateString(),
     ]))">
       <div class="modal-header">

@@ -69,7 +69,7 @@ Route::middleware('auth')->group(function () {
         Route::post('/bookings/{booking}/decline', [BookingController::class, 'decline'])->name('bookings.decline');
         // Direct costs the villa pays for one booking (internal - not billed to the guest).
         Route::post('/bookings/{booking}/expenses', [BookingExpenseController::class, 'store'])->name('bookings.expenses.store');
-        Route::delete('/booking-expenses/{bookingExpense}', [BookingExpenseController::class, 'destroy'])->name('bookings.expenses.destroy');
+        Route::delete('/booking-expenses/{expense}', [BookingExpenseController::class, 'destroy'])->name('bookings.expenses.destroy');
         Route::post('/bookings/{booking}/send-whatsapp', [BookingController::class, 'sendWhatsApp'])->name('bookings.send-whatsapp');
         Route::get('/bookings/{booking}/invoice/confirmation', [BookingController::class, 'confirmationInvoice'])->name('bookings.invoice.confirmation');
         Route::get('/bookings/{booking}/invoice/final', [BookingController::class, 'finalInvoice'])->name('bookings.invoice.final');
@@ -91,6 +91,8 @@ Route::middleware('auth')->group(function () {
     });
 
     Route::middleware('can:manage_expenses')->group(function () {
+        // Typeahead for linking an expense to a booking (declared before the resource routes).
+        Route::get('/expenses/booking-search', [ExpenseController::class, 'searchBookings'])->name('expenses.booking-search');
         Route::resource('expenses', ExpenseController::class)->only(['index', 'store', 'update', 'destroy']);
     });
 

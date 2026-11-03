@@ -129,6 +129,14 @@ class Booking extends Model
         ];
     }
 
+    protected static function booted(): void
+    {
+        // The expenses foreign key cascades on MySQL/PostgreSQL, but SQLite can't add an
+        // enforced foreign key to an existing table - so remove a booking's costs here too
+        // rather than leaving orphaned direct costs behind in the profit reports.
+        static::deleting(fn (Booking $booking) => $booking->expenses()->delete());
+    }
+
     public function room(): BelongsTo
     {
         return $this->belongsTo(Room::class);
@@ -140,11 +148,12 @@ class Booking extends Model
     }
 
     /**
-     * Direct costs the villa pays for this booking (not billed to the guest).
+     * Expenses linked to this booking: the direct costs the villa pays for
+     * it (not billed to the guest). General expenses have no booking.
      */
-    public function bookingExpenses(): HasMany
+    public function expenses(): HasMany
     {
-        return $this->hasMany(BookingExpense::class)->orderBy('id');
+        return $this->hasMany(Expense::class)->orderBy('expense_date')->orderBy('id');
     }
 
     /**
@@ -170,9 +179,9 @@ class Booking extends Model
     /**
      * Total of the direct costs recorded against this booking.
      */
-    protected function bookingExpensesTotal(): Attribute
+    protected function expensesTotal(): Attribute
     {
-        return Attribute::get(fn () => round((float) $this->bookingExpenses->sum('amount'), 2));
+        return Attribute::get(fn () => round((float) $this->expenses->sum('amount'), 2));
     }
 
     /**
@@ -181,7 +190,7 @@ class Booking extends Model
      */
     protected function bookingProfit(): Attribute
     {
-        return Attribute::get(fn () => round($this->grand_total - $this->booking_expenses_total, 2));
+        return Attribute::get(fn () => round($this->grand_total - $this->expenses_total, 2));
     }
 
     /**

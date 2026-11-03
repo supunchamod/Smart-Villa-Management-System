@@ -68,7 +68,7 @@ class BookingController extends Controller
             ? $request->query('range')
             : null;
 
-        $bookingsQuery = Booking::query()->with(['room', 'extras', 'bookingExpenses'])->latest();
+        $bookingsQuery = Booking::query()->with(['room', 'extras', 'expenses'])->latest();
 
         match ($tab) {
             'active' => $bookingsQuery->where('status', 'confirmed'),
@@ -165,7 +165,7 @@ class BookingController extends Controller
     public function show(Booking $booking): View
     {
         return view('bookings.show', [
-            'booking' => $booking->load(['room', 'extras', 'bookingExpenses']),
+            'booking' => $booking->load(['room', 'extras', 'expenses']),
         ]);
     }
 
@@ -269,7 +269,7 @@ class BookingController extends Controller
 
             $locked->extras()->createMany($extras->all());
 
-            $locked->bookingExpenses()->createMany(
+            $locked->expenses()->createMany(
                 collect($validated['booking_expenses'] ?? [])->map(fn (array $row) => [
                     'category' => trim($row['category']),
                     'description' => isset($row['description']) && trim($row['description']) !== '' ? trim($row['description']) : null,

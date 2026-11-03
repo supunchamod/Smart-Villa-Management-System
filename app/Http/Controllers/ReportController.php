@@ -46,6 +46,8 @@ class ReportController extends Controller
         $expenseRows = collect();
         $totalIncome = 0.0;
         $totalExpenses = 0.0;
+        $generalExpenses = 0.0;
+        $bookingExpenses = 0.0;
 
         if ($reportType !== 'expense') {
             $incomeRows = IncomeLedger::between($start, $end);
@@ -56,6 +58,8 @@ class ReportController extends Controller
             // General expenses plus costs recorded against individual bookings.
             $expenseRows = ExpenseLedger::between($start, $end);
             $totalExpenses = ExpenseLedger::total($expenseRows);
+            $generalExpenses = ExpenseLedger::total($expenseRows->where('source', ExpenseLedger::GENERAL));
+            $bookingExpenses = ExpenseLedger::total($expenseRows->where('source', ExpenseLedger::BOOKING));
         }
 
         // The P&L statement also itemises net profit per booking.
@@ -70,6 +74,8 @@ class ReportController extends Controller
             'bookingProfitTotals' => IncomeLedger::profitabilityTotals($bookingProfits),
             'totalIncome' => $totalIncome,
             'totalExpenses' => $totalExpenses,
+            'generalExpenses' => $generalExpenses,
+            'bookingExpenses' => $bookingExpenses,
             'netProfit' => $totalIncome - $totalExpenses,
         ])->setPaper('a4', 'portrait');
 

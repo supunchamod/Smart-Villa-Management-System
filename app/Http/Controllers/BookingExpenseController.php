@@ -3,15 +3,16 @@
 namespace App\Http\Controllers;
 
 use App\Models\Booking;
-use App\Models\BookingExpense;
+use App\Models\Expense;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 
 /**
- * Add / remove the direct costs recorded against a single booking. Reached
- * from the booking details page (plain form posts) and the checkout modal
- * (JSON, to delete an existing cost without leaving the modal).
+ * Quick add / remove of the direct costs linked to a single booking, from
+ * the booking pages (details page, checkout modal, "View Details" popup).
+ * They are ordinary rows of the central expenses table with booking_id set;
+ * the full Expenses section manages the same records.
  */
 class BookingExpenseController extends Controller
 {
@@ -28,7 +29,7 @@ class BookingExpenseController extends Controller
             'expense_date' => ['nullable', 'date', 'before_or_equal:today'],
         ]);
 
-        $expense = $booking->bookingExpenses()->create([
+        $expense = $booking->expenses()->create([
             ...$validated,
             'expense_date' => $validated['expense_date'] ?? today()->toDateString(),
         ]);
@@ -36,9 +37,12 @@ class BookingExpenseController extends Controller
         return $this->reply($request, true, 'Booking expense added.', 200, ['expense' => $expense->toListItem()]);
     }
 
-    public function destroy(Request $request, BookingExpense $bookingExpense): RedirectResponse|JsonResponse
+    public function destroy(Request $request, Expense $expense): RedirectResponse|JsonResponse
     {
-        $bookingExpense->delete();
+        // This endpoint only manages booking-linked costs.
+        abort_if($expense->booking_id === null, 404);
+
+        $expense->delete();
 
         return $this->reply($request, true, 'Booking expense removed.');
     }

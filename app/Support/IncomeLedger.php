@@ -3,7 +3,7 @@
 namespace App\Support;
 
 use App\Models\Booking;
-use App\Models\BookingExpense;
+use App\Models\Expense;
 use Carbon\CarbonInterface;
 use Illuminate\Support\Collection;
 
@@ -82,7 +82,8 @@ class IncomeLedger
     {
         $incomeIds = static::between($start, $end)->map(fn (array $event) => $event['booking']->id);
 
-        $costIds = BookingExpense::query()
+        $costIds = Expense::query()
+            ->whereNotNull('booking_id')
             ->whereDate('expense_date', '>=', $start->toDateString())
             ->whereDate('expense_date', '<=', $end->toDateString())
             ->pluck('booking_id');
@@ -93,7 +94,7 @@ class IncomeLedger
             return collect();
         }
 
-        return Booking::with(['room', 'extras', 'bookingExpenses'])
+        return Booking::with(['room', 'extras', 'expenses'])
             ->whereIn('id', $ids)
             ->get()
             ->map(function (Booking $booking) {
@@ -101,7 +102,7 @@ class IncomeLedger
                 $roomCharges = $cancelled ? 0.0 : (float) $booking->total_amount;
                 $extrasTotal = $cancelled ? 0.0 : $booking->extras_total;
                 $revenue = round($roomCharges + $extrasTotal, 2);
-                $costs = $booking->booking_expenses_total;
+                $costs = $booking->expenses_total;
                 $net = round($revenue - $costs, 2);
 
                 return [
@@ -111,11 +112,11 @@ class IncomeLedger
                     'extras_total' => round($extrasTotal, 2),
                     'revenue' => $revenue,
                     'costs' => $costs,
-                    'expenses' => $booking->bookingExpenses->map(fn (BookingExpense $expense) => [
+                    'expenses' => $booking->expenses->map(fn (Expense $expense) => [
                         'category' => $expense->category,
                         'description' => $expense->description,
                         'amount' => (float) $expense->amount,
-                        'date' => $expense->incurred_on,
+                        'date' => $expense->expense_date,
                     ])->values(),
                     'net_profit' => $net,
                     'margin' => $revenue > 0 ? round(($net / $revenue) * 100, 1) : 0.0,

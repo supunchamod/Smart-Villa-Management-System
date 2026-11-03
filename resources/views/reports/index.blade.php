@@ -60,7 +60,7 @@
               <div class="panel-head"><div><h2>About These Reports</h2><p>What each statement includes</p></div></div>
               <ul class="mb-0">
                 <li><strong>Income Report</strong> — every advance payment and final settlement collected in the period.</li>
-                <li><strong>Expense Report</strong> — every logged operating expense in the period.</li>
+                <li><strong>Expense Report</strong> — every logged expense in the period: general operating costs and costs linked to specific bookings.</li>
                 <li><strong>Full Profit &amp; Loss Statement</strong> — both of the above, plus total revenue, total expenses, and net profit.</li>
               </ul>
             </div>

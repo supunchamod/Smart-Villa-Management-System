@@ -318,7 +318,7 @@ class DemoDataSeeder extends Seeder
     private function seedExpenses(): void
     {
         $categories = collect(self::EXPENSE_CATEGORIES)->pluck('category');
-        Expense::whereIn('category', $categories)->delete();
+        Expense::whereNull('booking_id')->whereIn('category', $categories)->delete();
 
         $today = Carbon::today();
         $cursor = $today->copy()->subMonths(2)->startOfMonth();

@@ -26,9 +26,9 @@
             'currency' => $currency,
             'baseAmount' => (float) $booking->total_amount,
             'advance' => (float) $booking->advance_payment,
-            'saved' => $booking->bookingExpenses->map(fn ($expense) => $expense->toListItem())->values()->all(),
+            'saved' => $booking->expenses->map(fn ($expense) => $expense->toListItem())->values()->all(),
             'today' => today()->toDateString(),
-            'categories' => \App\Models\BookingExpense::CATEGORIES,
+            'categories' => \App\Models\Expense::BOOKING_CATEGORIES,
         ]))"
         @submit="submitting = true"
       >

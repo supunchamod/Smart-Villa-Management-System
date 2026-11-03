@@ -194,7 +194,7 @@
             {{-- Internal margin: the villa's own direct costs for this booking. Never shown on guest-facing bills. --}}
             <div class="bd-internal">
               <div class="bd-internal-title"><i class="bi bi-lock"></i> Internal · not on the guest bill</div>
-              <div class="bd-total-row"><span>Booking expenses (direct costs)</span><span class="bd-internal-amt">− {{ $money($booking->booking_expenses_total) }}</span></div>
+              <div class="bd-total-row"><span>Booking expenses (direct costs)</span><span class="bd-internal-amt">− {{ $money($booking->expenses_total) }}</span></div>
               <div class="bd-total-row bd-internal-profit {{ $booking->booking_profit < 0 ? 'is-loss' : '' }}"><span>Profit on this booking</span><span class="bd-internal-amt">{{ $money($booking->booking_profit) }}</span></div>
             </div>
 
@@ -217,17 +217,17 @@
       <header class="bd-card-head">
         <span class="bd-card-icon bd-card-icon-amber"><i class="bi bi-receipt-cutoff"></i></span>
         <div><h2>Booking Expenses / Direct Costs</h2><p>Costs the villa pays for this booking (external meals, transport…). Not billed to the guest.</p></div>
-        <span class="bd-exp-total">{{ $money($booking->booking_expenses_total) }}</span>
+        <span class="bd-exp-total">{{ $money($booking->expenses_total) }}</span>
       </header>
 
-      @if ($booking->bookingExpenses->isNotEmpty())
+      @if ($booking->expenses->isNotEmpty())
         <ul class="bd-exp-list">
-          @foreach ($booking->bookingExpenses as $expense)
+          @foreach ($booking->expenses as $expense)
             <li class="bd-exp-row">
               <div class="bd-exp-main">
                 <strong>{{ $expense->category }}</strong>
                 @if ($expense->description)<small>{{ $expense->description }}</small>@endif
-                <small class="bd-exp-date">{{ $expense->incurred_on->format('d M Y') }}</small>
+                <small class="bd-exp-date">{{ $expense->expense_date->format('d M Y') }}</small>
               </div>
               <span class="bd-line-amount">{{ $money($expense->amount) }}</span>
               <form method="POST" action="{{ route('bookings.expenses.destroy', $expense) }}" onsubmit="return confirm('Delete this expense?');">
@@ -248,7 +248,7 @@
           <div class="bd-exp-field">
             <label for="expCategory">Category</label>
             <input id="expCategory" name="category" type="text" class="form-control @error('category') is-invalid @enderror" list="expCategories" value="{{ old('category') }}" placeholder="e.g. Transport" maxlength="100" required>
-            <datalist id="expCategories">@foreach (\App\Models\BookingExpense::CATEGORIES as $category)<option value="{{ $category }}">@endforeach</datalist>
+            <datalist id="expCategories">@foreach (\App\Models\Expense::BOOKING_CATEGORIES as $category)<option value="{{ $category }}">@endforeach</datalist>
             @error('category')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror
           </div>
           <div class="bd-exp-field bd-exp-field-grow">
