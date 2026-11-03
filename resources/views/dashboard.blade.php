@@ -15,7 +15,7 @@
         </div>
         <h2 class="visually-hidden">Overview</h2>
 
-        @if ($publicVillaUrl)
+        @if (config('features.landing_page_ui') && $publicVillaUrl)
           <div class="panel pubsite-panel" x-data='publicLinkWidget(@json($publicVillaUrl))'>
             <div class="panel-head">
               <div><h2>Public Booking Website</h2><p>Share your direct-booking page so guests can book instantly</p></div>
@@ -201,7 +201,7 @@
           <h2>Hello, {{ $ownerFirstName }}</h2>
         </div>
 
-        @if ($publicVillaUrl)
+        @if (config('features.landing_page_ui') && $publicVillaUrl)
           <div class="pubsite-mobile-card" x-data='publicLinkWidget(@json($publicVillaUrl))'>
             <div class="pubsite-mobile-head"><i class="bi bi-globe2"></i> Public Booking Website</div>
             <div class="pubsite-mobile-link" x-text="url"></div>

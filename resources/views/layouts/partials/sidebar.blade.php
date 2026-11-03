@@ -16,7 +16,9 @@
           <a class="nav-link {{ request()->routeIs('bookings.create') ? 'active' : '' }}" href="{{ route('bookings.create') }}"><i class="bi bi-journal-plus"></i><span>Add Bookings</span></a>
           <a class="nav-link {{ request()->routeIs('bookings.*') && ! request()->routeIs('bookings.create') ? 'active' : '' }}" href="{{ route('bookings.index') }}"><i class="bi bi-journal-check"></i><span>Manage Bookings</span></a>
           <a class="nav-link {{ request()->routeIs('calendar') ? 'active' : '' }}" href="{{ route('calendar') }}"><i class="bi bi-calendar3"></i><span>Bookings Calendar</span></a>
+          @if (config('features.landing_page_ui'))
           <a class="nav-link {{ request()->routeIs('landing-page.*') ? 'active' : '' }}" href="{{ route('landing-page.index') }}"><i class="bi bi-easel"></i><span>Landing Page</span></a>
+          @endif
           @if ($globalSettings->is_safari_enabled)
             <a class="nav-link {{ request()->routeIs('bookings.index') && request('type') === 'safari_only' ? 'active' : '' }}" href="{{ route('bookings.index', ['type' => 'safari_only']) }}"><i class="bi bi-compass"></i><span>Safari</span></a>
           @endif
