@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Admin\WhatsAppSettingsController;
 use App\Http\Controllers\BookingController;
+use App\Http\Controllers\BookingExpenseController;
 use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ExpenseController;
@@ -66,6 +67,9 @@ Route::middleware('auth')->group(function () {
         Route::post('/bookings/{booking}/checkout', [BookingController::class, 'checkout'])->name('bookings.checkout');
         Route::post('/bookings/{booking}/confirm', [BookingController::class, 'confirm'])->name('bookings.confirm');
         Route::post('/bookings/{booking}/decline', [BookingController::class, 'decline'])->name('bookings.decline');
+        // Direct costs the villa pays for one booking (internal - not billed to the guest).
+        Route::post('/bookings/{booking}/expenses', [BookingExpenseController::class, 'store'])->name('bookings.expenses.store');
+        Route::delete('/booking-expenses/{bookingExpense}', [BookingExpenseController::class, 'destroy'])->name('bookings.expenses.destroy');
         Route::post('/bookings/{booking}/send-whatsapp', [BookingController::class, 'sendWhatsApp'])->name('bookings.send-whatsapp');
         Route::get('/bookings/{booking}/invoice/confirmation', [BookingController::class, 'confirmationInvoice'])->name('bookings.invoice.confirmation');
         Route::get('/bookings/{booking}/invoice/final', [BookingController::class, 'finalInvoice'])->name('bookings.invoice.final');

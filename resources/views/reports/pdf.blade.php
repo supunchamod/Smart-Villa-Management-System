@@ -75,10 +75,10 @@
             <tbody>
                 @forelse ($expenseRows as $expense)
                     <tr>
-                        <td>{{ $expense->expense_date->format('d M Y') }}</td>
-                        <td>{{ $expense->category }}</td>
-                        <td>{{ $expense->description ?: '—' }}</td>
-                        <td class="text-right">{{ $globalSettings->currency }} {{ number_format($expense->amount, 2) }}</td>
+                        <td>{{ $expense['date']->format('d M Y') }}</td>
+                        <td>{{ $expense['category'] }}@if ($expense['booking'])<br><span class="muted">Booking #{{ $expense['booking']->id }} · {{ $expense['booking']->customer_name }}</span>@endif</td>
+                        <td>{{ $expense['description'] ?: '—' }}</td>
+                        <td class="text-right">{{ $globalSettings->currency }} {{ number_format($expense['amount'], 2) }}</td>
                     </tr>
                 @empty
                     <tr><td colspan="4" class="muted" style="text-align: center;">No expenses recorded for this period.</td></tr>

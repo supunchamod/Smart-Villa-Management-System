@@ -140,6 +140,14 @@ class Booking extends Model
     }
 
     /**
+     * Direct costs the villa pays for this booking (not billed to the guest).
+     */
+    public function bookingExpenses(): HasMany
+    {
+        return $this->hasMany(BookingExpense::class)->orderBy('id');
+    }
+
+    /**
      * Confirmed bookings with a check-in still ahead of today, soonest
      * first - the "what's coming up" query shared by the calendar's agenda
      * list and the Profit Analyzer's upcoming-bookings widget.
@@ -157,6 +165,23 @@ class Booking extends Model
     protected function extrasTotal(): Attribute
     {
         return Attribute::get(fn () => round((float) $this->extras->sum(fn (BookingExtra $extra) => $extra->line_total), 2));
+    }
+
+    /**
+     * Total of the direct costs recorded against this booking.
+     */
+    protected function bookingExpensesTotal(): Attribute
+    {
+        return Attribute::get(fn () => round((float) $this->bookingExpenses->sum('amount'), 2));
+    }
+
+    /**
+     * Money earned on the booking (room charge + extras) minus its direct
+     * costs. Internal figure - never shown on guest-facing bills.
+     */
+    protected function bookingProfit(): Attribute
+    {
+        return Attribute::get(fn () => round($this->grand_total - $this->booking_expenses_total, 2));
     }
 
     /**

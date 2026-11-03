@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Expense;
+use App\Support\ExpenseLedger;
 use App\Support\IncomeLedger;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
@@ -53,10 +53,9 @@ class ReportController extends Controller
         }
 
         if ($reportType !== 'income') {
-            $expenseRows = Expense::whereBetween('expense_date', [$start->toDateString(), $end->toDateString()])
-                ->orderBy('expense_date')
-                ->get();
-            $totalExpenses = (float) $expenseRows->sum('amount');
+            // General expenses plus costs recorded against individual bookings.
+            $expenseRows = ExpenseLedger::between($start, $end);
+            $totalExpenses = ExpenseLedger::total($expenseRows);
         }
 
         $pdf = Pdf::loadView('reports.pdf', [

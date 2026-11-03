@@ -55,7 +55,7 @@
         <div class="pa-card-top"><span class="pa-card-icon pa-icon-rose"><i class="bi bi-receipt-cutoff"></i></span></div>
         <span class="pa-card-label">Total Expenses <em>මුළු වියදම්</em></span>
         <h3 class="pa-card-value">{{ $globalSettings->currency }} {{ number_format($totalExpenses, 2) }}</h3>
-        <p class="pa-card-caption">Maintenance, staff, utilities &amp; inventory for {{ $rangeLabel }}</p>
+        <p class="pa-card-caption">Maintenance, staff, utilities, inventory &amp; booking direct costs for {{ $rangeLabel }}@if ($bookingExpensesTotal > 0) ({{ $globalSettings->currency }} {{ number_format($bookingExpensesTotal, 2) }} recorded on bookings)@endif</p>
       </div>
     </div>
     <div class="col-12 col-md-6 col-lg-3 mb-4">
@@ -63,7 +63,7 @@
         <div class="pa-card-top"><span class="pa-card-icon pa-icon-ocean"><i class="bi bi-piggy-bank"></i></span></div>
         <span class="pa-card-label">Gross Profit <em>සමස්ත ලාභය</em></span>
         <h3 class="pa-card-value">{{ $globalSettings->currency }} {{ number_format($grossProfit, 2) }}</h3>
-        <p class="pa-card-caption">Revenue minus direct costs (housekeeping, F&amp;B, inventory: {{ $globalSettings->currency }} {{ number_format($directCosts, 2) }})</p>
+        <p class="pa-card-caption">Revenue minus direct costs (housekeeping, F&amp;B, inventory &amp; booking expenses: {{ $globalSettings->currency }} {{ number_format($directCosts, 2) }})</p>
       </div>
     </div>
     <div class="col-12 col-md-6 col-lg-3 mb-4">
@@ -157,7 +157,7 @@
                     <td><strong>{{ $row['transaction_id'] }}</strong><br><small class="text-muted">{{ $row['customer_name'] }}</small></td>
                     <td>{{ $row['source'] }}</td>
                     <td>{{ $globalSettings->currency }} {{ number_format($row['gross_revenue'], 2) }}</td>
-                    <td>{{ $globalSettings->currency }} {{ number_format($row['expense_allocated'], 2) }}</td>
+                    <td>{{ $globalSettings->currency }} {{ number_format($row['expense_allocated'], 2) }}@if ($row['direct_expense'] > 0)<br><small class="text-muted">incl. {{ $globalSettings->currency }} {{ number_format($row['direct_expense'], 2) }} booking cost</small>@endif</td>
                     <td>{{ $globalSettings->currency }} {{ number_format($row['net_profit'], 2) }}</td>
                     <td><span class="pa-badge {{ $statusMeta['class'] }}">{{ $statusMeta['label'] }}</span></td>
                   </tr>
@@ -189,7 +189,7 @@
                 </div>
                 <div class="pa-ledger-figures">
                   <span>Gross <strong>{{ $globalSettings->currency }} {{ number_format($row['gross_revenue'], 2) }}</strong></span>
-                  <span>Allocated <strong>{{ $globalSettings->currency }} {{ number_format($row['expense_allocated'], 2) }}</strong></span>
+                  <span>Allocated <strong>{{ $globalSettings->currency }} {{ number_format($row['expense_allocated'], 2) }}</strong>@if ($row['direct_expense'] > 0) <small class="text-muted">(incl. {{ number_format($row['direct_expense'], 2) }} booking cost)</small>@endif</span>
                   <span>Net <strong>{{ $globalSettings->currency }} {{ number_format($row['net_profit'], 2) }}</strong></span>
                 </div>
               </div>

@@ -191,6 +191,13 @@
               </div>
             </dl>
 
+            {{-- Internal margin: the villa's own direct costs for this booking. Never shown on guest-facing bills. --}}
+            <div class="bd-internal">
+              <div class="bd-internal-title"><i class="bi bi-lock"></i> Internal · not on the guest bill</div>
+              <div class="bd-total-row"><span>Booking expenses (direct costs)</span><span class="bd-internal-amt">− {{ $money($booking->booking_expenses_total) }}</span></div>
+              <div class="bd-total-row bd-internal-profit {{ $booking->booking_profit < 0 ? 'is-loss' : '' }}"><span>Profit on this booking</span><span class="bd-internal-amt">{{ $money($booking->booking_profit) }}</span></div>
+            </div>
+
             @if ($isCheckedOut && ($booking->payment_method || $booking->checked_out_at))
               <p class="bd-paid-note">
                 <i class="bi bi-check-circle-fill"></i>
@@ -204,6 +211,60 @@
         </section>
       </div>
     </div>
+
+    {{-- ============ Booking expenses / direct costs ============ --}}
+    <section class="bd-card bd-expenses mt-4">
+      <header class="bd-card-head">
+        <span class="bd-card-icon bd-card-icon-amber"><i class="bi bi-receipt-cutoff"></i></span>
+        <div><h2>Booking Expenses / Direct Costs</h2><p>Costs the villa pays for this booking (external meals, transport…). Not billed to the guest.</p></div>
+        <span class="bd-exp-total">{{ $money($booking->booking_expenses_total) }}</span>
+      </header>
+
+      @if ($booking->bookingExpenses->isNotEmpty())
+        <ul class="bd-exp-list">
+          @foreach ($booking->bookingExpenses as $expense)
+            <li class="bd-exp-row">
+              <div class="bd-exp-main">
+                <strong>{{ $expense->category }}</strong>
+                @if ($expense->description)<small>{{ $expense->description }}</small>@endif
+                <small class="bd-exp-date">{{ $expense->created_at->format('d M Y, H:i') }}</small>
+              </div>
+              <span class="bd-line-amount">{{ $money($expense->amount) }}</span>
+              <form method="POST" action="{{ route('bookings.expenses.destroy', $expense) }}" onsubmit="return confirm('Delete this expense?');">
+                @csrf
+                @method('DELETE')
+                <button type="submit" class="bd-exp-delete" aria-label="Delete expense"><i class="bi bi-trash3"></i></button>
+              </form>
+            </li>
+          @endforeach
+        </ul>
+      @else
+        <p class="bd-exp-empty">No direct costs recorded for this booking yet.</p>
+      @endif
+
+      @if ($booking->status !== 'cancelled')
+        <form method="POST" action="{{ route('bookings.expenses.store', $booking) }}" class="bd-exp-form">
+          @csrf
+          <div class="bd-exp-field">
+            <label for="expCategory">Category</label>
+            <input id="expCategory" name="category" type="text" class="form-control @error('category') is-invalid @enderror" list="expCategories" value="{{ old('category') }}" placeholder="e.g. Transport" maxlength="100" required>
+            <datalist id="expCategories">@foreach (\App\Models\BookingExpense::CATEGORIES as $category)<option value="{{ $category }}">@endforeach</datalist>
+            @error('category')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror
+          </div>
+          <div class="bd-exp-field bd-exp-field-grow">
+            <label for="expDescription">Description <span class="text-muted">(optional)</span></label>
+            <input id="expDescription" name="description" type="text" class="form-control @error('description') is-invalid @enderror" value="{{ old('description') }}" placeholder="e.g. Tuk-tuk to the station" maxlength="255">
+            @error('description')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror
+          </div>
+          <div class="bd-exp-field">
+            <label for="expAmount">Amount ({{ $currency }})</label>
+            <input id="expAmount" name="amount" type="number" step="0.01" min="0.01" class="form-control @error('amount') is-invalid @enderror" value="{{ old('amount') }}" placeholder="0.00" inputmode="decimal" required>
+            @error('amount')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror
+          </div>
+          <button type="submit" class="bd-btn bd-btn-primary bd-exp-add"><i class="bi bi-plus-lg"></i><span>Add expense</span></button>
+        </form>
+      @endif
+    </section>
 
         @if ($booking->status === 'confirmed')
           @include('bookings._checkout-modal', ['booking' => $booking, 'modalId' => 'checkoutModal'])

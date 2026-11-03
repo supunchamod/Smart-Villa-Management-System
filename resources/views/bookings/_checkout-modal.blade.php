@@ -26,6 +26,14 @@
             'currency' => $currency,
             'baseAmount' => (float) $booking->total_amount,
             'advance' => (float) $booking->advance_payment,
+            'saved' => $booking->bookingExpenses->map(fn ($expense) => [
+                'id' => $expense->id,
+                'category' => $expense->category,
+                'description' => $expense->description,
+                'amount' => (float) $expense->amount,
+                'url' => route('bookings.expenses.destroy', $expense),
+            ])->values()->all(),
+            'categories' => \App\Models\BookingExpense::CATEGORIES,
         ]))"
         @submit="submitting = true"
       >
@@ -91,6 +99,51 @@
             </div>
           </div>
 
+          {{-- Direct costs the villa pays for this stay. Internal: never added to the guest's bill or balance. --}}
+          <div class="co-section">
+            <div class="co-section-title">
+              <span>Booking expenses / direct costs</span>
+              <small>Internal – not billed to the guest</small>
+            </div>
+
+            <ul class="co-saved" x-show="saved.length > 0">
+              <template x-for="cost in saved" :key="cost.id">
+                <li class="co-saved-row">
+                  <div class="co-saved-main"><strong x-text="cost.category"></strong><small x-show="cost.description" x-text="cost.description"></small></div>
+                  <span class="co-num" x-text="money(cost.amount)"></span>
+                  <button type="button" class="co-remove" @click="deleteSaved(cost)" :disabled="deleting === cost.id" aria-label="Delete expense"><i class="bi bi-trash3"></i></button>
+                </li>
+              </template>
+            </ul>
+
+            <div class="co-chips">
+              <template x-for="cat in categories" :key="cat">
+                <button type="button" class="co-chip" @click="addCost(cat)"><i class="bi bi-plus-lg"></i><span x-text="cat"></span></button>
+              </template>
+            </div>
+
+            <div class="co-rows co-cost-rows" x-show="costs.length > 0">
+              <template x-for="(cost, index) in costs" :key="cost.key">
+                <div class="co-row co-cost-row">
+                  <input type="text" class="form-control co-name" :name="`booking_expenses[${index}][category]`" x-model="cost.category" list="coCostCategories{{ $modalId }}" placeholder="Category (e.g. Transport)" aria-label="Expense category" maxlength="100" required>
+                  <input type="text" class="form-control co-desc" :name="`booking_expenses[${index}][description]`" x-model="cost.description" placeholder="Description (optional)" aria-label="Expense description" maxlength="255">
+                  <label class="co-field co-price" data-label="Amount">
+                    <input type="number" class="form-control" :name="`booking_expenses[${index}][amount]`" x-model.number="cost.amount" min="0.01" step="0.01" inputmode="decimal" placeholder="0.00" aria-label="Expense amount" required>
+                  </label>
+                  <button type="button" class="co-remove" @click="removeCost(index)" aria-label="Remove expense"><i class="bi bi-x-lg"></i></button>
+                </div>
+              </template>
+            </div>
+            <datalist id="coCostCategories{{ $modalId }}"><template x-for="cat in categories" :key="cat"><option :value="cat"></option></template></datalist>
+
+            <div class="co-empty" x-show="saved.length === 0 && costs.length === 0">No direct costs recorded for this booking.</div>
+
+            <div class="co-margin" x-show="costsTotal > 0 || saved.length > 0">
+              <div class="co-sum-row"><span>Total direct costs</span><span class="co-num" x-text="money(costsTotal)"></span></div>
+              <div class="co-sum-row co-margin-profit" :class="{ 'is-loss': profit < 0 }"><span>Profit on this booking</span><strong class="co-num" x-text="money(profit)"></strong></div>
+            </div>
+          </div>
+
           <div class="co-summary">
             <div class="co-sum-row"><span>Room charges</span><span class="co-num" x-text="money(baseAmount)"></span></div>
             <template x-for="item in billedItems" :key="item.key">
@@ -148,6 +201,10 @@
             currency: config.currency,
             presets: ['Meals', 'BBQ', 'Safari Jeep', 'Beverages', 'Laundry'],
             items: [],
+            saved: config.saved || [],
+            categories: config.categories || [],
+            costs: [],
+            deleting: null,
             method: 'cash',
             submitting: false,
             addItem(name) {
@@ -158,6 +215,33 @@
                     const fields = this.$el.querySelectorAll(selector);
                     if (fields.length) fields[fields.length - 1].focus();
                 });
+            },
+            addCost(category) {
+                this.costs.push({ key: ++nextKey, category: category || '', description: '', amount: '' });
+                this.$nextTick(() => {
+                    const selector = category ? '.co-cost-row input[name$="[amount]"]' : '.co-cost-row input[name$="[category]"]';
+                    const fields = this.$el.querySelectorAll(selector);
+                    if (fields.length) fields[fields.length - 1].focus();
+                });
+            },
+            removeCost(index) {
+                this.costs.splice(index, 1);
+            },
+            async deleteSaved(cost) {
+                if (this.deleting || !window.confirm('Delete this expense?')) return;
+                this.deleting = cost.id;
+                try {
+                    const response = await fetch(cost.url, {
+                        method: 'DELETE',
+                        headers: { 'Accept': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content },
+                    });
+                    if (!response.ok) throw new Error('Request failed');
+                    this.saved = this.saved.filter((c) => c.id !== cost.id);
+                } catch (e) {
+                    window.alert('Could not delete this expense. Please try again.');
+                } finally {
+                    this.deleting = null;
+                }
             },
             removeItem(index) {
                 this.items.splice(index, 1);
@@ -178,8 +262,17 @@
             get balance() {
                 return Math.round((this.subtotal - this.advance) * 100) / 100;
             },
+            get costsTotal() {
+                return this.saved.reduce((sum, c) => sum + (Number(c.amount) || 0), 0)
+                    + this.costs.reduce((sum, c) => sum + (Number(c.amount) || 0), 0);
+            },
+            // What the booking earns for the villa after its own direct costs (internal figure).
+            get profit() {
+                return Math.round((this.subtotal - this.costsTotal) * 100) / 100;
+            },
             get hasIncompleteItem() {
-                return this.items.some((item) => !String(item.name).trim() || item.price === '' || item.price < 0 || !(Number(item.quantity) >= 1));
+                return this.costs.some((c) => !String(c.category).trim() || !(Number(c.amount) > 0))
+                    || this.items.some((item) => !String(item.name).trim() || item.price === '' || item.price < 0 || !(Number(item.quantity) >= 1));
             },
             money(value) {
                 return this.currency + ' ' + Number(value).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });

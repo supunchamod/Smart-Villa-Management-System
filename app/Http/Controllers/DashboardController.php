@@ -3,10 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Models\Booking;
-use App\Models\Expense;
 use App\Models\Room;
 use App\Models\Setting;
 use App\Models\User;
+use App\Support\ExpenseLedger;
 use App\Support\IncomeLedger;
 use Illuminate\Support\Str;
 use Illuminate\View\View;
@@ -45,8 +45,9 @@ class DashboardController extends Controller
             ->unique()
             ->count();
 
-        $monthlyExpenses = (float) Expense::whereBetween('expense_date', [$monthStart->toDateString(), $monthEnd->toDateString()])->sum('amount');
-        $previousMonthlyExpenses = (float) Expense::whereBetween('expense_date', [$previousMonthStart->toDateString(), $previousMonthEnd->toDateString()])->sum('amount');
+        // Both general expenses and per-booking direct costs count as spending.
+        $monthlyExpenses = ExpenseLedger::total(ExpenseLedger::between($monthStart, $monthEnd));
+        $previousMonthlyExpenses = ExpenseLedger::total(ExpenseLedger::between($previousMonthStart, $previousMonthEnd));
 
         $monthlyRevenue = (float) IncomeLedger::between($monthStart, $monthEnd)->sum('amount');
         $previousMonthlyRevenue = (float) IncomeLedger::between($previousMonthStart, $previousMonthEnd)->sum('amount');
@@ -61,7 +62,7 @@ class DashboardController extends Controller
         // Trailing 7-day income vs expenses series for the overview chart.
         $chartStart = $today->copy()->subDays(6);
         $incomeEvents = IncomeLedger::between($chartStart->copy()->startOfDay(), $today->copy()->endOfDay());
-        $expenseRows = Expense::whereBetween('expense_date', [$chartStart->toDateString(), $today->toDateString()])->get();
+        $expenseRows = ExpenseLedger::between($chartStart->copy()->startOfDay(), $today->copy()->endOfDay());
 
         $chartLabels = [];
         $chartIncome = [];
@@ -77,7 +78,7 @@ class DashboardController extends Controller
                 2
             );
             $chartExpenses[] = round(
-                (float) $expenseRows->filter(fn (Expense $expense) => $expense->expense_date->toDateString() === $dayKey)->sum('amount'),
+                (float) $expenseRows->filter(fn (array $expense) => $expense['date']->toDateString() === $dayKey)->sum('amount'),
                 2
             );
 
@@ -105,7 +106,7 @@ class DashboardController extends Controller
             ->orderByDesc('created_at')
             ->get();
 
-        $todaysCheckouts = Booking::with(['room', 'extras'])
+        $todaysCheckouts = Booking::with(['room', 'extras', 'bookingExpenses'])
             ->where('status', 'confirmed')
             ->where('booking_type', '!=', 'safari_only')
             ->whereDate('check_out', $today)

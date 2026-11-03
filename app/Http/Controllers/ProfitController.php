@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Booking;
-use App\Models\Expense;
+use App\Support\ExpenseLedger;
 use App\Support\IncomeLedger;
 use Carbon\Carbon;
 use Carbon\CarbonInterface;
@@ -57,22 +57,30 @@ class ProfitController extends Controller
         // trailing trend buckets, rather than re-querying per bucket.
         $allIncomeEvents = IncomeLedger::events();
         $historyStart = min($start->copy(), now()->subMonths(self::TREND_BUCKETS)->startOfMonth());
-        $expenseHistory = Expense::whereDate('expense_date', '>=', $historyStart->toDateString())->get();
+        // General expenses AND per-booking direct costs, so both reduce profit.
+        $expenseHistory = ExpenseLedger::since($historyStart);
 
         $rangeIncomeEvents = $allIncomeEvents->filter(fn (array $event) => $event['date']->between($start, $end));
-        $rangeExpenses = $expenseHistory->filter(fn (Expense $expense) => $expense->expense_date->between($start, $end));
+        $rangeExpenses = $expenseHistory->filter(fn (array $expense) => $expense['date']->between($start, $end));
 
         $totalRevenue = round((float) $rangeIncomeEvents->sum('amount'), 2);
-        $totalExpenses = round((float) $rangeExpenses->sum('amount'), 2);
-        $directCosts = round((float) $rangeExpenses
-            ->filter(fn (Expense $expense) => Str::contains(strtolower($expense->category), self::DIRECT_COST_KEYWORDS))
+        $totalExpenses = ExpenseLedger::total($rangeExpenses);
+        $bookingExpenses = $rangeExpenses->where('source', ExpenseLedger::BOOKING);
+        $bookingExpensesTotal = ExpenseLedger::total($bookingExpenses);
+        $generalExpensesTotal = round($totalExpenses - $bookingExpensesTotal, 2);
+
+        // Costs recorded against a specific booking are direct costs by definition; general
+        // expenses count as direct only when their category matches the keyword list.
+        $directCosts = round($bookingExpensesTotal + (float) $rangeExpenses
+            ->where('source', ExpenseLedger::GENERAL)
+            ->filter(fn (array $expense) => Str::contains(strtolower($expense['category']), self::DIRECT_COST_KEYWORDS))
             ->sum('amount'), 2);
         $operationalCosts = round($totalExpenses - $directCosts, 2);
         $grossProfit = round($totalRevenue - $directCosts, 2);
         $netProfit = round($totalRevenue - $totalExpenses, 2);
 
         $expenseBreakdown = $rangeExpenses
-            ->groupBy(fn (Expense $expense) => trim((string) $expense->category) !== '' ? trim($expense->category) : 'Uncategorized')
+            ->groupBy(fn (array $expense) => $expense['source'] === ExpenseLedger::BOOKING ? $expense['category'].' (booking)' : $expense['category'])
             ->map(fn (Collection $rows, string $category) => [
                 'category' => $category,
                 'amount' => round((float) $rows->sum('amount'), 2),
@@ -83,7 +91,7 @@ class ProfitController extends Controller
         [$weeklyLabels, $weeklyRevenue, $weeklyNetProfit] = $this->buildTrend($allIncomeEvents, $expenseHistory, 'weekly');
         [$monthlyLabels, $monthlyRevenue, $monthlyNetProfit] = $this->buildTrend($allIncomeEvents, $expenseHistory, 'monthly');
 
-        $ledgerRows = $this->buildLedger($rangeIncomeEvents, $totalRevenue, $totalExpenses);
+        $ledgerRows = $this->buildLedger($rangeIncomeEvents, $totalRevenue, $generalExpensesTotal, $bookingExpenses);
         $ledger = $this->paginateLedger($ledgerRows, $request);
 
         // Independent of the summary range above, same reasoning as the
@@ -99,6 +107,7 @@ class ProfitController extends Controller
             'granularity' => $granularity,
             'totalRevenue' => $totalRevenue,
             'totalExpenses' => $totalExpenses,
+            'bookingExpensesTotal' => $bookingExpensesTotal,
             'directCosts' => $directCosts,
             'operationalCosts' => $operationalCosts,
             'grossProfit' => $grossProfit,
@@ -155,7 +164,7 @@ class ProfitController extends Controller
      * the manager is looking at "Today".
      *
      * @param  Collection<int, array{type: string, date: CarbonInterface, amount: float, booking: \App\Models\Booking}>  $incomeEvents
-     * @param  Collection<int, Expense>  $expenses
+     * @param  Collection<int, array<string, mixed>>  $expenses
      * @return array{0: array<int, string>, 1: array<int, float>, 2: array<int, float>}
      */
     private function buildTrend(Collection $incomeEvents, Collection $expenses, string $unit): array
@@ -180,7 +189,7 @@ class ProfitController extends Controller
                 ->sum('amount');
 
             $expenseTotal = (float) $expenses
-                ->filter(fn (Expense $expense) => $expense->expense_date->between($bucketStart, $bucketEnd))
+                ->filter(fn (array $expense) => $expense['date']->between($bucketStart, $bucketEnd))
                 ->sum('amount');
 
             $labels[] = $label;
@@ -193,21 +202,44 @@ class ProfitController extends Controller
 
     /**
      * One row per cash-in event (advance payment or final settlement),
-     * newest first, with the period's total expenses allocated to each row
-     * pro-rata by its share of period revenue - there's no per-booking
-     * expense tracking, so this is a labelled allocation, not a logged fact.
+     * newest first. Expenses are attributed two ways:
+     *
+     *  - Direct costs recorded against a booking are charged to that
+     *    booking's own rows (split by each row's share of the booking's
+     *    revenue in the period) - a logged fact, not an estimate.
+     *  - General expenses (rent, salaries...) have no booking, so they are
+     *    still allocated pro-rata by each row's share of period revenue.
+     *
+     * A booking's direct costs recorded in a period where it has no cash-in
+     * event stay in the period totals but can't be shown on any row.
      *
      * @param  Collection<int, array{type: string, date: CarbonInterface, amount: float, booking: \App\Models\Booking}>  $incomeEvents
+     * @param  Collection<int, array<string, mixed>>  $bookingExpenses
      * @return Collection<int, array<string, mixed>>
      */
-    private function buildLedger(Collection $incomeEvents, float $totalRevenue, float $totalExpenses): Collection
+    private function buildLedger(Collection $incomeEvents, float $totalRevenue, float $generalExpenses, Collection $bookingExpenses): Collection
     {
+        $directCostByBooking = $bookingExpenses
+            ->groupBy(fn (array $expense) => $expense['booking']?->id)
+            ->map(fn (Collection $rows) => (float) $rows->sum('amount'));
+
+        $revenueByBooking = $incomeEvents
+            ->groupBy(fn (array $event) => $event['booking']->id)
+            ->map(fn (Collection $rows) => (float) $rows->sum('amount'));
+
         return $incomeEvents
             ->sortByDesc('date')
             ->values()
-            ->map(function (array $event) use ($totalRevenue, $totalExpenses) {
+            ->map(function (array $event) use ($totalRevenue, $generalExpenses, $directCostByBooking, $revenueByBooking) {
                 $booking = $event['booking'];
-                $allocatedExpense = $totalRevenue > 0 ? ($event['amount'] / $totalRevenue) * $totalExpenses : 0.0;
+
+                $bookingRevenue = (float) ($revenueByBooking[$booking->id] ?? 0);
+                $directExpense = $bookingRevenue > 0
+                    ? ($event['amount'] / $bookingRevenue) * (float) ($directCostByBooking[$booking->id] ?? 0)
+                    : 0.0;
+                $generalShare = $totalRevenue > 0 ? ($event['amount'] / $totalRevenue) * $generalExpenses : 0.0;
+
+                $allocatedExpense = $generalShare + $directExpense;
                 $netProfit = $event['amount'] - $allocatedExpense;
                 $margin = $event['amount'] > 0 ? ($netProfit / $event['amount']) * 100 : 0.0;
 
@@ -217,6 +249,7 @@ class ProfitController extends Controller
                     'customer_name' => $booking->customer_name,
                     'source' => $booking->room?->type ?: 'Room Booking',
                     'gross_revenue' => round($event['amount'], 2),
+                    'direct_expense' => round($directExpense, 2),
                     'expense_allocated' => round($allocatedExpense, 2),
                     'net_profit' => round($netProfit, 2),
                     'margin' => round($margin, 2),

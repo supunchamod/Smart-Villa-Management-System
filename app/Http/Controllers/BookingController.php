@@ -68,7 +68,7 @@ class BookingController extends Controller
             ? $request->query('range')
             : null;
 
-        $bookingsQuery = Booking::query()->with(['room', 'extras'])->latest();
+        $bookingsQuery = Booking::query()->with(['room', 'extras', 'bookingExpenses'])->latest();
 
         match ($tab) {
             'active' => $bookingsQuery->where('status', 'confirmed'),
@@ -165,7 +165,7 @@ class BookingController extends Controller
     public function show(Booking $booking): View
     {
         return view('bookings.show', [
-            'booking' => $booking->load(['room', 'extras']),
+            'booking' => $booking->load(['room', 'extras', 'bookingExpenses']),
         ]);
     }
 
@@ -221,6 +221,10 @@ class BookingController extends Controller
                 ->filter(fn ($row) => is_array($row) && (trim((string) ($row['item_name'] ?? '')) !== '' || trim((string) ($row['unit_price'] ?? '')) !== ''))
                 ->values()
                 ->all(),
+            'booking_expenses' => collect($request->input('booking_expenses', []))
+                ->filter(fn ($row) => is_array($row) && (trim((string) ($row['category'] ?? '')) !== '' || trim((string) ($row['amount'] ?? '')) !== ''))
+                ->values()
+                ->all(),
         ]);
 
         $validated = $request->validate([
@@ -229,6 +233,11 @@ class BookingController extends Controller
             'extras.*.item_name' => ['required', 'string', 'max:120'],
             'extras.*.quantity' => ['nullable', 'integer', 'min:1', 'max:999'],
             'extras.*.unit_price' => ['required', 'numeric', 'min:0', 'max:99999999'],
+            // Direct costs the villa paid for this stay (internal - not part of the guest's bill).
+            'booking_expenses' => ['array', 'max:30'],
+            'booking_expenses.*.category' => ['required', 'string', 'max:100'],
+            'booking_expenses.*.description' => ['nullable', 'string', 'max:255'],
+            'booking_expenses.*.amount' => ['required', 'numeric', 'min:0.01', 'max:99999999'],
         ]);
 
         $fail = function (string $message) use ($request) {
@@ -258,6 +267,14 @@ class BookingController extends Controller
             }
 
             $locked->extras()->createMany($extras->all());
+
+            $locked->bookingExpenses()->createMany(
+                collect($validated['booking_expenses'] ?? [])->map(fn (array $row) => [
+                    'category' => trim($row['category']),
+                    'description' => isset($row['description']) && trim($row['description']) !== '' ? trim($row['description']) : null,
+                    'amount' => round((float) $row['amount'], 2),
+                ])->all()
+            );
 
             $locked->update([
                 'status' => 'checked_out',
