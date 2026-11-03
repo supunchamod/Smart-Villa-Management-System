@@ -134,16 +134,16 @@ class Booking extends Model
         return $this->belongsTo(Room::class);
     }
 
-    /**
-     * Confirmed bookings with a check-in still ahead of today, soonest
-     * first - the "what's coming up" query shared by the calendar's agenda
-     * list and the Profit Analyzer's upcoming-bookings widget.
-     */
     public function extras(): HasMany
     {
         return $this->hasMany(BookingExtra::class)->orderBy('id');
     }
 
+    /**
+     * Confirmed bookings with a check-in still ahead of today, soonest
+     * first - the "what's coming up" query shared by the calendar's agenda
+     * list and the Profit Analyzer's upcoming-bookings widget.
+     */
     public function scopeUpcoming(Builder $query): Builder
     {
         return $query->where('status', 'confirmed')
@@ -151,12 +151,6 @@ class Booking extends Model
             ->orderBy('check_in');
     }
 
-    /**
-     * The outstanding balance. Always zero once checked out - the advance
-     * and final settlement amounts are kept separate (rather than folding
-     * the settlement into advance_payment) so the income ledger can still
-     * report them as two distinct cash-in events.
-     */
     /**
      * Sum of the extra charges (meals, BBQ, jeep, ...) on this booking.
      */
@@ -175,6 +169,12 @@ class Booking extends Model
         return Attribute::get(fn () => round((float) $this->total_amount + $this->extras_total, 2));
     }
 
+    /**
+     * The outstanding balance. Always zero once checked out - the advance
+     * and final settlement amounts are kept separate (rather than folding
+     * the settlement into advance_payment) so the income ledger can still
+     * report them as two distinct cash-in events.
+     */
     protected function remainingBalance(): Attribute
     {
         return Attribute::get(function () {

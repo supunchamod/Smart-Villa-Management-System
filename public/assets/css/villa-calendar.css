@@ -61,3 +61,32 @@
 
 .shadow-xs { box-shadow: 0 2px 6px rgba(15, 23, 42, .06); }
 [data-theme="dark"] .shadow-xs { box-shadow: 0 2px 6px rgba(0, 0, 0, .3); }
+
+/* ---- Upcoming Bookings agenda (real data) ---- */
+.vc-agenda-panel { display: flex; flex-direction: column; padding: 20px; }
+.vc-agenda-head { margin-bottom: 16px; padding-bottom: 10px; border-bottom: 2px solid var(--vc-gold); }
+.vc-agenda-eyebrow { display: block; margin-bottom: 2px; color: var(--muted); font-size: 11px; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; }
+.vc-agenda-head h2 { margin: 0; font-size: 18px; font-weight: 800; color: var(--vc-navy); }
+.vc-agenda-list { display: flex; flex-direction: column; gap: 12px; flex: 1 1 auto; }
+button.vc-agenda-card { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; gap: 10px 12px; width: 100%; padding: 12px; border: 1px solid var(--line); border-left: 4px solid var(--vc-navy); border-radius: 10px; color: inherit; font: inherit; text-align: left; cursor: pointer; }
+button.vc-agenda-card:focus-visible { outline: 2px solid var(--vc-navy); outline-offset: 2px; }
+.vc-agenda-date { min-width: 52px; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 6px 8px; border-radius: 8px; line-height: 1.15; }
+.vc-agenda-date-num { font-weight: 800; }
+.vc-agenda-date-month { text-transform: uppercase; font-weight: 700; }
+.vc-agenda-meta + .vc-agenda-meta { margin-top: 1px; }
+.vc-agenda-revenue { grid-column: 1 / -1; justify-self: end; margin-left: 0; padding: 3px 10px; font-size: 12px; }
+.vc-agenda-footer-link { flex: 0 0 auto; }
+
+/* ---- Booking popup (calendar) ---- */
+.vcm-title { display: flex; align-items: center; gap: 14px; min-width: 0; }
+.vcm-title .modal-title { margin: 2px 0 6px; overflow-wrap: anywhere; }
+.vcm-body { padding: 4px 24px 8px; }
+.vcm-body .bd-group:first-child, .vcm-first { border-top: 0; }
+.vcm-stage { position: fixed; left: -10000px; top: 0; width: 720px; pointer-events: none; }
+.vcm-wrap { display: flex; flex: 1 1 auto; flex-direction: column; min-height: 0; max-height: 100%; overflow: hidden; }
+.vcm-wrap .modal-header, .vcm-wrap .modal-footer { flex-shrink: 0; }
+.vcm-wrap .modal-body { flex: 1 1 auto; min-height: 0; overflow-y: auto; }
+.bd-paid-note .bd-pay-pill { align-self: center; }
+@media (max-width: 767.98px) {
+  .vcm-body { padding: 0 16px 4px; }
+}

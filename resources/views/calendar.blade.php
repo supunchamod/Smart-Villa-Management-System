@@ -25,188 +25,267 @@
       <h2 class="vc-title">Villa Bookings &amp; Events Calendar</h2>
       <p>Use month, week, day, and list views with working previous, next, and today controls.</p>
     </div>
-    <div class="calendar-legend"><span><i class="event-blue"></i> Confirmed</span><span><i class="event-green"></i> Checked out</span><span><i class="event-red"></i> Cancelled</span></div>
+    <div class="calendar-legend"><span><i class="event-amber"></i> Pending</span><span><i class="event-blue"></i> Confirmed</span><span><i class="event-green"></i> Checked out</span><span><i class="event-red"></i> Cancelled</span></div>
   </div>
  <div class="row g-4 mt-1">
     <!-- Calendar Component (Left - 9 Columns) -->
     <div class="col-xl-9">
         <div class="panel calendar-library-panel h-100">
-            <!-- Dynamic Mounting Target for JS FullCalendar / Custom Calendar -->
+            {{-- FullCalendar mounts here and replaces the placeholder; events come from bookings.calendar --}}
             <div id="villaCalendar" data-calendar-mount data-events-url="{{ route('bookings.calendar') }}">
-                <div class="fallback-calendar">
-                    <div class="fallback-calendar-toolbar">
-                        <button class="btn btn-light btn-sm" type="button" disabled><i class="bi bi-chevron-left"></i></button>
-                        <h3 class="fw-bold text-navy" style="color: #002d62;">May 2026</h3>
-                        <div>
-                            <button class="btn btn-sm text-white" type="button" style="background-color: #e8b22d;" disabled>Today</button>
-                            <button class="btn btn-light btn-sm" type="button" disabled><i class="bi bi-chevron-right"></i></button>
-                        </div>
-                    </div>
-                    
-                    <div class="fallback-calendar-grid">
-                        <div class="fallback-calendar-head">Mon</div>
-                        <div class="fallback-calendar-head">Tue</div>
-                        <div class="fallback-calendar-head">Wed</div>
-                        <div class="fallback-calendar-head">Thu</div>
-                        <div class="fallback-calendar-head">Fri</div>
-                        <div class="fallback-calendar-head">Sat</div>
-                        <div class="fallback-calendar-head">Sun</div>
-
-                        <!-- Calendar Days Layer with Villa Booking Fallbacks -->
-                        <div class="fallback-calendar-day muted"></div>
-                        <div class="fallback-calendar-day muted"></div>
-                        <div class="fallback-calendar-day muted"></div>
-                        <button class="fallback-calendar-day" type="button"><strong>1</strong></button>
-                        <button class="fallback-calendar-day" type="button"><strong>2</strong></button>
-                        <button class="fallback-calendar-day" type="button"><strong>3</strong></button>
-                        <button class="fallback-calendar-day" type="button"><strong>4</strong></button>
-                        <button class="fallback-calendar-day" type="button"><strong>5</strong><span style="--event-color:#e8b22d">Cabana A - Reserved</span></button>
-                        <button class="fallback-calendar-day" type="button"><strong>6</strong></button>
-                        <button class="fallback-calendar-day" type="button"><strong>7</strong></button>
-                        <button class="fallback-calendar-day" type="button"><strong>8</strong><span style="--event-color:#002d62">Villa Suite Check-in</span></button>
-                        <button class="fallback-calendar-day" type="button"><strong>9</strong></button>
-                        <button class="fallback-calendar-day" type="button"><strong>10</strong></button>
-                        <button class="fallback-calendar-day" type="button"><strong>11</strong></button>
-                        <button class="fallback-calendar-day" type="button"><strong>12</strong><span style="--event-color:#2fa84f">Full Venue Event</span></button>
-                        <button class="fallback-calendar-day" type="button"><strong>13</strong></button>
-                        <button class="fallback-calendar-day" type="button"><strong>14</strong></button>
-                        <button class="fallback-calendar-day" type="button"><strong>15</strong></button>
-                        <button class="fallback-calendar-day" type="button"><strong>16</strong><span style="--event-color:#e8b22d">Cabana B - Check-in</span></button>
-                        <button class="fallback-calendar-day" type="button"><strong>17</strong></button>
-                        <button class="fallback-calendar-day" type="button"><strong>18</strong></button>
-                        <button class="fallback-calendar-day" type="button"><strong>19</strong></button>
-                        <button class="fallback-calendar-day" type="button"><strong>20</strong><span style="--event-color:#002d62">Corporate Booking</span></button>
-                        <button class="fallback-calendar-day" type="button"><strong>21</strong></button>
-                        <button class="fallback-calendar-day" type="button"><strong>22</strong></button>
-                        <button class="fallback-calendar-day today" type="button"><strong>23</strong></button>
-                        <button class="fallback-calendar-day" type="button"><strong>24</strong><span style="--event-color:#2fa84f">Premium Cabana Pack</span></button>
-                        <button class="fallback-calendar-day" type="button"><strong>25</strong></button>
-                        <button class="fallback-calendar-day" type="button"><strong>26</strong></button>
-                        <button class="fallback-calendar-day" type="button"><strong>27</strong></button>
-                        <button class="fallback-calendar-day" type="button"><strong>28</strong><span style="--event-color:#dc2626">Maintenance Block</span></button>
-                        <button class="fallback-calendar-day" type="button"><strong>29</strong></button>
-                        <button class="fallback-calendar-day" type="button"><strong>30</strong></button>
-                        <button class="fallback-calendar-day" type="button"><strong>31</strong></button>
-                    </div>
-                </div>
+                <p class="vc-empty">Loading calendar…</p>
             </div>
         </div>
     </div>
 
-    <!-- Villa Upcoming Bookings / Next Scheduled Items (Right - 3 Columns) -->
+    {{-- Upcoming bookings: real confirmed bookings, soonest check-in first --}}
     <div class="col-xl-3">
-        <div class="panel event-agenda h-100 d-flex flex-column justify-content-between p-3" style="background: #fff; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.03);">
-            <div>
-                <!-- Header Block with Gold Theme Alignment -->
-                <div class="panel-head mb-4 pb-2" style="border-bottom: 2px solid #e8b22d;">
-                    <div>
-                        <span class="text-uppercase fw-bold text-muted d-block mb-1" style="font-size: 11px; letter-spacing: 1.5px;">Villa Schedules</span>
-                        <h2 class="fw-bold h5 mb-0" style="color: #002d62;">Upcoming Bookings</h2>
-                    </div>
-                </div>
-
-                <!-- Livewire / Blade Variable Loop Target Area -->
-                <div class="vc-agenda-list d-flex flex-column gap-3">
-                    
-                    <!-- Booking Item 1 -->
-                    <div class="d-flex align-items-center justify-content-between p-3 rounded vc-agenda-card" style="background: #fdfdfd; border-left: 4px solid #002d62; border-top: 1px solid #eee; border-right: 1px solid #eee; border-bottom: 1px solid #eee; transition: all 0.3s ease;">
-                        <div class="d-flex align-items-center">
-                            <!-- Premium Date Badge -->
-                            <div class="text-center me-3 px-2 py-1 rounded text-white" style="background: #002d62; min-width: 55px; flex-shrink: 0;">
-                                <span class="d-block fw-bold" style="font-size: 14px; color: #e8b22d;">08</span>
-                                <span class="text-uppercase fw-semibold" style="font-size: 9px; letter-spacing: 0.5px;">May</span>
-                            </div>
-                            <div class="vc-agenda-content">
-                                <strong class="vc-agenda-title d-block" style="color: #002d62; font-size: 13.5px;">Luxury Cabana A</strong>
-                                <small class="vc-agenda-meta text-muted" style="font-size: 11.5px;">Check-in: 14:00 &middot; 2 Nights</small>
-                            </div>
-                        </div>
-                        <span class="fw-bold px-2 py-1 rounded" style="background: rgba(232, 178, 45, 0.1); color: #002d62; font-size: 12px; border: 1px dashed #e8b22d;">Rs. 45,000</span>
-                    </div>
-
-                    <!-- Booking Item 2 -->
-                    <div class="d-flex align-items-center justify-content-between p-3 rounded vc-agenda-card" style="background: #fdfdfd; border-left: 4px solid #e8b22d; border-top: 1px solid #eee; border-right: 1px solid #eee; border-bottom: 1px solid #eee; transition: all 0.3s ease;">
-                        <div class="d-flex align-items-center">
-                            <div class="text-center me-3 px-2 py-1 rounded text-white" style="background: #002d62; min-width: 55px; flex-shrink: 0;">
-                                <span class="d-block fw-bold" style="font-size: 14px; color: #e8b22d;">12</span>
-                                <span class="text-uppercase fw-semibold" style="font-size: 9px; letter-spacing: 0.5px;">May</span>
-                            </div>
-                            <div class="vc-agenda-content">
-                                <strong class="vc-agenda-title d-block" style="color: #002d62; font-size: 13.5px;">Deluxe Villa Suite</strong>
-                                <small class="vc-agenda-meta text-muted" style="font-size: 11.5px;">Check-in: 14:00 &middot; 1 Night</small>
-                            </div>
-                        </div>
-                        <span class="fw-bold px-2 py-1 rounded" style="background: rgba(232, 178, 45, 0.1); color: #002d62; font-size: 12px; border: 1px dashed #e8b22d;">Rs. 38,000</span>
-                    </div>
-
-                    <!-- Booking Item 3 -->
-                    <div class="d-flex align-items-center justify-content-between p-3 rounded vc-agenda-card" style="background: #fdfdfd; border-left: 4px solid #002d62; border-top: 1px solid #eee; border-right: 1px solid #eee; border-bottom: 1px solid #eee; transition: all 0.3s ease;">
-                        <div class="d-flex align-items-center">
-                            <div class="text-center me-3 px-2 py-1 rounded text-white" style="background: #002d62; min-width: 55px; flex-shrink: 0;">
-                                <span class="d-block fw-bold" style="font-size: 14px; color: #e8b22d;">16</span>
-                                <span class="text-uppercase fw-semibold" style="font-size: 9px; letter-spacing: 0.5px;">May</span>
-                            </div>
-                            <div class="vc-agenda-content">
-                                <strong class="vc-agenda-title d-block" style="color: #002d62; font-size: 13.5px;">Full Venue Rental</strong>
-                                <small class="vc-agenda-meta text-muted" style="font-size: 11.5px;">Event &middot; Corporate Group</small>
-                            </div>
-                        </div>
-                        <span class="fw-bold px-2 py-1 rounded" style="background: rgba(232, 178, 45, 0.1); color: #002d62; font-size: 12px; border: 1px dashed #e8b22d;">Rs. 180,000</span>
-                    </div>
-
-                    <!-- Booking Item 4 -->
-                    <div class="d-flex align-items-center justify-content-between p-3 rounded vc-agenda-card" style="background: #fdfdfd; border-left: 4px solid #e8b22d; border-top: 1px solid #eee; border-right: 1px solid #eee; border-bottom: 1px solid #eee; transition: all 0.3s ease;">
-                        <div class="d-flex align-items-center">
-                            <div class="text-center me-3 px-2 py-1 rounded text-white" style="background: #002d62; min-width: 55px; flex-shrink: 0;">
-                                <span class="d-block fw-bold" style="font-size: 14px; color: #e8b22d;">28</span>
-                                <span class="text-uppercase fw-semibold" style="font-size: 9px; letter-spacing: 0.5px;">May</span>
-                            </div>
-                            <div class="vc-agenda-content">
-                                <strong class="vc-agenda-title d-block" style="color: #002d62; font-size: 13.5px;">Premium Cabana B</strong>
-                                <small class="vc-agenda-meta text-muted" style="font-size: 11.5px;">Check-in: 14:00 &middot; 3 Nights</small>
-                            </div>
-                        </div>
-                        <span class="fw-bold px-2 py-1 rounded" style="background: rgba(232, 178, 45, 0.1); color: #002d62; font-size: 12px; border: 1px dashed #e8b22d;">Rs. 65,000</span>
-                    </div>
-
-                </div>
+        <div class="panel event-agenda vc-agenda-panel h-100">
+            <div class="vc-agenda-head">
+                <span class="vc-agenda-eyebrow">Villa Schedules</span>
+                <h2>Upcoming Bookings</h2>
             </div>
-            
-            <!-- Bottom Footer Action Component Alignment -->
-            <a href="{{ route('bookings.index') }}" class="btn w-100 text-uppercase fw-bold text-center mt-3 py-2 transition" style="border: 2px solid #e8b22d; color: #002d62; background: transparent; font-size: 11px; letter-spacing: 1.5px; border-radius: 8px;">
-                View All Bookings <i class="bi bi-arrow-right ms-2" style="color: #e8b22d;"></i>
-            </a>
+
+            <div class="vc-agenda-list">
+                @forelse ($upcomingBookings as $booking)
+                    @php
+                        $days = today()->diffInDays($booking->check_in->copy()->startOfDay(), false);
+                        $when = $days <= 0 ? 'Today' : ($days === 1 ? 'Tomorrow' : 'In '.(int) $days.' days');
+                        $isStay = $booking->booking_type !== 'safari_only';
+                    @endphp
+                    <button type="button" class="vc-agenda-card" title="View booking details"
+                            x-data
+                            @click="$dispatch('calendar-event-selected', @js($upcomingPayloads[$booking->id]))">
+                        <span class="vc-agenda-date">
+                            <span class="vc-agenda-date-num">{{ $booking->check_in->format('d') }}</span>
+                            <span class="vc-agenda-date-month">{{ $booking->check_in->format('M') }}</span>
+                        </span>
+                        <span class="vc-agenda-content">
+                            <strong class="vc-agenda-title">{{ $booking->customer_name }}</strong>
+                            <small class="vc-agenda-meta">{{ $booking->room_label }}</small>
+                            <small class="vc-agenda-meta">{{ $when }}@if ($isStay) · {{ $booking->nights }} {{ \Illuminate\Support\Str::plural('night', $booking->nights) }}@endif</small>
+                        </span>
+                        <span class="vc-agenda-revenue">{{ $globalSettings->currency }} {{ number_format($booking->grand_total, 0) }}</span>
+                    </button>
+                @empty
+                    <p class="vc-empty">No upcoming confirmed bookings.</p>
+                @endforelse
+            </div>
+
+            <a href="{{ route('bookings.index') }}" class="vc-agenda-footer-link">View All Bookings <i class="bi bi-arrow-right"></i></a>
         </div>
     </div>
 </div>
 </div>
-        <div class="modal fade" id="bookingDetailModal" tabindex="-1" aria-hidden="true"
-             x-data="{ booking: null }"
-             x-init="window.addEventListener('calendar-event-selected', (event) => { booking = event.detail; bootstrap.Modal.getOrCreateInstance($el).show(); })">
-          <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content dash-modal">
-              <div class="modal-header">
-                <div><span class="eyebrow">Booking</span><h2 class="modal-title" x-text="booking?.customer_name"></h2></div>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-              </div>
-              <div class="modal-body" x-show="booking">
-                <div class="row g-3">
-                  <div class="col-6"><small class="text-muted d-block">Room</small><strong x-text="booking?.room"></strong></div>
-                  <div class="col-6"><small class="text-muted d-block">Status</small><strong x-text="booking?.status"></strong></div>
-                  <div class="col-6"><small class="text-muted d-block">Check-in</small><strong x-text="booking?.check_in"></strong></div>
-                  <div class="col-6"><small class="text-muted d-block">Check-out</small><strong x-text="booking?.check_out"></strong></div>
-                  <div class="col-6" x-show="booking?.customer_email"><small class="text-muted d-block">Email</small><strong x-text="booking?.customer_email"></strong></div>
-                  <div class="col-6" x-show="booking?.customer_phone"><small class="text-muted d-block">Phone</small><strong x-text="booking?.customer_phone"></strong></div>
-                  <div class="col-4"><small class="text-muted d-block">Total</small><strong x-text="booking?.total_amount"></strong></div>
-                  <div class="col-4"><small class="text-muted d-block">Advance</small><strong x-text="booking?.advance_payment"></strong></div>
-                  <div class="col-4"><small class="text-muted d-block">Balance</small><strong x-text="booking?.balance"></strong></div>
-                </div>
+
+{{-- ============ Booking popup (opened by clicking a calendar event or an upcoming-booking card) ============ --}}
+<div class="modal fade" id="bookingDetailModal" tabindex="-1" aria-labelledby="bookingDetailTitle" aria-hidden="true"
+     x-data="bookingCalendarModal(@js([
+         'villa' => [
+             'name' => $globalSettings->villa_name,
+             'address' => $globalSettings->address,
+             'phone' => $globalSettings->phone_number,
+             'email' => $globalSettings->email,
+             'logo' => $globalSettings->logo_url,
+         ],
+     ]))"
+     x-init="window.addEventListener('calendar-event-selected', (e) => open(e.detail))">
+  <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-fullscreen-sm-down vb-dialog">
+    <div class="modal-content dash-modal">
+      <template x-if="b">
+        <div class="vcm-wrap">
+          <div class="modal-header">
+            <div class="vcm-title">
+              <span class="bd-avatar" aria-hidden="true" x-text="b.initials"></span>
+              <div>
+                <span class="eyebrow" x-text="b.reference"></span>
+                <h2 class="modal-title" id="bookingDetailTitle" x-text="b.customer_name"></h2>
+                <span class="deal-badge" :class="badgeClass" x-text="b.status_label"></span>
               </div>
             </div>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+
+          <div class="modal-body vcm-body">
+            <div class="bd-group vcm-first">
+              <h3>Guest</h3>
+              <dl class="bd-fields">
+                <div class="bd-field"><dt><i class="bi bi-telephone"></i>Phone</dt>
+                  <dd><a x-show="b.customer_phone" :href="'tel:' + (b.customer_phone || '').replace(/[^\d+]/g, '')" x-text="b.customer_phone"></a><span class="bd-empty" x-show="!b.customer_phone">Not provided</span></dd></div>
+                <div class="bd-field"><dt><i class="bi bi-envelope"></i>Email</dt>
+                  <dd><a x-show="b.customer_email" :href="'mailto:' + b.customer_email" x-text="b.customer_email"></a><span class="bd-empty" x-show="!b.customer_email">Not provided</span></dd></div>
+              </dl>
+            </div>
+
+            <div class="bd-group">
+              <h3 x-text="b.is_stay ? 'Stay' : 'Safari'"></h3>
+              <dl class="bd-fields">
+                <div class="bd-field bd-field-wide"><dt><i class="bi bi-door-open"></i><span x-text="b.is_stay ? 'Room / Cabana' : 'Tour'"></span></dt>
+                  <dd><span x-text="b.room"></span> <span class="bd-sub" x-show="b.room_type" x-text="b.room_type"></span></dd></div>
+                <template x-if="b.is_stay">
+                  <div class="bd-field"><dt><i class="bi bi-box-arrow-in-right"></i>Check-in</dt><dd x-text="b.check_in"></dd></div>
+                </template>
+                <template x-if="b.is_stay">
+                  <div class="bd-field"><dt><i class="bi bi-box-arrow-right"></i>Check-out</dt><dd x-text="b.check_out"></dd></div>
+                </template>
+                <template x-if="b.is_stay">
+                  <div class="bd-field"><dt><i class="bi bi-moon-stars"></i>Duration</dt><dd x-text="b.nights + (b.nights === 1 ? ' night' : ' nights')"></dd></div>
+                </template>
+                <template x-if="b.board">
+                  <div class="bd-field"><dt><i class="bi bi-cup-hot"></i>Board basis</dt><dd><span class="board-badge" :class="boardClass" x-text="b.board"></span></dd></div>
+                </template>
+                <template x-if="b.guests">
+                  <div class="bd-field"><dt><i class="bi bi-people"></i>Guests</dt><dd x-text="b.guests"></dd></div>
+                </template>
+                <template x-if="b.safari">
+                  <div class="bd-field"><dt><i class="bi bi-calendar-event"></i>Safari date</dt><dd x-text="b.safari.date"></dd></div>
+                </template>
+                <template x-if="b.safari && b.safari.vehicle">
+                  <div class="bd-field bd-field-wide"><dt><i class="bi bi-truck"></i>Vehicle</dt><dd x-text="b.safari.vehicle"></dd></div>
+                </template>
+              </dl>
+            </div>
+
+            <div class="bd-group">
+              <h3>Charges</h3>
+              <ul class="bd-lines">
+                <li class="bd-line">
+                  <div class="bd-line-main"><strong x-text="b.room_charges_label"></strong><small x-show="b.room_charges_detail" x-text="b.room_charges_detail"></small></div>
+                  <span class="bd-line-amount" x-text="b.room_charges"></span>
+                </li>
+                <template x-for="(extra, i) in b.extras" :key="i">
+                  <li class="bd-line">
+                    <div class="bd-line-main"><strong x-text="extra.name"></strong><small x-text="extra.detail"></small></div>
+                    <span class="bd-line-amount" x-text="extra.amount"></span>
+                  </li>
+                </template>
+                <li class="bd-line bd-line-empty" x-show="b.extras.length === 0">No extra charges</li>
+              </ul>
+            </div>
+
+            <div class="bd-group vcm-last">
+              <h3>Financial summary</h3>
+              <div class="bd-stats">
+                <div class="bd-stat bd-stat-total"><span>Total</span><strong x-text="b.total_amount"></strong></div>
+                <div class="bd-stat"><span>Advance paid</span><strong x-text="b.advance_payment"></strong></div>
+                <div class="bd-stat" :class="b.balance_due ? 'bd-stat-due' : 'bd-stat-clear'"><span>Balance due</span><strong x-text="b.balance"></strong></div>
+              </div>
+              <p class="bd-paid-note">
+                <span class="bd-pay-pill" :class="payClass" x-text="b.payment_status"></span>
+                <span x-show="b.payment_method" x-text="'Paid by ' + b.payment_method"></span>
+              </p>
+            </div>
+
+            {{-- Off-screen bill: the markup html2canvas turns into the downloadable image --}}
+            <div class="vcm-stage" aria-hidden="true"><div x-ref="stage"></div></div>
+          </div>
+
+          <div class="modal-footer vb-footer">
+            <a class="btn btn-light" x-show="b.urls.bill" :href="b.urls.bill" target="_blank" rel="noopener"><i class="bi bi-receipt"></i> View Bill</a>
+            <a class="btn btn-primary" x-show="b.urls.pdf" :href="b.urls.pdf"><i class="bi bi-file-earmark-pdf"></i> Download PDF Invoice</a>
+            <button type="button" class="btn btn-outline-primary" x-show="b.urls.bill" @click="downloadImage()" :disabled="busy">
+              <i class="bi bi-image"></i> <span x-text="busy ? 'Preparing…' : 'Download Bill Image'"></span>
+            </button>
+            <div class="vb-footer-links">
+              <a :href="b.urls.show">Open booking</a>
+              <a :href="b.urls.edit">Edit</a>
+            </div>
+            <p class="vb-error" x-show="error" x-text="error" x-cloak></p>
           </div>
         </div>
+      </template>
+    </div>
+  </div>
+</div>
+
 @endsection
 
 @push('scripts')
   <script src="{{ asset('assets/vendor/fullcalendar/index.global.min.js') }}"></script>
+  <script src="{{ asset('assets/vendor/html2canvas/html2canvas.min.js') }}"></script>
+  <script>
+    function bookingCalendarModal(config) {
+        const esc = (v) => String(v ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+        return {
+            b: null,
+            busy: false,
+            error: '',
+            open(detail) {
+                this.b = detail;
+                this.error = '';
+                this.$nextTick(() => bootstrap.Modal.getOrCreateInstance(this.$el).show());
+            },
+            get badgeClass() {
+                return { pending: 'pending', confirmed: 'new', checked_out: 'won', cancelled: 'stuck' }[this.b?.status] || 'new';
+            },
+            get payClass() {
+                const s = this.b?.payment_status;
+                return s === 'Fully Paid' ? 'bd-pay-paid' : (s === 'Partially Paid' ? 'bd-pay-partial' : 'bd-pay-unpaid');
+            },
+            get boardClass() {
+                const t = (this.b?.board || '').toLowerCase();
+                return t.includes('full') ? 'board-badge-fb' : t.includes('half') ? 'board-badge-hb' : t.includes('breakfast') ? 'board-badge-bb' : 'board-badge-room-only';
+            },
+            // The same branded bill the bookings list popup produces (.vb-sheet), built from the event data.
+            billHtml() {
+                const b = this.b, v = config.villa;
+                const stay = b.is_stay
+                    ? `<div class="vb-muted">${esc(b.check_in_short)} → ${esc(b.check_out_short)} (${b.nights} ${b.nights === 1 ? 'night' : 'nights'})</div>`
+                      + (b.board ? `<div class="vb-muted">Board: ${esc(b.board)}</div>` : '')
+                      + (b.guests ? `<div class="vb-muted">${esc(b.guests)}</div>` : '')
+                    : '';
+                const safari = b.safari
+                    ? `<div class="vb-strong">${esc(b.safari.tour)}</div><div class="vb-muted">${esc(b.safari.date || '')}${b.safari.vehicle ? ' · ' + esc(b.safari.vehicle) : ''}</div>`
+                    : '';
+                const item = (name, detail, amount) => `<div class="vb-item"><div class="vb-item-main"><strong>${esc(name)}</strong>${detail ? `<small>${esc(detail)}</small>` : ''}</div><span class="vb-item-amt">${esc(amount)}</span></div>`;
+                const extras = b.extras.length
+                    ? `<div class="vb-group">Extra charges</div>` + b.extras.map((x) => item(x.name, x.detail, x.amount)).join('')
+                    : '';
+                const payTone = !b.balance_due ? 'paid' : (b.payment_status === 'Partially Paid' ? 'partial' : 'unpaid');
+                const contact = [v.address, [v.phone, v.email].filter(Boolean).join(' · ')].filter(Boolean).map(esc).join('<br>');
+                return `<div class="vb-sheet vb-export">
+                  <div class="vb-head">
+                    <div class="vb-brand">${v.logo ? `<img class="vb-logo" src="${esc(v.logo)}" alt="">` : ''}<div><div class="vb-villa">${esc(v.name)}</div><div class="vb-contact">${contact}</div></div></div>
+                    <div class="vb-doc"><div class="vb-doc-title">${esc(b.doc_title)}</div><div class="vb-doc-meta">Ref: ${esc(b.reference)}</div><div class="vb-doc-meta">Date: ${esc(b.doc_date)}</div></div>
+                  </div>
+                  <div class="vb-parties">
+                    <div class="vb-party"><div class="vb-label">Billed to</div><div class="vb-strong">${esc(b.customer_name)}</div>${b.customer_phone ? `<div class="vb-muted">${esc(b.customer_phone)}</div>` : ''}${b.customer_email ? `<div class="vb-muted">${esc(b.customer_email)}</div>` : ''}</div>
+                    <div class="vb-party"><div class="vb-label">${b.is_stay ? 'Stay details' : 'Safari details'}</div>${b.is_stay ? `<div class="vb-strong">${esc(b.room)}${b.room_type ? ` <span class="vb-muted">· ${esc(b.room_type)}</span>` : ''}</div>` : ''}${stay}${safari}</div>
+                  </div>
+                  <div class="vb-items"><div class="vb-items-head"><span>Description</span><span>Amount</span></div>${item(b.room_charges_label, b.room_charges_detail, b.room_charges)}${extras}</div>
+                  <div class="vb-totals">
+                    <div class="vb-row vb-row-sub"><span>Subtotal</span><span>${esc(b.total_amount)}</span></div>
+                    <div class="vb-row"><span>Advance paid</span><span>− ${esc(b.advance_payment)}</span></div>
+                    ${b.settlement ? `<div class="vb-row"><span>Balance settled at checkout</span><span>${esc(b.settlement)}</span></div>` : ''}
+                    <div class="vb-due ${b.balance_due ? '' : 'is-paid'}"><span>Balance due</span><strong>${esc(b.balance)}</strong></div>
+                  </div>
+                  <div class="vb-foot"><span class="vb-status vb-status-${payTone}">${esc(b.payment_status)}</span><span class="vb-muted">Status: ${esc(b.status_label)}${b.payment_method ? ' · Paid by ' + esc(b.payment_method) : ''}</span></div>
+                  <div class="vb-thanks">Thank you for staying with ${esc(v.name)}.</div>
+                </div>`;
+            },
+            async downloadImage() {
+                this.busy = true; this.error = '';
+                const stage = this.$refs.stage;
+                try {
+                    if (typeof html2canvas !== 'function') throw new Error('Image export is unavailable.');
+                    if (document.fonts && document.fonts.ready) await document.fonts.ready;
+                    stage.innerHTML = this.billHtml();
+                    const canvas = await html2canvas(stage.firstElementChild, { scale: 2, backgroundColor: '#ffffff', useCORS: true, logging: false });
+                    const blob = await new Promise((res, rej) => canvas.toBlob((x) => (x ? res(x) : rej(new Error('No image'))), 'image/png'));
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url; a.download = this.b.file_name;
+                    document.body.appendChild(a); a.click(); a.remove();
+                    setTimeout(() => URL.revokeObjectURL(url), 2000);
+                } catch (e) {
+                    console.error(e);
+                    this.error = 'Could not create the bill image. Please try again.';
+                } finally {
+                    stage.innerHTML = '';
+                    this.busy = false;
+                }
+            },
+        };
+    }
+  </script>
 @endpush

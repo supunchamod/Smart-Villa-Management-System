@@ -674,16 +674,9 @@
     const dd = String(date.getDate()).padStart(2, '0');
     return `${yyyy}-${mm}-${dd}T${time}`;
   };
-  const calendarEvents = [
-    { title: 'Cabana A - Reserved', start: calendarIsoAt(5, '10:00:00'), color: '#5278ff' },
-    { title: 'Villa Suite Check-in', start: calendarIsoAt(8, '09:00:00'), color: '#2fa84f' },
-    { title: 'Advance Payment Due', start: calendarIsoAt(12, '11:30:00'), color: '#f6a642' },
-    { title: 'Full Venue Event', start: calendarIsoAt(16, '14:00:00'), color: '#8a1df2' },
-    { title: 'Cabana B - Reserved', start: calendarIsoAt(20, '13:00:00'), color: '#5278ff' },
-    { title: 'Deluxe Suite Check-out', start: calendarIsoAt(24, '09:30:00'), color: '#2fa84f' },
-    { title: 'Final Settlement Due', start: calendarIsoAt(28, '16:30:00'), color: '#dc2626' },
-    { title: 'Guest Arrival Today', start: calendarIsoAt(calendarToday.getDate(), '12:00:00'), color: '#2fb6d0' }
-  ];
+  // Real bookings come from the events feed; the fallback grid (shown only if FullCalendar
+  // can't load) intentionally has no made-up events.
+  const calendarEvents = [];
   const renderFallbackCalendar = (mount) => {
     if (!mount) return;
     let visibleDate = new Date(calendarYear, calendarMonth, calendarToday.getDate());

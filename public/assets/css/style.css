@@ -1857,5 +1857,6 @@ h1 { font-size: clamp(30px, 3.5vw, 42px); margin: 4px 0 8px; font-weight: 700; l
   .vb-sheet:not(.vb-export) .vb-doc { text-align: left; margin-left: 0; flex-basis: 100%; }
   .vb-footer { flex-direction: column; align-items: stretch; padding: 12px 16px calc(12px + env(safe-area-inset-bottom)); }
   .vb-footer .btn { width: 100%; min-height: 46px; }
-  .vb-footer-links { margin: 4px 0 0; justify-content: center; }
+  .vb-footer-links { flex: 0 0 auto; margin: 4px 0 0; justify-content: center; }
+  .vb-error { flex: 0 0 auto; }
 }

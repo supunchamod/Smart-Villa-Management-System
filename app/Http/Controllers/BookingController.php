@@ -10,6 +10,7 @@ use App\Models\Setting;
 use App\Rules\PhoneNumber;
 use App\Services\RoomAvailability;
 use App\Support\AutomatedWhatsApp;
+use App\Support\BookingDetails;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -527,25 +528,16 @@ class BookingController extends Controller
      */
     public function calendarFeed(): JsonResponse
     {
-        $events = Booking::with(['room', 'extras'])->get()->map(function (Booking $booking) {
+        $settings = Setting::current();
+
+        $events = Booking::with(['room', 'extras'])->get()->map(function (Booking $booking) use ($settings) {
             return [
                 'id' => $booking->id,
                 'title' => $booking->room_label.' — '.$booking->customer_name,
                 'start' => $booking->check_in->toDateString(),
                 'end' => $booking->check_out->toDateString(),
                 'color' => self::STATUS_COLORS[$booking->status] ?? '#5278ff',
-                'extendedProps' => [
-                    'customer_name' => $booking->customer_name,
-                    'customer_email' => $booking->customer_email,
-                    'customer_phone' => $booking->customer_phone,
-                    'room' => $booking->room_label,
-                    'check_in' => $booking->check_in->toFormattedDateString(),
-                    'check_out' => $booking->check_out->toFormattedDateString(),
-                    'total_amount' => number_format((float) $booking->total_amount, 2),
-                    'advance_payment' => number_format((float) $booking->advance_payment, 2),
-                    'balance' => number_format($booking->remaining_balance, 2),
-                    'status' => $booking->status,
-                ],
+                'extendedProps' => BookingDetails::for($booking, $settings),
             ];
         });
 
