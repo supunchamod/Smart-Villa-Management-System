@@ -28,6 +28,13 @@ class Booking extends Model
 
     public const DRONE_ITEM = 'Drone Video Shooting';
 
+    /**
+     * Invoice line-item name for the base (non-extra) charge of each
+     * booking type. A Full Package bundles accommodation, safari and meals
+     * into one price, so it is not called "Room charges".
+     */
+    public const FULL_PACKAGE_CHARGE_LABEL = 'Accommodations, Safari, Meals (Full Packages)';
+
     public const BOOKING_TYPES = [
         'accommodation_only' => 'Accommodation Only',
         'safari_only' => 'Safari Only',
@@ -350,6 +357,15 @@ class Booking extends Model
                 ->unique(fn ($item) => mb_strtolower($item))
                 ->values()
                 ->all();
+        });
+    }
+
+    protected function chargeLabel(): Attribute
+    {
+        return Attribute::get(fn () => match ($this->booking_type) {
+            'full_package' => self::FULL_PACKAGE_CHARGE_LABEL,
+            'safari_only' => 'Safari charges',
+            default => 'Room charges',
         });
     }
 

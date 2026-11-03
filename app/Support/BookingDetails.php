@@ -81,10 +81,12 @@ class BookingDetails
             ] : null,
             'status' => $booking->status,
             'status_label' => self::STATUS_LABELS[$booking->status] ?? ucfirst($booking->status),
-            'room_charges_label' => $isStay ? 'Room charges' : 'Safari charges',
-            'room_charges_detail' => $isStay
-                ? $booking->nights.' '.($booking->nights === 1 ? 'night' : 'nights').' × '.$money((float) $booking->total_amount / max(1, $booking->nights))
-                : null,
+            'room_charges_label' => $booking->charge_label,
+            'room_charges_detail' => match (true) {
+                $booking->booking_type === 'full_package' => $booking->nights.' '.($booking->nights === 1 ? 'night' : 'nights').($booking->stay_hotel_name ? ' · '.$booking->stay_hotel_name : ''),
+                $isStay => $booking->nights.' '.($booking->nights === 1 ? 'night' : 'nights').' × '.$money((float) $booking->total_amount / max(1, $booking->nights)),
+                default => null,
+            },
             'room_charges' => $money($booking->total_amount),
             'extras' => $booking->extras->map(fn (BookingExtra $extra) => [
                 'name' => $extra->item_name,

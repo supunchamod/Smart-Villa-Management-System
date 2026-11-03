@@ -113,8 +113,8 @@
             <div class="vb-items-head"><span>Description</span><span>Amount</span></div>
             <div class="vb-item">
               <div class="vb-item-main">
-                <strong>{{ $isStay ? 'Room charges' : 'Safari charges' }}</strong>
-                @if ($isStay)<small>{{ $booking->nights }} {{ \Illuminate\Support\Str::plural('night', $booking->nights) }} × {{ $money((float) $booking->total_amount / max(1, $booking->nights)) }}</small>@endif
+                <strong>{{ $booking->charge_label }}</strong>
+                @if ($booking->booking_type === 'full_package')<small>{{ $booking->nights }} {{ \Illuminate\Support\Str::plural('night', $booking->nights) }}@if ($booking->stay_hotel_name) · {{ $booking->stay_hotel_name }}@endif</small>@elseif ($isStay)<small>{{ $booking->nights }} {{ \Illuminate\Support\Str::plural('night', $booking->nights) }} × {{ $money((float) $booking->total_amount / max(1, $booking->nights)) }}</small>@endif
               </div>
               <span class="vb-item-amt">{{ $money($booking->total_amount) }}</span>
             </div>

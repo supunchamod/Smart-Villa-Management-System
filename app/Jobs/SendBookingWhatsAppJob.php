@@ -138,8 +138,8 @@ class SendBookingWhatsAppJob implements ShouldQueue
             '📅 Check-out: '.$booking->check_out->format('d M Y'),
         ];
 
-        if ($booking->extras->isNotEmpty()) {
-            $lines[] = '🧾 Room charges: '.$currency.' '.number_format((float) $booking->total_amount, 2);
+        if ($booking->extras->isNotEmpty() || $booking->booking_type === 'full_package') {
+            $lines[] = '🧾 '.$booking->charge_label.': '.$currency.' '.number_format((float) $booking->total_amount, 2);
 
             foreach ($booking->extras as $extra) {
                 $quantity = $extra->quantity > 1 ? " × {$extra->quantity}" : '';

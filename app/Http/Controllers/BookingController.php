@@ -545,7 +545,7 @@ class BookingController extends Controller
             '',
             "Hi {$booking->customer_name},",
             'Stay: '.$booking->room_label.', '.$booking->check_in->format('d M Y').' - '.$booking->check_out->format('d M Y'),
-            'Room charges: '.$money((float) $booking->total_amount),
+            $booking->charge_label.': '.$money((float) $booking->total_amount),
         ];
 
         foreach ($booking->extras as $extra) {

@@ -112,6 +112,9 @@
         $nights = $booking->nights;
         $ratePerNight = $nights > 0 ? (float) $booking->total_amount / $nights : (float) $booking->total_amount;
         $isStay = $booking->booking_type !== 'safari_only';
+        $isPackage = $booking->booking_type === 'full_package';
+        // "Room Charges" / "Safari Charges" (title case, as before) - or the full-package wording as-is.
+        $chargeLabel = $isPackage ? $booking->charge_label : \Illuminate\Support\Str::title($booking->charge_label);
         $methodLabels = ['cash' => 'Cash', 'card' => 'Card', 'bank_transfer' => 'Bank Transfer'];
     @endphp
 
@@ -125,13 +128,13 @@
             </tr>
         </thead>
         <tbody>
-            <tr class="group-row"><td colspan="4">{{ $isStay ? 'Room Charges' : 'Safari Charges' }}</td></tr>
+            <tr class="group-row"><td colspan="4">{{ $chargeLabel }}</td></tr>
             <tr>
                 <td>
-                    {{ $booking->room ? $booking->room->name_or_number.' — '.$booking->room->type : $booking->safari_tour_name }}
+                    {{ $booking->room ? $booking->room->name_or_number.' — '.$booking->room->type : ($isPackage && $booking->stay_hotel_name ? $booking->stay_hotel_name.' + '.$booking->safari_tour_name : $booking->safari_tour_name) }}
                 </td>
-                <td class="text-right">{{ $isStay ? $nights.' '.\Illuminate\Support\Str::plural('night', $nights) : '1' }}</td>
-                <td class="text-right">{{ $money($ratePerNight) }}</td>
+                <td class="text-right">{{ $isPackage ? '1 package' : ($isStay ? $nights.' '.\Illuminate\Support\Str::plural('night', $nights) : '1') }}</td>
+                <td class="text-right">{{ $money($isPackage ? $booking->total_amount : $ratePerNight) }}</td>
                 <td class="text-right">{{ $money($booking->total_amount) }}</td>
             </tr>
             @if ($booking->extras->isNotEmpty())
@@ -148,9 +151,9 @@
         </tbody>
     </table>
 
-    <table class="totals-table">
+    <table class="totals-table" @if ($isPackage) style="width: 440px;" @endif>
         <tr>
-            <td class="label">{{ $isStay ? 'Room Charges' : 'Safari Charges' }}</td>
+            <td class="label">{{ $chargeLabel }}</td>
             <td class="value">{{ $money($booking->total_amount) }}</td>
         </tr>
         {{-- Every extra charge is listed by name with its own amount; there is no single lumped "Extra charges" line. --}}

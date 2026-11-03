@@ -51,7 +51,7 @@
 
         <div class="modal-body">
           <div class="co-section">
-            <div class="co-section-title">Room charges</div>
+            <div class="co-section-title">{{ $booking->charge_label }}</div>
             <div class="co-line">
               <div class="co-line-main">
                 <strong>{{ $booking->room ? $booking->room->name_or_number : $booking->safari_tour_name }}</strong>
@@ -145,7 +145,7 @@
           </div>
 
           <div class="co-summary">
-            <div class="co-sum-row"><span>Room charges</span><span class="co-num" x-text="money(baseAmount)"></span></div>
+            <div class="co-sum-row"><span>{{ $booking->charge_label }}</span><span class="co-num" x-text="money(baseAmount)"></span></div>
             <template x-for="(item, i) in existing" :key="'ex' + i">
               <div class="co-sum-row co-sum-item">
                 <span class="co-sum-item-name" x-text="item.name + (item.detail ? ' (' + item.detail + ')' : '')"></span>
