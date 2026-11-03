@@ -80,7 +80,9 @@
             <div class="panel">
               <div class="panel-head">
                 <div><h2>Public Website Builder</h2><p>Controls the content of your public direct-booking mini-site</p></div>
+                @if (config('features.landing_page_ui'))
                 <a class="btn btn-sm btn-light" href="{{ route('public.villa', \Illuminate\Support\Str::slug($globalSettings->villa_name)) }}" target="_blank" rel="noopener"><i class="bi bi-box-arrow-up-right"></i> View Public Website</a>
+                @endif
               </div>
               <form class="row g-3" method="POST" action="{{ route('settings.update') }}">
                 @csrf
@@ -116,12 +118,14 @@
                   <textarea class="form-control @error('website_hero_subtitle') is-invalid @enderror" name="website_hero_subtitle" rows="2" placeholder="A private cabana escape on Sri Lanka's coast...">{{ old('website_hero_subtitle', $globalSettings->website_hero_subtitle) }}</textarea>
                   @error('website_hero_subtitle')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror
                 </div>
+                @if (config('features.landing_page_ui'))
                 <div class="col-12">
                   <div class="alert alert-light border mb-0 d-flex align-items-center justify-content-between gap-3">
                     <span><i class="bi bi-info-circle"></i> Cabana types, pax pricing tiers, and meal menu options now live in <strong>Landing Page</strong>.</span>
                     <a class="btn btn-sm btn-light" href="{{ route('landing-page.index') }}">Open Landing Page</a>
                   </div>
                 </div>
+                @endif
                 <div class="col-12"><button class="btn btn-primary" type="submit">Save Website Settings</button></div>
               </form>
             </div>
