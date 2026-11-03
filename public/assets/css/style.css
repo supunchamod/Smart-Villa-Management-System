@@ -2023,3 +2023,12 @@ a.ex-badge-booking:hover { background: rgba(47, 168, 79, .24); color: #1f8a3b; }
   .ex-type { grid-template-columns: 1fr; }
   .ex-kpi strong { font-size: 20px; }
 }
+
+/* ---- Special notes ---- */
+.bd-notes { display: flex; align-items: flex-start; gap: 10px; margin: 0; padding: 12px 14px; border-radius: 10px; background: rgba(245, 158, 11, .10); border: 1px solid rgba(245, 158, 11, .28); font-size: 14px; line-height: 1.5; }
+.bd-notes i { flex: 0 0 auto; margin-top: 2px; color: #b45309; }
+.bd-notes span { min-width: 0; white-space: pre-line; overflow-wrap: anywhere; }
+.vc-notes { margin-top: 16px; padding: 16px 20px; background: var(--surface); border: 1px solid var(--line); border-left: 4px solid #f59e0b; border-radius: 12px; }
+.vc-notes h3 { margin: 0 0 6px; font-size: 14px; font-weight: 800; }
+.vc-notes h3 i { color: #b45309; margin-right: 4px; }
+.vc-notes p { margin: 0; font-size: 14px; line-height: 1.5; white-space: pre-line; overflow-wrap: anywhere; }

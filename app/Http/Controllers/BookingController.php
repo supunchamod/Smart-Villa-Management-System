@@ -593,6 +593,7 @@ class BookingController extends Controller
             'customer_name' => ['required', 'string', 'max:255'],
             'customer_email' => ['nullable', 'email', 'max:255'],
             'customer_phone' => ['nullable', 'string', 'max:30', new PhoneNumber],
+            'special_notes' => ['nullable', 'string', 'max:2000'],
             'total_amount' => ['required', 'numeric', 'min:0'],
             'advance_payment' => ['required', 'numeric', 'min:0', 'lte:total_amount'],
             'status' => [Rule::in(['pending', 'confirmed', 'checked_out', 'cancelled'])],

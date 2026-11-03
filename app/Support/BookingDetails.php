@@ -51,6 +51,7 @@ class BookingDetails
             'initials' => $booking->customer_initials,
             'customer_phone' => $booking->customer_phone,
             'customer_email' => $booking->customer_email,
+            'special_notes' => $booking->special_notes,
             'room' => $booking->room_label,
             'room_type' => $booking->room?->type,
             'is_stay' => $isStay,

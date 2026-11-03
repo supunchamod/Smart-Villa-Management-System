@@ -129,6 +129,12 @@
               </dl>
             </div>
           @endif
+          @if ($booking->special_notes)
+            <div class="bd-group">
+              <h3>Special notes</h3>
+              <p class="bd-notes"><i class="bi bi-chat-left-text"></i><span>{{ $booking->special_notes }}</span></p>
+            </div>
+          @endif
         </section>
       </div>
 

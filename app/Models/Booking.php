@@ -84,6 +84,7 @@ class Booking extends Model
         'customer_name',
         'customer_email',
         'customer_phone',
+        'special_notes',
         'check_in',
         'check_out',
         'total_amount',

@@ -146,6 +146,11 @@
               </dl>
             </div>
 
+            <div class="bd-group" x-show="b.special_notes">
+              <h3>Special notes</h3>
+              <p class="bd-notes"><i class="bi bi-chat-left-text"></i><span x-text="b.special_notes"></span></p>
+            </div>
+
             <div class="bd-group">
               <h3>Charges</h3>
               <ul class="bd-lines">

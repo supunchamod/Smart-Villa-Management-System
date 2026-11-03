@@ -138,6 +138,13 @@
     <input class="form-control" type="text" x-bind:value="balance" disabled>
   </div>
 
+  {{-- Shown for every booking type (accommodation, safari, full package). --}}
+  <div class="col-12">
+    <label class="form-label" for="specialNotes">Special Notes <small class="text-muted">(guest requests, dietary needs, arrival time, celebrations… optional)</small></label>
+    <textarea id="specialNotes" class="form-control @error('special_notes') is-invalid @enderror" name="special_notes" rows="3" maxlength="2000" placeholder="e.g. Vegetarian meals, arriving after 9 PM, anniversary surprise…">{{ old('special_notes', $booking->special_notes ?? '') }}</textarea>
+    @error('special_notes')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror
+  </div>
+
   <div class="col-12">
     <button class="btn btn-primary" type="submit">{{ $isEdit ? 'Save Changes' : 'Create Booking' }}</button>
     <a class="btn btn-light" href="{{ route('bookings.index') }}">Cancel</a>

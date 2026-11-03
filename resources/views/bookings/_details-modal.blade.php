@@ -144,6 +144,13 @@
           <div class="vb-thanks">Thank you for staying with {{ $globalSettings->villa_name }}.</div>
         </div>
 
+        @if ($booking->special_notes)
+          <section class="vc-notes">
+            <h3><i class="bi bi-chat-left-text"></i> Special Notes</h3>
+            <p>{{ $booking->special_notes }}</p>
+          </section>
+        @endif
+
         {{-- ======== Booking expenses / direct costs (internal; deliberately outside the exported bill) ======== --}}
         <section class="vc-costs">
           <header class="vc-costs-head">
