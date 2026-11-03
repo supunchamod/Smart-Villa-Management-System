@@ -8,10 +8,12 @@ use App\Models\CabanaPricingTier;
 use App\Models\CabanaType;
 use App\Models\LandingPageMenu;
 use App\Models\Setting;
+use App\Rules\PhoneNumber;
+use App\Services\RoomAvailability;
+use App\Support\AutomatedWhatsApp;
 use Carbon\Carbon;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
@@ -19,6 +21,10 @@ use Illuminate\View\View;
 
 class PublicBookingController extends Controller
 {
+    public function __construct(private readonly RoomAvailability $availability)
+    {
+    }
+
     /**
      * Board type -> display label. Rates themselves are never hardcoded
      * here - they come entirely from the selected CabanaType's
@@ -157,7 +163,7 @@ class PublicBookingController extends Controller
             'cabana_type_id' => ['required', 'integer'],
             'customer_name' => ['required', 'string', 'max:255'],
             'customer_email' => ['nullable', 'email', 'max:255'],
-            'customer_phone' => ['required', 'string', 'max:30'],
+            'customer_phone' => ['required', 'string', 'max:30', new PhoneNumber],
             'check_in' => ['required', 'date', 'after_or_equal:today'],
             'check_out' => ['required', 'date', 'after:check_in'],
             'adults' => ['required', 'integer', 'min:1', 'max:20'],
@@ -212,24 +218,31 @@ class PublicBookingController extends Controller
         // is simply that rate times the number of nights.
         $total = round($nightlyRate * $nights, 2);
 
-        $booking = Booking::create([
-            'room_id' => $cabanaType->room_id,
-            'customer_name' => $validated['customer_name'],
-            'customer_email' => $validated['customer_email'] ?? null,
-            'customer_phone' => $validated['customer_phone'],
-            'check_in' => $checkIn->toDateString(),
-            'check_out' => $checkOut->toDateString(),
-            'total_amount' => $total,
-            'advance_payment' => 0,
-            'status' => 'pending',
-            'board_type' => $boardType,
-            'selected_menu_items' => $selectedMenuItems,
-            'guests_adults' => $adults,
-            'guests_children' => $children,
-            'bbq_addon' => $request->boolean('bbq_addon'),
-            'safari_jeep_addon' => $request->boolean('safari_jeep_addon'),
-            'outdoor_dining_preference' => $request->boolean('outdoor_dining_preference'),
-        ]);
+        // Re-check availability (overlap + maintenance) and insert under a
+        // lock on the room, so two guests submitting at once can't both
+        // claim the same dates.
+        $booking = $this->availability->withLockedRoom($cabanaType->room_id, function ($room) use ($validated, $checkIn, $checkOut, $total, $boardType, $selectedMenuItems, $adults, $children, $request) {
+            $this->availability->assertAvailable($room, $checkIn, $checkOut);
+
+            return Booking::create([
+                'room_id' => $room->id,
+                'customer_name' => $validated['customer_name'],
+                'customer_email' => $validated['customer_email'] ?? null,
+                'customer_phone' => $validated['customer_phone'],
+                'check_in' => $checkIn->toDateString(),
+                'check_out' => $checkOut->toDateString(),
+                'total_amount' => $total,
+                'advance_payment' => 0,
+                'status' => 'pending',
+                'board_type' => $boardType,
+                'selected_menu_items' => $selectedMenuItems,
+                'guests_adults' => $adults,
+                'guests_children' => $children,
+                'bbq_addon' => $request->boolean('bbq_addon'),
+                'safari_jeep_addon' => $request->boolean('safari_jeep_addon'),
+                'outdoor_dining_preference' => $request->boolean('outdoor_dining_preference'),
+            ]);
+        });
 
         $reference = 'INQ-'.str_pad((string) $booking->id, 6, '0', STR_PAD_LEFT);
 
@@ -239,13 +252,11 @@ class PublicBookingController extends Controller
         // debug log when WHATSAPP_AUTO_SEND is disabled, so a guest's
         // booking submission never fails just because WhatsApp isn't
         // reachable from this environment.
-        if (config('waha.auto_send', false)) {
-            SendOwnerEnquiryWhatsAppJob::dispatch($booking);
-        } else {
-            Log::debug('WhatsApp auto-send disabled; skipping automated owner enquiry alert.', [
-                'booking_id' => $booking->id,
-            ]);
-        }
+        AutomatedWhatsApp::dispatch(
+            fn () => SendOwnerEnquiryWhatsAppJob::dispatch($booking),
+            'owner enquiry alert',
+            $booking->id
+        );
 
         return redirect(route('public.villa', $slug).'#booking-confirmation')
             ->with('bookingSubmitted', true)

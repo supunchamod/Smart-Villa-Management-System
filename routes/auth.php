@@ -1,15 +1,13 @@
 <?php
 
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
-use App\Http\Controllers\Auth\RegisteredUserController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware('guest')->group(function () {
-    Route::get('register', [RegisteredUserController::class, 'create'])
-        ->name('register');
-
-    Route::post('register', [RegisteredUserController::class, 'store']);
-
+    // Public self-registration is intentionally not offered: every
+    // account created this way used to be a full-access owner. Staff are
+    // added by the owner from the Team page; the first owner comes from
+    // DatabaseSeeder.
     Route::get('login', [AuthenticatedSessionController::class, 'create'])
         ->name('login');
 

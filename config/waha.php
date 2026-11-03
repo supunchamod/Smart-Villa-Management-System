@@ -68,6 +68,19 @@ return [
     |
     */
 
+    /*
+    |--------------------------------------------------------------------------
+    | Default Country Code
+    |--------------------------------------------------------------------------
+    |
+    | Applied only to local-format numbers (a leading 0, or a bare short
+    | number). Numbers entered with a + or 00 prefix keep their own
+    | country code.
+    |
+    */
+
+    'default_country_code' => env('WAHA_DEFAULT_COUNTRY_CODE', '94'),
+
     'auto_send' => env('WHATSAPP_AUTO_SEND', false),
 
 ];

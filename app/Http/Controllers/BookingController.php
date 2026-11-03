@@ -7,10 +7,14 @@ use App\Jobs\SendPostCheckoutReviewWhatsAppJob;
 use App\Models\Booking;
 use App\Models\Room;
 use App\Models\Setting;
+use App\Rules\PhoneNumber;
+use App\Services\RoomAvailability;
+use App\Support\AutomatedWhatsApp;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
@@ -19,6 +23,10 @@ use Symfony\Component\HttpFoundation\Response;
 
 class BookingController extends Controller
 {
+    public function __construct(private readonly RoomAvailability $availability)
+    {
+    }
+
     /**
      * Status -> calendar color, kept in one place so the list badges and
      * the FullCalendar feed always agree.
@@ -135,7 +143,7 @@ class BookingController extends Controller
     {
         $validated = $this->validateBooking($request);
 
-        $booking = Booking::create($validated);
+        $booking = $this->saveWithAvailabilityCheck($validated, fn () => Booking::create($validated));
 
         // Only a confirmed booking gets an immediate WhatsApp confirmation
         // + invoice - a 'pending' one is still awaiting review via confirm().
@@ -178,7 +186,7 @@ class BookingController extends Controller
     {
         $validated = $this->validateBooking($request, $booking);
 
-        $booking->update($validated);
+        $this->saveWithAvailabilityCheck($validated, fn () => $booking->update($validated), $booking);
 
         return redirect()->route('bookings.index')->with('status', 'Booking updated successfully.');
     }
@@ -260,7 +268,23 @@ class BookingController extends Controller
             return back()->with('error', 'Only pending requests can be confirmed.');
         }
 
-        $booking->update(['status' => 'confirmed']);
+        try {
+            $confirmed = $this->confirmWithAvailabilityCheck($booking);
+        } catch (ValidationException $e) {
+            $message = collect($e->errors())->flatten()->first() ?? 'This booking can no longer be confirmed.';
+
+            return $request->wantsJson()
+                ? response()->json(['message' => $message], 422)
+                : back()->with('error', $message);
+        }
+
+        if (! $confirmed) {
+            $message = 'Only pending requests can be confirmed.';
+
+            return $request->wantsJson()
+                ? response()->json(['message' => $message], 422)
+                : back()->with('error', $message);
+        }
 
         $this->dispatchAutomatedWhatsApp(
             fn () => SendBookingWhatsAppJob::dispatch($booking),
@@ -333,7 +357,19 @@ class BookingController extends Controller
             ], 422);
         }
 
-        SendBookingWhatsAppJob::dispatch($booking);
+        try {
+            SendBookingWhatsAppJob::dispatch($booking);
+        } catch (\Throwable $e) {
+            Log::error('WhatsApp: failed to dispatch manual booking message.', [
+                'booking_id' => $booking->id,
+                'error' => $e->getMessage(),
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'The WhatsApp message could not be queued. Please try again shortly.',
+            ], 500);
+        }
 
         return response()->json([
             'success' => true,
@@ -430,7 +466,7 @@ class BookingController extends Controller
             'safari_vehicle_details' => ['nullable', 'string', 'max:255'],
             'customer_name' => ['required', 'string', 'max:255'],
             'customer_email' => ['nullable', 'email', 'max:255'],
-            'customer_phone' => ['nullable', 'string', 'max:30'],
+            'customer_phone' => ['nullable', 'string', 'max:30', new PhoneNumber],
             'total_amount' => ['required', 'numeric', 'min:0'],
             'advance_payment' => ['required', 'numeric', 'min:0', 'lte:total_amount'],
             'status' => [Rule::in(['pending', 'confirmed', 'checked_out', 'cancelled'])],
@@ -456,45 +492,82 @@ class BookingController extends Controller
             $validated['safari_vehicle_details'] = null;
         }
 
-        if ($needsRoom) {
-            $overlaps = Booking::where('room_id', $validated['room_id'])
-                ->where('status', '!=', 'cancelled')
-                ->when($booking, fn ($query) => $query->where('id', '!=', $booking->id))
-                ->where('check_in', '<', $validated['check_out'])
-                ->where('check_out', '>', $validated['check_in'])
-                ->exists();
-
-            if ($overlaps) {
-                throw ValidationException::withMessages([
-                    'check_in' => 'This room is already booked for the selected dates.',
-                ]);
-            }
-        }
-
         return $validated;
     }
 
     /**
-     * Runs an automated WhatsApp dispatch closure only when
-     * WHATSAPP_AUTO_SEND is enabled, so a local environment without WAHA
-     * configured never fails a booking create/confirm/checkout because it
-     * tried to reach WhatsApp. When disabled, the dispatch is skipped
-     * entirely (nothing is queued) and a debug notice is logged instead -
-     * the calling booking operation always proceeds either way.
+     * Saves the booking, first re-checking availability under a row lock
+     * on the room whenever the booking would hold one (see
+     * RoomAvailability). Cancelled / checked-out bookings and safari-only
+     * bookings (no room) hold nothing, so they skip the check and don't
+     * get blocked by it - e.g. editing the notes on a past stay.
      *
-     * Not used by the manual "Resend via WhatsApp" button (sendWhatsApp()
-     * above), which should always attempt to send.
+     * @param  array<string, mixed>  $validated
+     */
+    private function saveWithAvailabilityCheck(array $validated, \Closure $write, ?Booking $existing = null): mixed
+    {
+        $holdsRoom = ! empty($validated['room_id'])
+            && in_array($validated['status'], ['pending', 'confirmed'], true);
+
+        if (! $holdsRoom) {
+            return DB::transaction($write);
+        }
+
+        return $this->availability->withLockedRoom((int) $validated['room_id'], function ($room) use ($validated, $write, $existing) {
+            $this->availability->assertAvailable($room, $validated['check_in'], $validated['check_out'], $existing?->id);
+
+            return $write();
+        });
+    }
+
+    /**
+     * Moves a pending booking to confirmed, re-verifying under a room lock
+     * that no other booking was accepted for those dates (and the room
+     * didn't go into maintenance) since the enquiry came in. Returns false
+     * if the booking is no longer pending by the time the lock is held
+     * (e.g. a double click), and throws ValidationException on a conflict.
+     */
+    private function confirmWithAvailabilityCheck(Booking $booking): bool
+    {
+        $apply = function () use ($booking): bool {
+            $fresh = Booking::query()->lockForUpdate()->find($booking->id);
+
+            if (! $fresh || $fresh->status !== 'pending') {
+                return false;
+            }
+
+            $fresh->update(['status' => 'confirmed']);
+            $booking->status = 'confirmed';
+
+            return true;
+        };
+
+        if (! $booking->room_id) {
+            return DB::transaction($apply);
+        }
+
+        return $this->availability->withLockedRoom($booking->room_id, function ($room) use ($booking, $apply) {
+            $this->availability->assertAvailable(
+                $room,
+                $booking->check_in,
+                $booking->check_out,
+                $booking->id,
+                RoomAvailability::ACCEPTED_STATUSES,
+            );
+
+            return $apply();
+        });
+    }
+
+    /**
+     * Runs an automated WhatsApp dispatch closure only when
+     * WHATSAPP_AUTO_SEND is enabled, and never lets a dispatch failure
+     * break the booking operation that triggered it. See
+     * AutomatedWhatsApp. Not used by the manual "Resend via WhatsApp"
+     * button (sendWhatsApp() above), which should always attempt to send.
      */
     private function dispatchAutomatedWhatsApp(\Closure $dispatch, string $trigger, int $bookingId): void
     {
-        if (! config('waha.auto_send', false)) {
-            Log::debug("WhatsApp auto-send disabled; skipping automated {$trigger} message.", [
-                'booking_id' => $bookingId,
-            ]);
-
-            return;
-        }
-
-        $dispatch();
+        AutomatedWhatsApp::dispatch($dispatch, $trigger, $bookingId);
     }
 }

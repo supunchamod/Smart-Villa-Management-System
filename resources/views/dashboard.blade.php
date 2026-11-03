@@ -258,10 +258,12 @@
               <span>Income</span>
             </a>
           @endcan
-          <a href="{{ route('rooms.index') }}" class="mdash-quick-card mdash-quick-teal">
-            <span class="mdash-quick-icon"><i class="bi bi-door-open"></i></span>
-            <span>Room Status</span>
-          </a>
+          @can('manage_bookings')
+            <a href="{{ route('rooms.index') }}" class="mdash-quick-card mdash-quick-teal">
+              <span class="mdash-quick-icon"><i class="bi bi-door-open"></i></span>
+              <span>Room Status</span>
+            </a>
+          @endcan
           @can('view_finance')
             <a href="{{ route('reports') }}" class="mdash-quick-card mdash-quick-amber">
               <span class="mdash-quick-icon"><i class="bi bi-clipboard-data"></i></span>

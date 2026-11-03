@@ -143,8 +143,6 @@
               Sign in <i class="bi bi-arrow-right"></i>
             </button>
           </form>
-
-          <p class="villa-auth-switch">Don't have an account? <a href="{{ route('register') }}">Create one</a></p>
         </div>
       </section>
     </div>

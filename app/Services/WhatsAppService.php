@@ -241,10 +241,11 @@ class WhatsAppService
         }
 
         $chatId = $this->formatPhoneNumber($phone);
-        $mimeType = mime_content_type($filePath) ?: 'application/octet-stream';
-        $base64 = base64_encode(file_get_contents($filePath));
 
         try {
+            $mimeType = (function_exists('mime_content_type') ? mime_content_type($filePath) : false) ?: 'application/octet-stream';
+            $base64 = base64_encode((string) file_get_contents($filePath));
+
             $response = $this->client()->post('/api/sendFile', [
                 'session' => $this->session,
                 'chatId' => $chatId,
@@ -282,30 +283,37 @@ class WhatsAppService
     }
 
     /**
-     * Format a raw phone number into WAHA's chatId format
-     * (94XXXXXXXXX@c.us):
-     *   - trims whitespace and strips a leading '+'
-     *   - strips everything else that isn't a digit (spaces, dashes,
-     *     parentheses, etc.)
-     *   - a local Sri Lankan number starting with '0' (e.g. 0781655306)
-     *     has the '0' replaced with the '94' country code
-     *   - anything else not already carrying the '94' country code gets
-     *     it prepended (e.g. 781655306 -> 94781655306)
+     * Convert a phone number as typed by a guest or staff member into a
+     * WhatsApp chat id (`<country code + number>@c.us`).
+     *
+     * - `+44 7911 123456` / `0044 7911 123456`: already international, the
+     *   country code is kept as given.
+     * - `077 123 4567`: a single leading 0 is a national trunk prefix, so
+     *   the villa's default country code (WAHA_DEFAULT_COUNTRY_CODE,
+     *   Sri Lanka's 94 unless configured) replaces it.
+     * - `771234567`: a bare national-length number gets the default
+     *   country code.
+     * - Anything else with no `+`/`00`/`0` marker is assumed to already
+     *   include its country code (e.g. `447911123456`, `94771234567`),
+     *   rather than blindly being given the default one.
      */
     public function formatPhoneNumber(string $phone): string
     {
         $phone = trim($phone);
-
-        if (str_starts_with($phone, '+')) {
-            $phone = substr($phone, 1);
-        }
-
+        $hasPlus = str_starts_with($phone, '+');
         $digits = preg_replace('/\D/', '', $phone);
 
-        if (str_starts_with($digits, '0')) {
-            $digits = '94'.substr($digits, 1);
-        } elseif (! str_starts_with($digits, '94')) {
-            $digits = '94'.$digits;
+        $country = preg_replace('/\D/', '', (string) config('waha.default_country_code', '94'));
+
+        if ($hasPlus) {
+            // Already fully international.
+        } elseif (str_starts_with($digits, '00')) {
+            $digits = substr($digits, 2);
+        } elseif (str_starts_with($digits, '0')) {
+            $digits = $country.ltrim($digits, '0');
+        } elseif (strlen($digits) <= 9 && $country !== '' && ! str_starts_with($digits, $country)) {
+            // Short number with no country code (e.g. 771234567).
+            $digits = $country.$digits;
         }
 
         return "{$digits}@c.us";

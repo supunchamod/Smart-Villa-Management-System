@@ -51,12 +51,15 @@ Route::middleware('auth')->group(function () {
     // can:<permission> group.
     Route::get('/global-search', [SearchController::class, 'index'])->name('search');
 
-    Route::resource('rooms', RoomController::class)->except('show');
-    Route::patch('/rooms/{room}/toggle-status', [RoomController::class, 'toggleStatus'])->name('rooms.toggle-status');
-
     // Bookings and the calendar are both booking-management surfaces, so
     // both sit behind the same permission.
     Route::middleware('can:manage_bookings')->group(function () {
+        // Rooms feed straight into availability and pricing, so editing,
+        // deleting (which cascades to bookings) or putting one into
+        // maintenance needs the same permission as managing bookings.
+        Route::resource('rooms', RoomController::class)->except('show');
+        Route::patch('/rooms/{room}/toggle-status', [RoomController::class, 'toggleStatus'])->name('rooms.toggle-status');
+
         Route::get('/calendar', [PageController::class, 'calendar'])->name('calendar');
         Route::get('/api/bookings', [BookingController::class, 'calendarFeed'])->name('bookings.calendar');
         Route::resource('bookings', BookingController::class);

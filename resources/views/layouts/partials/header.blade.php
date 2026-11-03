@@ -4,7 +4,7 @@
         request()->routeIs(['projects.index', 'file-manager', 'calendar', 'chat', 'inbox']) => 'apps',
         request()->routeIs(['customers.index', 'customers.show', 'products.index', 'invoices.index', 'invoices.show']) => 'commerce',
         request()->routeIs(['settings', 'team']) => 'pages',
-        request()->routeIs(['login', 'register']) => 'auth',
+        request()->routeIs(['login']) => 'auth',
         default => null,
     };
 @endphp
@@ -89,7 +89,7 @@
       </div><div class="horizontal-dropdown">
         <button class="nav-link {{ $openSection === 'auth' ? 'active' : '' }}" type="button" data-bs-toggle="dropdown" data-bs-display="static"><i class="bi bi-shield-lock"></i><span>Auth</span><i class="bi bi-chevron-down"></i></button>
         <div class="dropdown-menu soft-dropdown horizontal-menu">
-          <a class="dropdown-item {{ request()->routeIs('login') ? 'active' : '' }}" href="{{ route('login') }}"><i class="bi bi-box-arrow-in-right"></i>Login</a><a class="dropdown-item {{ request()->routeIs('register') ? 'active' : '' }}" href="{{ route('register') }}"><i class="bi bi-person-plus"></i>Register</a><a class="dropdown-item " href="forgot-password.html"><i class="bi bi-key"></i>Forgot Password</a><a class="dropdown-item " href="404.html"><i class="bi bi-exclamation-diamond"></i>404</a><a class="dropdown-item " href="coming-soon.html"><i class="bi bi-hourglass-split"></i>Coming Soon</a>
+          <a class="dropdown-item {{ request()->routeIs('login') ? 'active' : '' }}" href="{{ route('login') }}"><i class="bi bi-box-arrow-in-right"></i>Login</a><a class="dropdown-item " href="forgot-password.html"><i class="bi bi-key"></i>Forgot Password</a><a class="dropdown-item " href="404.html"><i class="bi bi-exclamation-diamond"></i>404</a><a class="dropdown-item " href="coming-soon.html"><i class="bi bi-hourglass-split"></i>Coming Soon</a>
 
         </div>
       </div>

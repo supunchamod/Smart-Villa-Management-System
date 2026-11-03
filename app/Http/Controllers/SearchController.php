@@ -41,7 +41,7 @@ class SearchController extends Controller
         }
 
         $bookings = $user->can('manage_bookings') ? $this->searchBookings($query) : collect();
-        $rooms = $this->searchRooms($query);
+        $rooms = $user->can('manage_bookings') ? $this->searchRooms($query) : collect();
         $transactions = $user->can('view_finance') ? $this->searchTransactions($query) : collect();
 
         return view('search.results', [

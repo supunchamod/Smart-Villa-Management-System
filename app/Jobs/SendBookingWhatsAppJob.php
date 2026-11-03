@@ -21,11 +21,9 @@ class SendBookingWhatsAppJob implements ShouldQueue
     /**
      * Booking statuses that mean the stay is complete and paid in full,
      * so the "final" stage (final invoice + "Paid in Full" caption)
-     * applies. Booking::status never actually stores 'completed' today
-     * (only 'checked_out'), but the check tolerates it too in case that
-     * naming is ever adopted.
+     * applies.
      */
-    private const FINAL_STAGE_STATUSES = ['completed', 'checked_out'];
+    private const FINAL_STAGE_STATUSES = ['checked_out'];
 
     public int $tries = 3;
 
