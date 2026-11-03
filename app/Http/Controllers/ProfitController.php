@@ -36,6 +36,8 @@ class ProfitController extends Controller
 
     private const UPCOMING_BOOKINGS_LIMIT = 4;
 
+    private const BOOKING_PROFIT_ROWS = 25;
+
     /**
      * Villa Cabana's Profit Analyzer: top-line revenue/expense/profit
      * summary, an expense category breakdown, a trailing revenue-vs-net
@@ -94,6 +96,9 @@ class ProfitController extends Controller
         $ledgerRows = $this->buildLedger($rangeIncomeEvents, $totalRevenue, $generalExpensesTotal, $bookingExpenses);
         $ledger = $this->paginateLedger($ledgerRows, $request);
 
+        // Net profit per booking: (room + extras) - that booking's direct costs.
+        $bookingProfits = IncomeLedger::bookingProfitability($start, $end);
+
         // Independent of the summary range above, same reasoning as the
         // trend chart - "what's coming up" shouldn't disappear just because
         // the manager is looking at "Today" or a past custom range.
@@ -121,6 +126,9 @@ class ProfitController extends Controller
             'monthlyNetProfit' => $monthlyNetProfit,
             'ledger' => $ledger,
             'upcomingBookings' => $upcomingBookings,
+            'bookingProfits' => $bookingProfits->take(self::BOOKING_PROFIT_ROWS),
+            'bookingProfitCount' => $bookingProfits->count(),
+            'bookingProfitTotals' => IncomeLedger::profitabilityTotals($bookingProfits),
         ]);
     }
 

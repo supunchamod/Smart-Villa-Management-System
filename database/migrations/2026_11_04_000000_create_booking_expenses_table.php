@@ -10,7 +10,7 @@ return new class extends Migration
      * Direct costs the villa itself pays for one specific booking (external
      * meals, transport, supplies, ...). Unlike booking_extras these are NOT
      * billed to the guest - they only reduce the profit made on the booking.
-     * created_at doubles as the date the cost was recorded.
+     * (expense_date, the day the cost was incurred, is added by the next migration.)
      */
     public function up(): void
     {

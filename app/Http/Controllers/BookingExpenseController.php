@@ -21,13 +21,19 @@ class BookingExpenseController extends Controller
             return $this->reply($request, false, 'Expenses cannot be added to a cancelled booking.', 422);
         }
 
-        $expense = $booking->bookingExpenses()->create($request->validate([
+        $validated = $request->validate([
             'category' => ['required', 'string', 'max:100'],
             'description' => ['nullable', 'string', 'max:255'],
             'amount' => ['required', 'numeric', 'min:0.01', 'max:99999999'],
-        ]));
+            'expense_date' => ['nullable', 'date', 'before_or_equal:today'],
+        ]);
 
-        return $this->reply($request, true, 'Booking expense added.', 200, ['expense' => $expense]);
+        $expense = $booking->bookingExpenses()->create([
+            ...$validated,
+            'expense_date' => $validated['expense_date'] ?? today()->toDateString(),
+        ]);
+
+        return $this->reply($request, true, 'Booking expense added.', 200, ['expense' => $expense->toListItem()]);
     }
 
     public function destroy(Request $request, BookingExpense $bookingExpense): RedirectResponse|JsonResponse

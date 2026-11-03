@@ -12,7 +12,7 @@ use Illuminate\Support\Collection;
  *
  *  - 'general': the Expenses page (rent, salaries, utilities...), dated by expense_date.
  *  - 'booking': direct costs recorded against a single booking (external
- *    meals, transport...), dated by when they were recorded (created_at).
+ *    meals, transport...), dated by the day the cost was incurred (expense_date).
  *
  * The profit analyzer, dashboard and reports read this instead of querying
  * Expense directly, so booking-specific costs always reduce net profit.
@@ -62,12 +62,12 @@ class ExpenseLedger
 
         $booking = BookingExpense::query()
             ->with('booking')
-            ->where('created_at', '>=', $from->copy()->startOfDay())
-            ->when($to, fn ($query) => $query->where('created_at', '<=', $to->copy()->endOfDay()))
+            ->whereDate('expense_date', '>=', $from->toDateString())
+            ->when($to, fn ($query) => $query->whereDate('expense_date', '<=', $to->toDateString()))
             ->get()
             ->map(fn (BookingExpense $expense) => [
                 'source' => self::BOOKING,
-                'date' => $expense->created_at->copy(),
+                'date' => $expense->incurred_on,
                 'category' => trim((string) $expense->category) !== '' ? trim($expense->category) : 'Uncategorized',
                 'description' => $expense->description,
                 'amount' => (float) $expense->amount,

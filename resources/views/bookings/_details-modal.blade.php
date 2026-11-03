@@ -33,7 +33,18 @@
 @endphp
 <div class="modal fade" id="quickViewModal{{ $booking->id }}" tabindex="-1" aria-labelledby="quickViewTitle{{ $booking->id }}" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-fullscreen-sm-down vb-dialog">
-    <div class="modal-content dash-modal" x-data="bookingBill(@js(['billId' => $billId, 'fileName' => $fileName, 'chatNumber' => $chatNumber, 'customer' => $booking->customer_name]))">
+    <div class="modal-content dash-modal" x-data="bookingBill(@js([
+        'billId' => $billId,
+        'fileName' => $fileName,
+        'chatNumber' => $chatNumber,
+        'customer' => $booking->customer_name,
+        'currency' => $currency,
+        'revenue' => (float) $booking->grand_total,
+        'storeUrl' => $booking->status === 'cancelled' ? null : route('bookings.expenses.store', $booking),
+        'costs' => $booking->bookingExpenses->map(fn ($expense) => $expense->toListItem())->values()->all(),
+        'categories' => \App\Models\BookingExpense::CATEGORIES,
+        'today' => today()->toDateString(),
+    ]))">
       <div class="modal-header">
         <div>
           <span class="eyebrow">Booking #{{ $booking->id }}</span>
@@ -132,6 +143,47 @@
           </div>
           <div class="vb-thanks">Thank you for staying with {{ $globalSettings->villa_name }}.</div>
         </div>
+
+        {{-- ======== Booking expenses / direct costs (internal; deliberately outside the exported bill) ======== --}}
+        <section class="vc-costs">
+          <header class="vc-costs-head">
+            <div>
+              <h3>Booking Expenses / Direct Costs</h3>
+              <p>Costs the villa pays for this booking. Not on the guest bill.</p>
+            </div>
+            <span class="vc-costs-total" x-text="money(costsTotal)"></span>
+          </header>
+
+          <ul class="vc-costs-list" x-show="costs.length > 0">
+            <template x-for="cost in costs" :key="cost.id">
+              <li class="vc-cost-row">
+                <div class="vc-cost-main">
+                  <strong x-text="cost.category"></strong>
+                  <small x-show="cost.description" x-text="cost.description"></small>
+                  <small class="vc-cost-date" x-text="cost.date"></small>
+                </div>
+                <span class="vc-cost-amt" x-text="money(cost.amount)"></span>
+                <button type="button" class="vc-cost-del" @click="deleteCost(cost)" :disabled="deleting === cost.id" aria-label="Delete expense"><i class="bi bi-trash3"></i></button>
+              </li>
+            </template>
+          </ul>
+          <p class="vc-costs-empty" x-show="costs.length === 0">No direct costs recorded for this booking yet.</p>
+
+          <form class="vc-cost-form" x-show="storeUrl" @submit.prevent="addCost()">
+            <input type="text" class="form-control" x-model="form.category" list="vcCats{{ $booking->id }}" placeholder="Category" aria-label="Category" maxlength="100" required>
+            <datalist id="vcCats{{ $booking->id }}"><template x-for="cat in categories" :key="cat"><option :value="cat"></option></template></datalist>
+            <input type="text" class="form-control vc-cost-desc" x-model="form.description" placeholder="Description (optional)" aria-label="Description" maxlength="255">
+            <input type="number" class="form-control" x-model.number="form.amount" min="0.01" step="0.01" inputmode="decimal" placeholder="Amount" aria-label="Amount" required>
+            <input type="date" class="form-control" x-model="form.expense_date" :max="today" aria-label="Date">
+            <button type="submit" class="btn btn-primary" :disabled="adding"><i class="bi bi-plus-lg"></i> <span x-text="adding ? 'Adding…' : 'Add'"></span></button>
+          </form>
+          <p class="vb-error" x-show="costError" x-text="costError" x-cloak></p>
+
+          <div class="vc-costs-profit" :class="{ 'is-loss': profit < 0 }">
+            <span>Net profit on this booking <small>(room + extras − direct costs)</small></span>
+            <strong x-text="money(profit)"></strong>
+          </div>
+        </section>
       </div>
 
       <div class="modal-footer vb-footer">
@@ -164,6 +216,58 @@
         return {
             busy: false,
             error: '',
+            // ---- booking expenses (internal direct costs) ----
+            costs: config.costs || [],
+            categories: config.categories || [],
+            storeUrl: config.storeUrl,
+            today: config.today,
+            form: { category: '', description: '', amount: '', expense_date: config.today },
+            adding: false,
+            deleting: null,
+            costError: '',
+            money(value) {
+                return config.currency + ' ' + Number(value || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            },
+            get costsTotal() {
+                return this.costs.reduce((sum, c) => sum + (Number(c.amount) || 0), 0);
+            },
+            get profit() {
+                return Math.round((config.revenue - this.costsTotal) * 100) / 100;
+            },
+            headers() {
+                return { 'Accept': 'application/json', 'Content-Type': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content };
+            },
+            async addCost() {
+                if (this.adding) return;
+                this.adding = true; this.costError = '';
+                try {
+                    const response = await fetch(this.storeUrl, { method: 'POST', headers: this.headers(), body: JSON.stringify(this.form) });
+                    const data = await response.json().catch(() => ({}));
+                    if (!response.ok) {
+                        const first = data.errors ? Object.values(data.errors)[0][0] : null;
+                        throw new Error(first || data.message || 'Could not add the expense.');
+                    }
+                    this.costs.push(data.expense);
+                    this.form = { category: '', description: '', amount: '', expense_date: this.today };
+                } catch (e) {
+                    this.costError = e.message;
+                } finally {
+                    this.adding = false;
+                }
+            },
+            async deleteCost(cost) {
+                if (this.deleting || !window.confirm('Delete this expense?')) return;
+                this.deleting = cost.id; this.costError = '';
+                try {
+                    const response = await fetch(cost.url, { method: 'DELETE', headers: this.headers() });
+                    if (!response.ok) throw new Error('Could not delete the expense.');
+                    this.costs = this.costs.filter((c) => c.id !== cost.id);
+                } catch (e) {
+                    this.costError = e.message;
+                } finally {
+                    this.deleting = null;
+                }
+            },
             // Renders the bill off-screen at a fixed width so the image is the same
             // size whether staff are on a phone or a desktop.
             async render() {

@@ -121,6 +121,71 @@
     </div>
   </div>
 
+  {{-- Net profit per booking: (room + extras) minus the direct costs recorded on that booking --}}
+  <div class="row">
+    <div class="col-12 mb-4">
+      <div class="pa-panel">
+        <div class="pa-panel-head">
+          <div>
+            <h2>Net Profit per Booking</h2>
+            <p>{{ $rangeLabel }} &middot; revenue (room + extra charges) minus each booking's direct costs</p>
+          </div>
+          <div class="pa-bp-totals">
+            <span>Revenue <strong>{{ $globalSettings->currency }} {{ number_format($bookingProfitTotals['revenue'], 2) }}</strong></span>
+            <span>Direct costs <strong>− {{ $globalSettings->currency }} {{ number_format($bookingProfitTotals['costs'], 2) }}</strong></span>
+            <span class="{{ $bookingProfitTotals['net_profit'] < 0 ? 'is-loss' : 'is-profit' }}">Net <strong>{{ $globalSettings->currency }} {{ number_format($bookingProfitTotals['net_profit'], 2) }}</strong></span>
+          </div>
+        </div>
+
+        @if ($bookingProfits->isEmpty())
+          <p class="pa-empty">No booking activity or direct costs recorded for {{ $rangeLabel }}.</p>
+        @else
+          <div class="table-responsive">
+            <table class="table align-middle pa-table pa-bp-table">
+              <thead>
+                <tr>
+                  <th>Booking</th>
+                  <th>Revenue</th>
+                  <th>Direct costs (itemised)</th>
+                  <th>Net profit</th>
+                  <th>Margin</th>
+                </tr>
+              </thead>
+              <tbody>
+                @foreach ($bookingProfits as $row)
+                  @php($b = $row['booking'])
+                  <tr>
+                    <td>
+                      <a href="{{ route('bookings.show', $b) }}"><strong>#{{ $b->id }} · {{ $b->customer_name }}</strong></a><br>
+                      <small class="text-muted">{{ $b->room_label }} · {{ $b->check_in->format('d M') }} – {{ $b->check_out->format('d M Y') }}@if ($b->status === 'cancelled') · Cancelled @endif</small>
+                    </td>
+                    <td>
+                      {{ $globalSettings->currency }} {{ number_format($row['revenue'], 2) }}<br>
+                      <small class="text-muted">Room {{ number_format($row['room_charges'], 2) }}@if ($row['extras_total'] > 0) + extras {{ number_format($row['extras_total'], 2) }}@endif</small>
+                    </td>
+                    <td>
+                      @forelse ($row['expenses'] as $expense)
+                        <div class="pa-bp-cost"><span>{{ $expense['category'] }}@if ($expense['description']) <em>· {{ $expense['description'] }}</em>@endif</span><span>{{ number_format($expense['amount'], 2) }}</span></div>
+                      @empty
+                        <small class="text-muted">None</small>
+                      @endforelse
+                      @if ($row['expenses']->count() > 1)<div class="pa-bp-cost pa-bp-cost-total"><span>Total</span><span>{{ number_format($row['costs'], 2) }}</span></div>@endif
+                    </td>
+                    <td><strong class="{{ $row['net_profit'] < 0 ? 'text-danger' : 'text-success' }}">{{ $globalSettings->currency }} {{ number_format($row['net_profit'], 2) }}</strong></td>
+                    <td>{{ number_format($row['margin'], 1) }}%</td>
+                  </tr>
+                @endforeach
+              </tbody>
+            </table>
+          </div>
+          @if ($bookingProfitCount > $bookingProfits->count())
+            <p class="pa-bp-note">Showing the {{ $bookingProfits->count() }} most recent of {{ $bookingProfitCount }} bookings. Totals above cover all {{ $bookingProfitCount }}.</p>
+          @endif
+        @endif
+      </div>
+    </div>
+  </div>
+
   {{-- Bottom row: revenue ledger & financial logs, plus upcoming bookings --}}
   <div class="row">
     <div class="col-lg-8 mb-4">

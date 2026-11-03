@@ -227,7 +227,7 @@
               <div class="bd-exp-main">
                 <strong>{{ $expense->category }}</strong>
                 @if ($expense->description)<small>{{ $expense->description }}</small>@endif
-                <small class="bd-exp-date">{{ $expense->created_at->format('d M Y, H:i') }}</small>
+                <small class="bd-exp-date">{{ $expense->incurred_on->format('d M Y') }}</small>
               </div>
               <span class="bd-line-amount">{{ $money($expense->amount) }}</span>
               <form method="POST" action="{{ route('bookings.expenses.destroy', $expense) }}" onsubmit="return confirm('Delete this expense?');">
@@ -255,6 +255,11 @@
             <label for="expDescription">Description <span class="text-muted">(optional)</span></label>
             <input id="expDescription" name="description" type="text" class="form-control @error('description') is-invalid @enderror" value="{{ old('description') }}" placeholder="e.g. Tuk-tuk to the station" maxlength="255">
             @error('description')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror
+          </div>
+          <div class="bd-exp-field">
+            <label for="expDate">Date</label>
+            <input id="expDate" name="expense_date" type="date" class="form-control @error('expense_date') is-invalid @enderror" value="{{ old('expense_date', today()->toDateString()) }}" max="{{ today()->toDateString() }}">
+            @error('expense_date')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror
           </div>
           <div class="bd-exp-field">
             <label for="expAmount">Amount ({{ $currency }})</label>

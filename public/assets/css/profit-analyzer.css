@@ -162,3 +162,16 @@
 .pa-ledger-figures span { display: flex; flex-direction: column; gap: 2px; font-size: 10.5px; color: var(--pa-muted); font-weight: 700; text-transform: uppercase; }
 .pa-ledger-figures strong { font-size: 13px; color: var(--pa-navy-ink); font-weight: 800; text-transform: none; }
 [data-theme="dark"] .pa-ledger-figures strong { color: var(--pa-text); }
+
+/* Net profit per booking */
+.pa-bp-totals { display: flex; flex-wrap: wrap; gap: 8px 18px; font-size: 13px; color: var(--pa-muted); }
+.pa-bp-totals strong { margin-left: 4px; color: var(--pa-navy-ink); font-variant-numeric: tabular-nums; }
+[data-theme="dark"] .pa-bp-totals strong { color: var(--pa-text); }
+.pa-bp-totals .is-profit strong { color: #2fa84f; }
+.pa-bp-totals .is-loss strong { color: #dc2626; }
+.pa-bp-table td { vertical-align: top; }
+.pa-bp-cost { display: flex; justify-content: space-between; gap: 14px; min-width: 220px; padding: 1px 0; font-size: 12.5px; }
+.pa-bp-cost em { color: var(--pa-muted); font-style: normal; }
+.pa-bp-cost span:last-child { font-variant-numeric: tabular-nums; white-space: nowrap; }
+.pa-bp-cost-total { margin-top: 3px; padding-top: 3px; border-top: 1px solid var(--pa-line); font-weight: 800; }
+.pa-bp-note { margin: 12px 0 0; font-size: 12px; color: var(--pa-muted); }

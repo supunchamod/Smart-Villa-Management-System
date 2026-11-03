@@ -26,13 +26,8 @@
             'currency' => $currency,
             'baseAmount' => (float) $booking->total_amount,
             'advance' => (float) $booking->advance_payment,
-            'saved' => $booking->bookingExpenses->map(fn ($expense) => [
-                'id' => $expense->id,
-                'category' => $expense->category,
-                'description' => $expense->description,
-                'amount' => (float) $expense->amount,
-                'url' => route('bookings.expenses.destroy', $expense),
-            ])->values()->all(),
+            'saved' => $booking->bookingExpenses->map(fn ($expense) => $expense->toListItem())->values()->all(),
+            'today' => today()->toDateString(),
             'categories' => \App\Models\BookingExpense::CATEGORIES,
         ]))"
         @submit="submitting = true"
@@ -109,7 +104,7 @@
             <ul class="co-saved" x-show="saved.length > 0">
               <template x-for="cost in saved" :key="cost.id">
                 <li class="co-saved-row">
-                  <div class="co-saved-main"><strong x-text="cost.category"></strong><small x-show="cost.description" x-text="cost.description"></small></div>
+                  <div class="co-saved-main"><strong x-text="cost.category"></strong><small x-show="cost.description" x-text="cost.description"></small><small class="co-saved-date" x-text="cost.date"></small></div>
                   <span class="co-num" x-text="money(cost.amount)"></span>
                   <button type="button" class="co-remove" @click="deleteSaved(cost)" :disabled="deleting === cost.id" aria-label="Delete expense"><i class="bi bi-trash3"></i></button>
                 </li>
@@ -129,6 +124,9 @@
                   <input type="text" class="form-control co-desc" :name="`booking_expenses[${index}][description]`" x-model="cost.description" placeholder="Description (optional)" aria-label="Expense description" maxlength="255">
                   <label class="co-field co-price" data-label="Amount">
                     <input type="number" class="form-control" :name="`booking_expenses[${index}][amount]`" x-model.number="cost.amount" min="0.01" step="0.01" inputmode="decimal" placeholder="0.00" aria-label="Expense amount" required>
+                  </label>
+                  <label class="co-field co-date" data-label="Date">
+                    <input type="date" class="form-control" :name="`booking_expenses[${index}][expense_date]`" x-model="cost.expense_date" :max="today" aria-label="Expense date">
                   </label>
                   <button type="button" class="co-remove" @click="removeCost(index)" aria-label="Remove expense"><i class="bi bi-x-lg"></i></button>
                 </div>
@@ -203,6 +201,7 @@
             items: [],
             saved: config.saved || [],
             categories: config.categories || [],
+            today: config.today,
             costs: [],
             deleting: null,
             method: 'cash',
@@ -217,7 +216,7 @@
                 });
             },
             addCost(category) {
-                this.costs.push({ key: ++nextKey, category: category || '', description: '', amount: '' });
+                this.costs.push({ key: ++nextKey, category: category || '', description: '', amount: '', expense_date: this.today });
                 this.$nextTick(() => {
                     const selector = category ? '.co-cost-row input[name$="[amount]"]' : '.co-cost-row input[name$="[category]"]';
                     const fields = this.$el.querySelectorAll(selector);

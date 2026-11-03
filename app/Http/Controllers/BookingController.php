@@ -238,6 +238,7 @@ class BookingController extends Controller
             'booking_expenses.*.category' => ['required', 'string', 'max:100'],
             'booking_expenses.*.description' => ['nullable', 'string', 'max:255'],
             'booking_expenses.*.amount' => ['required', 'numeric', 'min:0.01', 'max:99999999'],
+            'booking_expenses.*.expense_date' => ['nullable', 'date', 'before_or_equal:today'],
         ]);
 
         $fail = function (string $message) use ($request) {
@@ -273,6 +274,7 @@ class BookingController extends Controller
                     'category' => trim($row['category']),
                     'description' => isset($row['description']) && trim($row['description']) !== '' ? trim($row['description']) : null,
                     'amount' => round((float) $row['amount'], 2),
+                    'expense_date' => ! empty($row['expense_date']) ? $row['expense_date'] : today()->toDateString(),
                 ])->all()
             );
 

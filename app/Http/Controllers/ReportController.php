@@ -58,11 +58,16 @@ class ReportController extends Controller
             $totalExpenses = ExpenseLedger::total($expenseRows);
         }
 
+        // The P&L statement also itemises net profit per booking.
+        $bookingProfits = $reportType === 'profit_loss' ? IncomeLedger::bookingProfitability($start, $end) : collect();
+
         $pdf = Pdf::loadView('reports.pdf', [
             'reportType' => $reportType,
             'periodLabel' => $start->format('d M Y').' – '.$end->format('d M Y'),
             'incomeRows' => $incomeRows,
             'expenseRows' => $expenseRows,
+            'bookingProfits' => $bookingProfits,
+            'bookingProfitTotals' => IncomeLedger::profitabilityTotals($bookingProfits),
             'totalIncome' => $totalIncome,
             'totalExpenses' => $totalExpenses,
             'netProfit' => $totalIncome - $totalExpenses,
