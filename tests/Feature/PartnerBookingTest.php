@@ -52,7 +52,6 @@ class PartnerBookingTest extends TestCase
     private function recordAdvance(PartnerBooking $entry, array $overrides = [])
     {
         return $this->actingAs($this->owner)->post(route('partner-bookings.advance', $entry), array_merge([
-            'partner_name' => 'Cinnamon Wild, Yala',
             'agreed_cost' => 90000,
             'advance_amount' => 30000,
         ], $overrides));
@@ -96,7 +95,10 @@ class PartnerBookingTest extends TestCase
 
         $entry = $entry->fresh();
         $this->assertSame(PartnerBooking::ADVANCE_PAID, $entry->status);
+        // The partner is the booking's stay hotel - there is no separate name input.
+        $this->assertSame('Cinnamon Wild, Yala', $entry->partner_label);
         $this->assertSame('Cinnamon Wild, Yala', $entry->partner_name);
+        $this->assertSame('advance_paid', $entry->stage);
         $this->assertSame(60000.0, $entry->remaining_cost);
 
         $this->assertDatabaseHas('expenses', [
@@ -198,5 +200,83 @@ class PartnerBookingTest extends TestCase
         $this->actingAs($this->owner)->delete(route('bookings.destroy', $booking))->assertRedirect();
 
         $this->assertSame(0, PartnerBooking::count());
+    }
+
+    public function test_the_partner_name_comes_from_the_bookings_stay_hotel_and_follows_edits(): void
+    {
+        $booking = $this->createPackage(['stay_hotel_name' => 'Cinnamon Wild, Yala']);
+        $this->assertSame('Cinnamon Wild, Yala', $booking->partnerBooking->partner_label);
+
+        // A partner_name submitted with the form is ignored.
+        $this->recordAdvance($booking->partnerBooking, ['partner_name' => 'Someone Else'])->assertSessionHasNoErrors();
+        $this->assertSame('Cinnamon Wild, Yala', $booking->partnerBooking->fresh()->partner_name);
+        $this->assertDatabaseHas('expenses', ['booking_id' => $booking->id, 'description' => 'Advance to Cinnamon Wild, Yala']);
+
+        $this->actingAs($this->owner)->put(route('bookings.update', $booking), [
+            'booking_type' => 'full_package', 'stay_hotel_name' => 'Wild Coast Tented Lodge',
+            'check_in' => today()->addDays(3)->toDateString(), 'check_out' => today()->addDays(5)->toDateString(),
+            'safari_tour_name' => 'Yala Full Day Safari', 'safari_date' => today()->addDays(4)->toDateString(),
+            'group_pax_size' => 4, 'customer_name' => 'Supun Chamod', 'total_amount' => 150000, 'advance_payment' => 50000, 'status' => 'confirmed',
+        ])->assertSessionHasNoErrors();
+
+        $this->assertSame('Wild Coast Tented Lodge', $booking->partnerBooking->fresh()->partner_label);
+    }
+
+    public function test_the_initial_advance_can_be_saved_without_the_total_agreed_cost(): void
+    {
+        $booking = $this->createPackage();
+        $entry = $booking->partnerBooking;
+
+        $this->actingAs($this->owner)
+            ->post(route('partner-bookings.advance', $entry), ['advance_amount' => 25000])
+            ->assertSessionHasNoErrors();
+
+        $entry = $entry->fresh();
+        $this->assertSame(PartnerBooking::ADVANCE_PAID, $entry->status);
+        $this->assertNull($entry->agreed_cost);
+        $this->assertNull($entry->remaining_cost);
+        $this->assertSame('advance_partial', $entry->stage);
+        $this->assertSame('Pending Advance / Partial', $entry->stage_meta['label']);
+
+        $this->assertDatabaseHas('expenses', ['booking_id' => $booking->id, 'partner_booking_id' => $entry->id, 'partner_stage' => 'advance', 'amount' => 25000]);
+
+        $this->actingAs($this->owner)->get(route('partner-bookings.index'))->assertOk()->assertSee('Pending Advance / Partial');
+
+        // Adding the agreed cost later confirms it.
+        $this->recordAdvance($entry, ['advance_amount' => 25000, 'agreed_cost' => 90000])->assertSessionHasNoErrors();
+        $this->assertSame('advance_paid', $entry->fresh()->stage);
+        $this->assertSame(65000.0, $entry->fresh()->remaining_cost);
+        $this->assertSame(1, Expense::where('partner_booking_id', $entry->id)->count());
+    }
+
+    public function test_an_advance_amount_is_still_required(): void
+    {
+        $entry = $this->createPackage()->partnerBooking;
+
+        $this->actingAs($this->owner)->post(route('partner-bookings.advance', $entry), [])->assertSessionHasErrors('advance_amount');
+        $this->assertSame(0, Expense::count());
+    }
+
+    public function test_settling_without_a_known_total_asks_for_it_and_then_books_the_remainder(): void
+    {
+        $booking = $this->createPackage();
+        $entry = $booking->partnerBooking;
+        $this->actingAs($this->owner)->post(route('partner-bookings.advance', $entry), ['advance_amount' => 25000])->assertSessionHasNoErrors();
+        $this->actingAs($this->owner)->post(route('bookings.checkout', $booking), ['payment_method' => 'cash'])->assertSessionHasNoErrors();
+
+        $this->assertSame('pending_final', $entry->fresh()->stage);
+
+        // The total agreed cost was never entered, so settlement must supply it (and it must cover the advance).
+        $this->actingAs($this->owner)->post(route('partner-bookings.settle', $entry), ['final_amount' => 65000])->assertSessionHasErrors('agreed_cost');
+        $this->actingAs($this->owner)->post(route('partner-bookings.settle', $entry), ['agreed_cost' => 20000, 'final_amount' => 0])->assertSessionHasErrors('agreed_cost');
+
+        $this->actingAs($this->owner)
+            ->post(route('partner-bookings.settle', $entry), ['agreed_cost' => 90000, 'final_amount' => 65000])
+            ->assertSessionHasNoErrors();
+
+        $entry = $entry->fresh();
+        $this->assertSame('settled', $entry->stage);
+        $this->assertSame(90000.0, (float) $entry->agreed_cost);
+        $this->assertSame(90000.0, $booking->fresh()->expenses_total); // 25,000 advance + 65,000 final
     }
 }

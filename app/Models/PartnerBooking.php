@@ -60,11 +60,23 @@ class PartnerBooking extends Model
     }
 
     /**
-     * What is still owed to the partner (agreed cost minus the advance).
+     * The partner / resort is the booking's Stay Hotel / Accommodation Name.
+     * (partner_name is a copy kept for sorting; the booking is the source.)
+     */
+    protected function partnerLabel(): Attribute
+    {
+        return Attribute::get(fn () => $this->booking?->stay_hotel_name ?: $this->partner_name);
+    }
+
+    /**
+     * What is still owed to the partner (agreed cost minus the advance), or
+     * null while the total agreed cost has not been entered yet.
      */
     protected function remainingCost(): Attribute
     {
-        return Attribute::get(fn () => max(0.0, round((float) $this->agreed_cost - (float) $this->advance_paid, 2)));
+        return Attribute::get(fn () => $this->agreed_cost === null
+            ? null
+            : max(0.0, round((float) $this->agreed_cost - (float) $this->advance_paid, 2)));
     }
 
     /**
@@ -79,7 +91,12 @@ class PartnerBooking extends Model
             }
 
             if ($this->status === self::ADVANCE_PAID) {
-                return $this->booking?->status === 'checked_out' ? 'pending_final' : 'advance_paid';
+                if ($this->booking?->status === 'checked_out') {
+                    return 'pending_final';
+                }
+
+                // An advance was paid but the total agreed cost isn't known yet.
+                return $this->agreed_cost === null ? 'advance_partial' : 'advance_paid';
             }
 
             return 'pending_advance';
@@ -93,6 +110,7 @@ class PartnerBooking extends Model
     {
         return Attribute::get(fn () => [
             'pending_advance' => ['label' => 'Pending Advance', 'class' => 'pending'],
+            'advance_partial' => ['label' => 'Pending Advance / Partial', 'class' => 'pending'],
             'advance_paid' => ['label' => 'Advance Paid / Confirmed', 'class' => 'new'],
             'pending_final' => ['label' => 'Pending Final Settlement', 'class' => 'stuck'],
             'settled' => ['label' => 'Fully Settled', 'class' => 'won'],

@@ -25,7 +25,17 @@ class PartnerBookingService
     public function syncRegistration(Booking $booking): ?PartnerBooking
     {
         if ($booking->booking_type === 'full_package') {
-            return $booking->partnerBooking()->firstOrCreate([], ['status' => PartnerBooking::PENDING_ADVANCE]);
+            $entry = $booking->partnerBooking()->firstOrCreate([], [
+                'status' => PartnerBooking::PENDING_ADVANCE,
+                'partner_name' => $booking->stay_hotel_name,
+            ]);
+
+            // The partner is the booking's stay hotel - keep it in step if that is edited.
+            if ($entry->status !== PartnerBooking::SETTLED && $entry->partner_name !== $booking->stay_hotel_name) {
+                $entry->update(['partner_name' => $booking->stay_hotel_name]);
+            }
+
+            return $entry;
         }
 
         $entry = $booking->partnerBooking;
@@ -38,10 +48,11 @@ class PartnerBookingService
     }
 
     /**
-     * Save (or correct) the partner, the agreed cost and the advance paid.
-     * Moves the entry to Advance Paid / Confirmed.
+     * Save (or correct) the advance paid and, if known, the total agreed
+     * cost. The partner is always the booking's stay hotel. Moves the entry
+     * to Advance Paid (Partial until the agreed cost is entered).
      *
-     * @param  array{partner_name: string, agreed_cost: float|string, advance_amount: float|string, advance_date?: string|null}  $data
+     * @param  array{agreed_cost?: float|string|null, advance_amount: float|string, advance_date?: string|null}  $data
      */
     public function recordAdvance(PartnerBooking $entry, array $data): PartnerBooking
     {
@@ -49,15 +60,17 @@ class PartnerBookingService
             $advance = round((float) $data['advance_amount'], 2);
             $date = ! empty($data['advance_date']) ? $data['advance_date'] : today()->toDateString();
 
+            $partner = $entry->booking?->stay_hotel_name ?: $entry->partner_name;
+
             $entry->update([
-                'partner_name' => trim($data['partner_name']),
-                'agreed_cost' => round((float) $data['agreed_cost'], 2),
+                'partner_name' => $partner,
+                'agreed_cost' => isset($data['agreed_cost']) && $data['agreed_cost'] !== '' ? round((float) $data['agreed_cost'], 2) : null,
                 'advance_paid' => $advance,
                 'advance_paid_on' => $date,
                 'status' => PartnerBooking::ADVANCE_PAID,
             ]);
 
-            $this->syncExpense($entry, 'advance', PartnerBooking::ADVANCE_CATEGORY, $advance, $date, "Advance to {$entry->partner_name}");
+            $this->syncExpense($entry, 'advance', PartnerBooking::ADVANCE_CATEGORY, $advance, $date, 'Advance to '.($partner ?: 'partner resort'));
 
             return $entry->fresh();
         });
@@ -66,19 +79,21 @@ class PartnerBookingService
     /**
      * Record the final payment to the partner and mark the entry Fully Settled.
      */
-    public function settle(PartnerBooking $entry, float $amount, ?string $date = null): PartnerBooking
+    public function settle(PartnerBooking $entry, float $amount, ?string $date = null, ?float $agreedCost = null): PartnerBooking
     {
-        return DB::transaction(function () use ($entry, $amount, $date) {
+        return DB::transaction(function () use ($entry, $amount, $date, $agreedCost) {
             $amount = round($amount, 2);
             $date = $date ?: today()->toDateString();
 
             $entry->update([
+                // The total may only become known at settlement time.
+                'agreed_cost' => $agreedCost !== null ? round($agreedCost, 2) : $entry->agreed_cost,
                 'final_paid' => $amount,
                 'settled_on' => $date,
                 'status' => PartnerBooking::SETTLED,
             ]);
 
-            $this->syncExpense($entry, 'final', PartnerBooking::FINAL_CATEGORY, $amount, $date, "Final settlement to {$entry->partner_name}");
+            $this->syncExpense($entry, 'final', PartnerBooking::FINAL_CATEGORY, $amount, $date, 'Final settlement to '.($entry->booking?->stay_hotel_name ?: $entry->partner_name ?: 'partner resort'));
 
             return $entry->fresh();
         });

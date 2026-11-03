@@ -231,9 +231,9 @@
               @php $pb = $booking->partnerBooking; $pbMeta = $pb->stage_meta; @endphp
               <div class="bd-internal bd-partner">
                 <div class="bd-internal-title"><i class="bi bi-buildings"></i> Partner resort</div>
-                <div class="bd-total-row"><span>{{ $pb->partner_name ?: 'Partner not assigned yet' }}</span><span class="deal-badge {{ $pbMeta['class'] }}">{{ $pbMeta['label'] }}</span></div>
-                @if ($pb->agreed_cost !== null)
-                  <div class="bd-total-row"><span>Agreed cost / advance paid</span><span class="bd-internal-amt">{{ $money($pb->agreed_cost) }} / {{ $money($pb->advance_paid) }}</span></div>
+                <div class="bd-total-row"><span>{{ $pb->partner_label ?: 'No stay hotel on this booking' }}</span><span class="deal-badge {{ $pbMeta['class'] }}">{{ $pbMeta['label'] }}</span></div>
+                @if ($pb->status !== 'pending_advance')
+                  <div class="bd-total-row"><span>Agreed cost / advance paid</span><span class="bd-internal-amt">{{ $pb->agreed_cost !== null ? $money($pb->agreed_cost) : 'not entered' }} / {{ $money($pb->advance_paid) }}</span></div>
                 @endif
                 <div class="bd-total-row"><a href="{{ route('partner-bookings.index', ['search' => '#'.$booking->id]) }}">Manage in Partner Resort Bookings &rarr;</a></div>
               </div>

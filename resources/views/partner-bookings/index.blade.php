@@ -24,12 +24,12 @@
         'id' => $oldEntry->id,
         'booking_id' => $oldEntry->booking_id,
         'guest' => $oldEntry->booking?->customer_name,
-        'partner_name' => old('partner_name', $oldEntry->partner_name),
+        'partner' => $oldEntry->partner_label ?? '',
+        'cost_known' => $oldEntry->agreed_cost !== null,
         'agreed_cost' => old('agreed_cost', $oldEntry->agreed_cost),
         'advance' => old('advance_amount', $oldEntry->advance_paid),
         'advance_date' => old('advance_date', optional($oldEntry->advance_paid_on)->toDateString()),
-        'remaining' => $oldEntry->remaining_cost,
-        'final_amount' => old('final_amount', $oldEntry->remaining_cost),
+        'final_amount' => old('final_amount', $oldEntry->remaining_cost ?? ''),
         'settled_date' => old('settled_date'),
         'advance_url' => route('partner-bookings.advance', $oldEntry),
         'settle_url' => route('partner-bookings.settle', $oldEntry),
@@ -106,12 +106,12 @@
                     'id' => $entry->id,
                     'booking_id' => $entry->booking_id,
                     'guest' => $booking?->customer_name,
-                    'partner_name' => $entry->partner_name ?? '',
+                    'partner' => $entry->partner_label ?? '',
+                    'cost_known' => $entry->agreed_cost !== null,
                     'agreed_cost' => $entry->agreed_cost !== null ? (float) $entry->agreed_cost : '',
                     'advance' => (float) $entry->advance_paid,
                     'advance_date' => optional($entry->advance_paid_on)->toDateString(),
-                    'remaining' => $entry->remaining_cost,
-                    'final_amount' => $entry->remaining_cost,
+                    'final_amount' => $entry->remaining_cost ?? '',
                     'settled_date' => null,
                     'advance_url' => route('partner-bookings.advance', $entry),
                     'settle_url' => route('partner-bookings.settle', $entry),
@@ -147,10 +147,10 @@
                 <span class="ex-cat">{{ $booking->stay_hotel_name ?: '—' }}</span><br>
                 <small class="text-muted">{{ $booking->safari_tour_name }}</small>
               </td>
-              <td>@if ($entry->partner_name)<strong>{{ $entry->partner_name }}</strong>@else<span class="text-muted">Not assigned</span>@endif</td>
+              <td>@if ($entry->partner_label)<strong>{{ $entry->partner_label }}</strong>@else<span class="text-muted">No stay hotel on booking</span>@endif</td>
               <td class="text-end ex-amount">{{ $entry->agreed_cost !== null ? number_format($entry->agreed_cost, 2) : '—' }}</td>
               <td class="text-end ex-amount">{{ $entry->status === 'pending_advance' ? '—' : number_format($entry->advance_paid, 2) }}</td>
-              <td class="text-end ex-amount">@if ($entry->status === 'pending_advance')—@elseif ($entry->status === 'settled')<span class="text-success">Paid</span>@else{{ number_format($entry->remaining_cost, 2) }}@endif</td>
+              <td class="text-end ex-amount">@if ($entry->status === 'pending_advance')—@elseif ($entry->status === 'settled')<span class="text-success">Paid</span>@elseif ($entry->remaining_cost === null)<span class="text-muted" title="Total agreed cost not entered yet">—</span>@else{{ number_format($entry->remaining_cost, 2) }}@endif</td>
               <td>
                 <span class="deal-badge {{ $row['meta']['class'] }} {{ $row['stage'] === 'pending_final' ? 'pb-flag' : '' }}">{{ $row['meta']['label'] }}</span>
                 @if ($entry->status === 'settled' && $entry->settled_on)<br><small class="text-muted">{{ $entry->settled_on->format('d M Y') }}</small>@endif
@@ -187,11 +187,11 @@
             </div>
             <span class="deal-badge {{ $row['meta']['class'] }} {{ $row['stage'] === 'pending_final' ? 'pb-flag' : '' }}">{{ $row['meta']['label'] }}</span>
           </div>
-          <div class="pb-card-partner">{{ $entry->partner_name ?: 'Partner not assigned' }}</div>
+          <div class="pb-card-partner">{{ $entry->partner_label ?: 'No stay hotel on booking' }}</div>
           <div class="pb-card-nums">
             <span>Agreed <strong>{{ $entry->agreed_cost !== null ? number_format($entry->agreed_cost, 2) : '—' }}</strong></span>
             <span>Advance <strong>{{ $entry->status === 'pending_advance' ? '—' : number_format($entry->advance_paid, 2) }}</strong></span>
-            <span>Remaining <strong>@if ($entry->status === 'pending_advance')—@elseif ($entry->status === 'settled')Paid @else{{ number_format($entry->remaining_cost, 2) }}@endif</strong></span>
+            <span>Remaining <strong>@if ($entry->status === 'pending_advance')—@elseif ($entry->status === 'settled')Paid @elseif ($entry->remaining_cost === null)—@else{{ number_format($entry->remaining_cost, 2) }}@endif</strong></span>
           </div>
           @if ($row['stage'] === 'pending_advance')
             <button type="button" class="btn btn-primary w-100" @click="openAdvance(@js($row['payload']))"><i class="bi bi-cash-coin"></i> Record Advance</button>
@@ -224,34 +224,35 @@
             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
           </div>
           <div class="modal-body">
-            <div class="row g-3">
-              <div class="col-12">
-                <label class="form-label" for="pbPartner">Partner / Resort / Cabana Name <span class="text-danger">*</span></label>
-                <input id="pbPartner" class="form-control" name="partner_name" x-model="form.partner_name" placeholder="e.g. Cinnamon Wild, Yala" maxlength="255" required>
-              </div>
-              <div class="col-md-6">
-                <label class="form-label" for="pbAgreed">Total Agreed Cost to Partner ({{ $currency }}) <span class="text-danger">*</span></label>
-                <input id="pbAgreed" class="form-control" type="number" name="agreed_cost" x-model.number="form.agreed_cost" min="0.01" step="0.01" inputmode="decimal" placeholder="0.00" required>
-              </div>
+            <div class="pb-partner">
+              <span class="pb-partner-label"><i class="bi bi-buildings"></i> Partner / Resort</span>
+              <strong x-text="form.partner || 'No stay hotel on this booking'"></strong>
+              <small>Taken from the booking's Stay Hotel / Accommodation Name.</small>
+            </div>
+            <div class="row g-3 mt-0">
               <div class="col-md-6">
                 <label class="form-label" for="pbAdvance">Advance Amount Paid to Partner ({{ $currency }}) <span class="text-danger">*</span></label>
-                <input id="pbAdvance" class="form-control" type="number" name="advance_amount" x-model.number="form.advance" min="0" step="0.01" inputmode="decimal" placeholder="0.00" required>
+                <input id="pbAdvance" class="form-control" type="number" name="advance_amount" x-model.number="form.advance" min="0.01" step="0.01" inputmode="decimal" placeholder="0.00" required>
               </div>
               <div class="col-md-6">
                 <label class="form-label" for="pbAdvDate">Date paid</label>
                 <input id="pbAdvDate" class="form-control" type="date" name="advance_date" x-model="form.advance_date" :max="today">
               </div>
               <div class="col-md-6">
+                <label class="form-label" for="pbAgreed">Total Agreed Cost to Partner ({{ $currency }}) <span class="text-muted">(optional)</span></label>
+                <input id="pbAgreed" class="form-control" type="number" name="agreed_cost" x-model.number="form.agreed_cost" min="0.01" step="0.01" inputmode="decimal" placeholder="Add later if not agreed yet">
+              </div>
+              <div class="col-md-6">
                 <label class="form-label">Remaining after advance</label>
-                <input class="form-control" type="text" :value="money(Math.max(0, (Number(form.agreed_cost) || 0) - (Number(form.advance) || 0)))" disabled>
+                <input class="form-control" type="text" :value="hasAgreed ? money(Math.max(0, num(form.agreed_cost) - num(form.advance))) : 'Add the total agreed cost'" disabled>
               </div>
             </div>
-            <p class="pb-note" x-show="(Number(form.advance) || 0) > (Number(form.agreed_cost) || 0)">The advance cannot be more than the agreed cost.</p>
-            <p class="text-muted small mt-3 mb-0"><i class="bi bi-info-circle"></i> Saving marks this booking <strong>Advance Paid / Confirmed</strong> and records the advance as a direct expense on booking #<span x-text="form.booking_id"></span>.</p>
+            <p class="pb-note" x-show="overAdvance">The advance cannot be more than the agreed cost.</p>
+            <p class="text-muted small mt-3 mb-0"><i class="bi bi-info-circle"></i> Saving records the advance as a direct expense on booking #<span x-text="form.booking_id"></span>. Without a total agreed cost the status is <strong>Pending Advance / Partial</strong>; add the total (now or at settlement) and it becomes <strong>Advance Paid / Confirmed</strong>.</p>
           </div>
           <div class="modal-footer">
             <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
-            <button type="submit" class="btn btn-primary" :disabled="(Number(form.advance) || 0) > (Number(form.agreed_cost) || 0)"><i class="bi bi-check2-circle"></i> Save Advance</button>
+            <button type="submit" class="btn btn-primary" :disabled="overAdvance"><i class="bi bi-check2-circle"></i> Save Advance</button>
           </div>
         </form>
       </div>
@@ -272,16 +273,20 @@
           </div>
           <div class="modal-body">
             <div class="pb-sum">
-              <div class="pb-sum-row"><span>Partner</span><strong x-text="form.partner_name"></strong></div>
-              <div class="pb-sum-row"><span>Total agreed cost</span><strong x-text="money(form.agreed_cost)"></strong></div>
-              <div class="pb-sum-row"><span>Advance already paid</span><strong x-text="'− ' + money(form.advance)"></strong></div>
-              <div class="pb-sum-due"><span>Remaining to pay</span><strong x-text="money(form.remaining)"></strong></div>
+              <div class="pb-sum-row"><span>Partner / Resort</span><strong x-text="form.partner || 'No stay hotel on this booking'"></strong></div>
+              <div class="pb-sum-row"><span>Advance already paid</span><strong x-text="money(form.advance)"></strong></div>
+              <div class="pb-sum-due"><span>Remaining to pay</span><strong x-text="hasAgreed ? money(remainingNow) : 'Enter total cost'"></strong></div>
             </div>
             <div class="row g-3 mt-1">
               <div class="col-md-6">
+                <label class="form-label" for="pbSetAgreed">Total Agreed Cost to Partner ({{ $currency }}) <span class="text-danger" x-show="!form.cost_known">*</span></label>
+                <input id="pbSetAgreed" class="form-control" type="number" name="agreed_cost" x-model.number="form.agreed_cost" @input="syncFinal()" :min="Math.max(0.01, num(form.advance))" step="0.01" inputmode="decimal" placeholder="0.00" :required="!form.cost_known">
+                <div class="form-text" x-show="!form.cost_known">Not entered earlier - needed to settle.</div>
+              </div>
+              <div class="col-md-6">
                 <label class="form-label" for="pbFinal">Final payment ({{ $currency }}) <span class="text-danger">*</span></label>
-                <input id="pbFinal" class="form-control" type="number" name="final_amount" x-model.number="form.final_amount" min="0" step="0.01" inputmode="decimal" required>
-                <div class="form-text">Defaults to the full remaining balance.</div>
+                <input id="pbFinal" class="form-control" type="number" name="final_amount" x-model.number="form.final_amount" @input="finalTouched = true" min="0" step="0.01" inputmode="decimal" required>
+                <div class="form-text">Defaults to the remaining balance.</div>
               </div>
               <div class="col-md-6">
                 <label class="form-label" for="pbSetDate">Date paid</label>
@@ -304,15 +309,33 @@
 @push('scripts')
 <script>
     function partnerManager(config) {
-        const blank = () => ({ id: null, booking_id: '', guest: '', partner_name: '', agreed_cost: '', advance: '', advance_date: config.today, remaining: 0, final_amount: 0, settled_date: config.today, advance_url: '#', settle_url: '#' });
+        const blank = () => ({ id: null, booking_id: '', guest: '', partner: '', cost_known: false, agreed_cost: '', advance: '', advance_date: config.today, final_amount: '', settled_date: config.today, advance_url: '#', settle_url: '#' });
         return {
             today: config.today,
             form: blank(),
+            finalTouched: false,
             init() {
                 if (config.reopen && config.old) {
                     this.form = { ...blank(), ...config.old };
+                    this.finalTouched = true;
                     this.show(config.reopen === 'settle' ? 'settleModal' : 'advanceModal');
                 }
+            },
+            num(value) {
+                return Number(value) || 0;
+            },
+            get hasAgreed() {
+                return this.form.agreed_cost !== '' && this.form.agreed_cost !== null && this.num(this.form.agreed_cost) > 0;
+            },
+            get overAdvance() {
+                return this.hasAgreed && this.num(this.form.advance) > this.num(this.form.agreed_cost);
+            },
+            get remainingNow() {
+                return Math.max(0, this.num(this.form.agreed_cost) - this.num(this.form.advance));
+            },
+            // Until the user types a final amount themselves, keep it equal to the remaining balance.
+            syncFinal() {
+                if (!this.finalTouched && this.hasAgreed) this.form.final_amount = this.remainingNow;
             },
             money(value) {
                 return config.currency + ' ' + Number(value || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -321,11 +344,12 @@
                 this.$nextTick(() => bootstrap.Modal.getOrCreateInstance(document.getElementById(id)).show());
             },
             openAdvance(entry) {
-                this.form = { ...blank(), ...entry, advance_date: entry.advance_date || config.today, advance: entry.agreed_cost === '' ? '' : entry.advance };
+                this.form = { ...blank(), ...entry, advance_date: entry.advance_date || config.today, advance: entry.advance > 0 ? entry.advance : '' };
                 this.show('advanceModal');
             },
             openSettle(entry) {
                 this.form = { ...blank(), ...entry, settled_date: config.today };
+                this.finalTouched = false;
                 this.show('settleModal');
             },
         };
