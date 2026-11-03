@@ -60,6 +60,8 @@
                 <div class="section-label">{{ $booking->booking_type === 'safari_only' ? 'Safari Details' : 'Stay Details' }}</div>
                 @if ($booking->room)
                     <div>Cabana: {{ $booking->room->name_or_number }} ({{ $booking->room->type }})</div>
+                @elseif ($booking->stay_hotel_name)
+                    <div>Stay: {{ $booking->stay_hotel_name }}</div>
                 @endif
                 @if ($booking->booking_type !== 'accommodation_only' && $booking->safari_tour_name)
                     <div>Safari: {{ $booking->safari_tour_name }}</div>

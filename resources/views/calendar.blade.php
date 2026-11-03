@@ -120,7 +120,7 @@
             <div class="bd-group">
               <h3 x-text="b.is_stay ? 'Stay' : 'Safari'"></h3>
               <dl class="bd-fields">
-                <div class="bd-field bd-field-wide"><dt><i class="bi bi-door-open"></i><span x-text="b.is_stay ? 'Room / Cabana' : 'Tour'"></span></dt>
+                <div class="bd-field bd-field-wide"><dt><i class="bi bi-door-open"></i><span x-text="b.stay_label"></span></dt>
                   <dd><span x-text="b.room"></span> <span class="bd-sub" x-show="b.room_type" x-text="b.room_type"></span></dd></div>
                 <template x-if="b.is_stay">
                   <div class="bd-field"><dt><i class="bi bi-box-arrow-in-right"></i>Check-in</dt><dd x-text="b.check_in"></dd></div>

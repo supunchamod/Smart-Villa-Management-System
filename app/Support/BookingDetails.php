@@ -54,6 +54,7 @@ class BookingDetails
             'special_notes' => $booking->special_notes,
             'room' => $booking->room_label,
             'room_type' => $booking->room?->type,
+            'stay_label' => $booking->room ? 'Room / Cabana' : ($booking->stay_hotel_name ? 'Stay hotel' : 'Tour'),
             'is_stay' => $isStay,
             'check_in' => $booking->check_in?->format('D, d M Y'),
             'check_out' => $booking->check_out?->format('D, d M Y'),

@@ -85,6 +85,7 @@ class Booking extends Model
      */
     protected $fillable = [
         'room_id',
+        'stay_hotel_name',
         'booking_type',
         'safari_tour_name',
         'safari_date',
@@ -308,7 +309,7 @@ class Booking extends Model
 
     protected function roomLabel(): Attribute
     {
-        return Attribute::get(fn () => $this->room?->name_or_number ?? $this->safari_tour_name ?? 'Safari Booking');
+        return Attribute::get(fn () => $this->room?->name_or_number ?? $this->stay_hotel_name ?? $this->safari_tour_name ?? 'Safari Booking');
     }
 
     /**

@@ -29,7 +29,19 @@
     <input type="hidden" name="booking_type" value="accommodation_only">
   @endif
 
-  <div class="col-md-6" x-show="bookingType !== 'safari_only'">
+  {{-- Full Package: the hotel / accommodation where the guests stay (instead of one of the villa's rooms). --}}
+  <div class="col-md-6" x-show="bookingType === 'full_package'" x-cloak>
+    <label class="form-label" for="stayHotelName">Stay Hotel / Accommodation Name</label>
+    <input id="stayHotelName" class="form-control @error('stay_hotel_name') is-invalid @enderror" name="stay_hotel_name" list="stayHotelOptions" value="{{ old('stay_hotel_name', $booking->stay_hotel_name ?? '') }}" placeholder="e.g. Cinnamon Wild, Yala" maxlength="255" :required="bookingType === 'full_package'">
+    <datalist id="stayHotelOptions">
+      @foreach (\App\Models\Booking::query()->whereNotNull('stay_hotel_name')->distinct()->orderBy('stay_hotel_name')->limit(50)->pluck('stay_hotel_name') as $hotel)
+        <option value="{{ $hotel }}">
+      @endforeach
+    </datalist>
+    @error('stay_hotel_name')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror
+  </div>
+
+  <div class="col-md-6" x-show="bookingType === 'accommodation_only'">
     <label class="form-label">Room</label>
     <select class="form-select @error('room_id') is-invalid @enderror" name="room_id">
       <option value="">Select a room</option>
@@ -52,8 +64,8 @@
     </div>
   @endif
 
-  {{-- Not applicable to a safari-only trip (no room, no meal plan). --}}
-  <div class="col-md-6" x-show="bookingType !== 'safari_only'">
+  {{-- Only for accommodation bookings - safari trips and full packages have no meal plan here. --}}
+  <div class="col-md-6" x-show="bookingType === 'accommodation_only'">
     <label class="form-label">Board Basis / Meal Plan</label>
     <select class="form-select @error('board_type') is-invalid @enderror" name="board_type">
       @foreach (\App\Models\Booking::BOARD_TYPES as $value => $label)
@@ -110,22 +122,22 @@
   </div>
 
   {{-- Safari-only trip logistics --}}
-  <template x-if="bookingType === 'safari_only'">
-    <div class="col-12"><hr><h3 class="h6 mb-0"><i class="bi bi-geo-alt"></i> Safari Trip Details</h3></div>
+  <template x-if="bookingType === 'safari_only' || bookingType === 'full_package'">
+    <div class="col-12"><hr><h3 class="h6 mb-0"><i class="bi bi-geo-alt"></i> <span x-text="bookingType === 'safari_only' ? 'Safari Trip Details' : 'Package Trip Details'"></span></h3></div>
   </template>
   <div class="col-md-6" x-show="bookingType === 'safari_only'">
     <label class="form-label">Pickup location</label>
     <input class="form-control @error('pickup_location') is-invalid @enderror" name="pickup_location" value="{{ old('pickup_location', $booking->pickup_location ?? '') }}" placeholder="e.g. Star Moon Cabana, Kalupahana" maxlength="255">
     @error('pickup_location')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror
   </div>
-  <div class="col-md-3 col-6" x-show="bookingType === 'safari_only'">
+  <div class="col-md-3 col-6" x-show="bookingType === 'safari_only' || bookingType === 'full_package'">
     <label class="form-label">Pickup time</label>
     <input class="form-control @error('pickup_time') is-invalid @enderror" type="time" name="pickup_time" value="{{ old('pickup_time', $booking->pickup_time_short ?? '') }}">
     @error('pickup_time')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror
   </div>
-  <div class="col-md-3 col-6" x-show="bookingType === 'safari_only'">
+  <div class="col-md-3 col-6" x-show="bookingType === 'safari_only' || bookingType === 'full_package'">
     <label class="form-label">Group size (pax)</label>
-    <input class="form-control @error('group_pax_size') is-invalid @enderror" type="number" min="1" max="500" step="1" inputmode="numeric" name="group_pax_size" value="{{ old('group_pax_size', $booking->group_pax_size ?? '') }}" placeholder="e.g. 4" :required="bookingType === 'safari_only'">
+    <input class="form-control @error('group_pax_size') is-invalid @enderror" type="number" min="1" max="500" step="1" inputmode="numeric" name="group_pax_size" value="{{ old('group_pax_size', $booking->group_pax_size ?? '') }}" placeholder="e.g. 4" :required="bookingType === 'safari_only' || bookingType === 'full_package'">
     @error('group_pax_size')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror
   </div>
   <div class="col-md-6" x-show="bookingType === 'safari_only'">
@@ -151,25 +163,7 @@
     </div>
   </div>
 
-  <template x-if="bookingType === 'full_package'">
-    <div class="col-12">
-      <label class="form-label d-block">Integrated billing calculation <small class="text-muted">(optional helper, sums into Total Amount below)</small></label>
-      <div class="row g-2 align-items-end">
-        <div class="col-md-4">
-          <label class="form-label small text-muted">Accommodation amount</label>
-          <input class="form-control" type="number" step="0.01" min="0" x-model.number="roomAmount" placeholder="0.00">
-        </div>
-        <div class="col-md-4">
-          <label class="form-label small text-muted">Safari package amount</label>
-          <input class="form-control" type="number" step="0.01" min="0" x-model.number="safariAmount" placeholder="0.00">
-        </div>
-        <div class="col-md-4">
-          <button type="button" class="btn btn-light w-100" @click="applyCombinedTotal()"><i class="bi bi-calculator"></i> Sum into Total Amount</button>
-        </div>
-      </div>
-    </div>
-  </template>
-
+  <div class="col-12"><hr class="my-1"><h3 class="h6 mb-0"><i class="bi bi-cash-coin"></i> Billing</h3></div>
   <div class="col-md-4">
     <label class="form-label">Total amount</label>
     <input class="form-control @error('total_amount') is-invalid @enderror" type="number" step="0.01" min="0" name="total_amount" x-model.number="total" placeholder="0.00">
@@ -206,8 +200,6 @@
             bookingType: config.bookingType,
             total: config.total,
             advance: config.advance,
-            roomAmount: '',
-            safariAmount: '',
             lunch: !!config.lunch,
             drone: !!config.drone,
             lunchAmount: config.lunchAmount,
@@ -219,11 +211,6 @@
             },
             get balance() {
                 return (this.total + this.extraCharges - this.advance).toFixed(2);
-            },
-            applyCombinedTotal() {
-                const room = parseFloat(this.roomAmount) || 0;
-                const safari = parseFloat(this.safariAmount) || 0;
-                this.total = +(room + safari).toFixed(2);
             },
         };
     }

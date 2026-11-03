@@ -49,8 +49,8 @@
           <div class="bd-hero-meta">
             <span><i class="bi bi-hash"></i>Booking {{ $booking->id }}</span>
             <span class="type-badge {{ $typeBadge }}">{{ $booking->booking_type_label }}</span>
-            @if ($isStay && $booking->room)
-              <span><i class="bi bi-door-open"></i>{{ $booking->room->name_or_number }}</span>
+            @if ($isStay && ($booking->room || $booking->stay_hotel_name))
+              <span><i class="bi bi-{{ $booking->room ? 'door-open' : 'building' }}"></i>{{ $booking->room_label }}</span>
             @endif
             @if ($isStay)
               <span><i class="bi bi-calendar3"></i>{{ $booking->check_in->format('d M') }} – {{ $booking->check_out->format('d M Y') }}</span>
@@ -103,6 +103,8 @@
               <dl class="bd-fields">
                 @if ($booking->room)
                   <div class="bd-field bd-field-wide"><dt><i class="bi bi-door-open"></i>Room</dt><dd>{{ $booking->room->name_or_number }} <span class="bd-sub">{{ $booking->room->type }}</span></dd></div>
+                @elseif ($booking->stay_hotel_name)
+                  <div class="bd-field bd-field-wide"><dt><i class="bi bi-building"></i>Stay hotel / accommodation</dt><dd>{{ $booking->stay_hotel_name }}</dd></div>
                 @endif
                 <div class="bd-field"><dt><i class="bi bi-box-arrow-in-right"></i>Check-in</dt><dd>{{ $booking->check_in->format('D, d M Y') }}</dd></div>
                 <div class="bd-field"><dt><i class="bi bi-box-arrow-right"></i>Check-out</dt><dd>{{ $booking->check_out->format('D, d M Y') }}</dd></div>

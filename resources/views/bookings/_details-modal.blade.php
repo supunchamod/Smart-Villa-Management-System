@@ -87,7 +87,7 @@
             </div>
             <div class="vb-party">
               <div class="vb-label">{{ $isStay ? 'Stay details' : 'Safari details' }}</div>
-              @if ($booking->room)<div class="vb-strong">{{ $booking->room->name_or_number }} <span class="vb-muted">· {{ $booking->room->type }}</span></div>@endif
+              @if ($booking->room)<div class="vb-strong">{{ $booking->room->name_or_number }} <span class="vb-muted">· {{ $booking->room->type }}</span></div>@elseif ($booking->stay_hotel_name)<div class="vb-strong">{{ $booking->stay_hotel_name }} <span class="vb-muted">· Stay hotel</span></div>@endif
               @if ($isStay)
                 <div class="vb-muted">{{ $booking->check_in->format('d M Y') }} → {{ $booking->check_out->format('d M Y') }} ({{ $booking->nights }} {{ \Illuminate\Support\Str::plural('night', $booking->nights) }})</div>
               @endif

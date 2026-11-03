@@ -603,21 +603,26 @@ class BookingController extends Controller
             $bookingType = 'accommodation_only';
         }
 
-        $needsRoom = $bookingType !== 'safari_only';
+        // Accommodation bookings use one of the villa's rooms; a Full Package records the hotel the
+        // guests stay at instead (no room, no board basis); Safari Only has neither room nor stay dates.
+        $needsRoom = $bookingType === 'accommodation_only';
+        $needsStayDates = $bookingType !== 'safari_only';
         $needsSafari = $bookingType !== 'accommodation_only';
         $isSafariOnly = $bookingType === 'safari_only';
+        $isFullPackage = $bookingType === 'full_package';
 
         $validated = $request->validate([
             'room_id' => [$needsRoom ? 'required' : 'nullable', 'exists:rooms,id'],
-            'check_in' => [$needsRoom ? 'required' : 'nullable', 'date'],
-            'check_out' => array_filter([$needsRoom ? 'required' : 'nullable', 'date', $needsRoom ? 'after:check_in' : null]),
+            'stay_hotel_name' => [$isFullPackage ? 'required' : 'nullable', 'string', 'max:255'],
+            'check_in' => [$needsStayDates ? 'required' : 'nullable', 'date'],
+            'check_out' => array_filter([$needsStayDates ? 'required' : 'nullable', 'date', $needsStayDates ? 'after:check_in' : null]),
             'safari_tour_name' => [$needsSafari ? 'required' : 'nullable', 'string', 'max:255'],
             'safari_date' => [$needsSafari ? 'required' : 'nullable', 'date'],
             'safari_vehicle_details' => ['nullable', 'string', 'max:255'],
-            // Safari-only trip logistics (ignored / cleared for every other booking type).
+            // Trip logistics: pickup time + group size for safari-only and full packages; the rest safari-only.
             'pickup_location' => ['nullable', 'string', 'max:255'],
             'pickup_time' => ['nullable', 'date_format:H:i'],
-            'group_pax_size' => [$isSafariOnly ? 'required' : 'nullable', 'integer', 'min:1', 'max:500'],
+            'group_pax_size' => [$isSafariOnly || $isFullPackage ? 'required' : 'nullable', 'integer', 'min:1', 'max:500'],
             'include_lunch' => ['nullable', 'boolean'],
             'include_drone_videos' => ['nullable', 'boolean'],
             'customer_name' => ['required', 'string', 'max:255'],
@@ -647,26 +652,39 @@ class BookingController extends Controller
         $validated['status'] = $validated['status'] ?? 'confirmed';
 
         if (! $needsRoom) {
+            $validated['room_id'] = null;
+        }
+
+        if (! $isFullPackage) {
+            $validated['stay_hotel_name'] = null;
+        }
+
+        if ($isSafariOnly) {
             // A safari-only booking has no room or stay dates of its own -
             // the safari date stands in for both so every date-driven query
             // and view elsewhere (reminders, dashboard widgets, the
             // calendar feed) keeps working without special-casing this type.
-            $validated['room_id'] = null;
             $validated['check_in'] = $validated['safari_date'];
             $validated['check_out'] = $validated['safari_date'];
         }
 
-        if ($isSafariOnly) {
-            // A safari-only trip has no room, so no board basis / meal plan either.
+        // Only accommodation bookings have a board basis / meal plan.
+        if ($bookingType !== 'accommodation_only') {
             $validated['board_type'] = null;
+        }
+
+        if ($isSafariOnly) {
             $validated['include_lunch'] = $request->boolean('include_lunch');
             $validated['include_drone_videos'] = $request->boolean('include_drone_videos');
         } else {
-            $validated['pickup_location'] = null;
-            $validated['pickup_time'] = null;
-            $validated['group_pax_size'] = null;
             $validated['include_lunch'] = false;
             $validated['include_drone_videos'] = false;
+            $validated['pickup_location'] = null;
+        }
+
+        if (! $isSafariOnly && ! $isFullPackage) {
+            $validated['pickup_time'] = null;
+            $validated['group_pax_size'] = null;
         }
 
         if (! $needsSafari) {
