@@ -69,6 +69,9 @@ Route::middleware('auth')->group(function () {
         Route::post('/bookings/{booking}/send-whatsapp', [BookingController::class, 'sendWhatsApp'])->name('bookings.send-whatsapp');
         Route::get('/bookings/{booking}/invoice/confirmation', [BookingController::class, 'confirmationInvoice'])->name('bookings.invoice.confirmation');
         Route::get('/bookings/{booking}/invoice/final', [BookingController::class, 'finalInvoice'])->name('bookings.invoice.final');
+        Route::get('/bookings/{booking}/invoice/{stage}/view', [BookingController::class, 'viewInvoice'])
+            ->whereIn('stage', ['confirmation', 'final'])
+            ->name('bookings.invoice.view');
 
         // The public booking page's content/pricing manager - grouped with
         // bookings/calendar since it's the same "manage what guests can

@@ -105,7 +105,7 @@ class DashboardController extends Controller
             ->orderByDesc('created_at')
             ->get();
 
-        $todaysCheckouts = Booking::with('room')
+        $todaysCheckouts = Booking::with(['room', 'extras'])
             ->where('status', 'confirmed')
             ->where('booking_type', '!=', 'safari_only')
             ->whereDate('check_out', $today)

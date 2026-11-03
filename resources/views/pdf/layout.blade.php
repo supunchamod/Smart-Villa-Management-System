@@ -178,6 +178,25 @@
         text-transform: uppercase;
     }
 
+    .section-gap { margin-top: 14px; }
+    .items-table td.sub { color: #6b7280; font-size: 11px; padding-top: 0; border-bottom: none; }
+    .items-table tr.extra-row td { padding-top: 9px; padding-bottom: 9px; }
+    .items-table tr.group-row td { background: #fafafa; font-size: 11px; text-transform: uppercase; letter-spacing: .05em; color: #6b7280; padding: 7px 12px; }
+    .totals-table .grand.settled td { border-top-color: #2fa84f; }
+    .method-note { margin-top: 6px; text-align: right; color: #6b7280; font-size: 12px; }
+
+    @isset($web)
+    /* On-screen bill: a centred, screenshot-friendly card. */
+    body { background: #eef1f6; margin: 0; padding: 24px 12px; }
+    .bill-sheet { max-width: 780px; margin: 0 auto; background: #fff; padding: 36px 40px; border-radius: 10px; box-shadow: 0 6px 30px rgba(15,23,42,.10); position: relative; overflow: hidden; }
+    .bill-toolbar { max-width: 780px; margin: 0 auto 14px; display: flex; flex-wrap: wrap; gap: 8px; }
+    .bill-toolbar a, .bill-toolbar button { font: inherit; font-weight: bold; font-size: 13px; padding: 9px 16px; border-radius: 8px; border: 1px solid #d1d5db; background: #fff; color: #111827; text-decoration: none; cursor: pointer; }
+    .bill-toolbar .primary { background: #5278ff; border-color: #5278ff; color: #fff; }
+    .bill-toolbar .wa { background: #25d366; border-color: #25d366; color: #fff; }
+    .watermark { position: absolute; top: 320px; left: 80px; }
+    @media print { body { background: #fff; padding: 0; } .bill-sheet { box-shadow: none; padding: 0; } .bill-toolbar { display: none; } }
+    @endisset
+
     .footer-note {
         margin-top: 50px;
         text-align: center;

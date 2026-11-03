@@ -67,7 +67,7 @@ class BookingController extends Controller
             ? $request->query('range')
             : null;
 
-        $bookingsQuery = Booking::query()->with('room')->latest();
+        $bookingsQuery = Booking::query()->with(['room', 'extras'])->latest();
 
         match ($tab) {
             'active' => $bookingsQuery->where('status', 'confirmed'),
@@ -164,7 +164,7 @@ class BookingController extends Controller
     public function show(Booking $booking): View
     {
         return view('bookings.show', [
-            'booking' => $booking->load('room'),
+            'booking' => $booking->load(['room', 'extras']),
         ]);
     }
 
@@ -202,35 +202,82 @@ class BookingController extends Controller
     }
 
     /**
-     * Mark a confirmed booking as checked out, settling the balance. Also
-     * callable via AJAX (e.g. the dashboard's inline checkout cards, and
-     * the Manage Bookings "Checkout & Pay Balance" modal), which gets a
-     * JSON reply instead of a redirect so the UI can update in place.
+     * Mark a confirmed booking as checked out, adding any extra charges
+     * (meals, BBQ, safari jeep, ...) to the bill and settling the balance:
+     *
+     *   balance = total_amount (room/package) + extras - advance_payment
+     *
+     * Also callable via AJAX, which gets a JSON reply instead of a redirect.
+     * The extras, the status change and the settlement amount are written in
+     * one transaction under a row lock, so a double submit can't add the
+     * extras twice or check the booking out twice.
      */
     public function checkout(Request $request, Booking $booking): RedirectResponse|JsonResponse
     {
-        if ($booking->status !== 'confirmed') {
-            if ($request->wantsJson()) {
-                return response()->json(['message' => 'Only confirmed bookings can be checked out.'], 422);
-            }
-
-            return back()->with('error', 'Only confirmed bookings can be checked out.');
-        }
+        // Rows the user added but left completely blank are noise, not errors.
+        $request->merge([
+            'extras' => collect($request->input('extras', []))
+                ->filter(fn ($row) => is_array($row) && (trim((string) ($row['item_name'] ?? '')) !== '' || trim((string) ($row['unit_price'] ?? '')) !== ''))
+                ->values()
+                ->all(),
+        ]);
 
         $validated = $request->validate([
             'payment_method' => ['nullable', 'string', Rule::in(['cash', 'card', 'bank_transfer'])],
+            'extras' => ['array', 'max:30'],
+            'extras.*.item_name' => ['required', 'string', 'max:120'],
+            'extras.*.quantity' => ['nullable', 'integer', 'min:1', 'max:999'],
+            'extras.*.unit_price' => ['required', 'numeric', 'min:0', 'max:99999999'],
         ]);
 
-        $booking->update([
-            'status' => 'checked_out',
-            'final_settlement_amount' => (float) $booking->total_amount - (float) $booking->advance_payment,
-            'checked_out_at' => now(),
-            'payment_method' => $validated['payment_method'] ?? null,
-        ]);
+        $fail = function (string $message) use ($request) {
+            return $request->wantsJson()
+                ? response()->json(['message' => $message], 422)
+                : back()->with('error', $message);
+        };
+
+        $result = DB::transaction(function () use ($booking, $validated) {
+            $locked = Booking::query()->lockForUpdate()->find($booking->id);
+
+            if (! $locked || $locked->status !== 'confirmed') {
+                return 'Only confirmed bookings can be checked out.';
+            }
+
+            $extras = collect($validated['extras'] ?? [])->map(fn (array $row) => [
+                'item_name' => trim($row['item_name']),
+                'quantity' => (int) ($row['quantity'] ?? 1),
+                'unit_price' => round((float) $row['unit_price'], 2),
+            ]);
+
+            $extrasTotal = round($extras->sum(fn (array $row) => $row['quantity'] * $row['unit_price']), 2);
+            $settlement = round((float) $locked->total_amount + $extrasTotal - (float) $locked->advance_payment, 2);
+
+            if ($settlement > 0 && empty($validated['payment_method'])) {
+                return 'Please choose the payment method used to collect the balance.';
+            }
+
+            $locked->extras()->createMany($extras->all());
+
+            $locked->update([
+                'status' => 'checked_out',
+                'final_settlement_amount' => max(0.0, $settlement),
+                'checked_out_at' => now(),
+                'payment_method' => $validated['payment_method'] ?? null,
+            ]);
+
+            return $locked;
+        });
+
+        if (is_string($result)) {
+            return $fail($result);
+        }
+
+        $booking = $result;
 
         // The booking is now marked as paid in full - send the final
-        // invoice immediately, and queue a review request for an hour
-        // from now, once the guest has actually had time to leave.
+        // invoice (which includes the extras) immediately, and queue a
+        // review request for an hour from now, once the guest has actually
+        // had time to leave.
         $this->dispatchAutomatedWhatsApp(
             fn () => SendBookingWhatsAppJob::dispatch($booking),
             'checkout final invoice',
@@ -246,6 +293,7 @@ class BookingController extends Controller
             return response()->json([
                 'status' => $booking->status,
                 'final_invoice_url' => route('bookings.invoice.final', $booking),
+                'final_bill_url' => route('bookings.invoice.view', [$booking, 'final']),
                 'message' => 'Booking checked out successfully. The final invoice is ready to download.',
             ]);
         }
@@ -378,33 +426,100 @@ class BookingController extends Controller
     }
 
     /**
-     * Stream the stage 1 confirmation invoice, showing the remaining balance due.
+     * Stream (or, with ?download=1, download) the stage 1 confirmation
+     * invoice, showing the remaining balance due.
      */
-    public function confirmationInvoice(Booking $booking): Response
+    public function confirmationInvoice(Request $request, Booking $booking): Response
     {
-        $booking->load('room');
-
-        return Pdf::loadView('invoices.pdf', [
-            'booking' => $booking,
-            'stage' => 'confirmation',
-        ])->setPaper('a4', 'portrait')->stream("invoice-confirmation-{$booking->id}.pdf");
+        return $this->invoicePdf($request, $booking, 'confirmation');
     }
 
     /**
-     * Stream the stage 2 final invoice once the booking has been checked out.
+     * Stream (or, with ?download=1, download) the stage 2 final invoice once
+     * the booking has been checked out.
      */
-    public function finalInvoice(Booking $booking): Response|RedirectResponse
+    public function finalInvoice(Request $request, Booking $booking): Response|RedirectResponse
     {
         if ($booking->status !== 'checked_out') {
             return back()->with('error', 'This booking has not been checked out yet.');
         }
 
-        $booking->load('room');
+        return $this->invoicePdf($request, $booking, 'final');
+    }
 
-        return Pdf::loadView('invoices.pdf', [
+    /**
+     * The same bill as the PDF, as a clean on-screen page: easy to
+     * screenshot, print, or share with the guest over WhatsApp (it carries a
+     * click-to-chat link with a text summary of the bill).
+     */
+    public function viewInvoice(Booking $booking, string $stage): View|RedirectResponse
+    {
+        abort_unless(in_array($stage, ['confirmation', 'final'], true), 404);
+
+        if ($stage === 'final' && $booking->status !== 'checked_out') {
+            return back()->with('error', 'This booking has not been checked out yet.');
+        }
+
+        $booking->load(['room', 'extras']);
+
+        return view('invoices.pdf', [
             'booking' => $booking,
-            'stage' => 'final',
-        ])->setPaper('a4', 'portrait')->stream("invoice-final-{$booking->id}.pdf");
+            'stage' => $stage,
+            'web' => true,
+            'whatsAppUrl' => $this->whatsAppShareUrl($booking, $stage),
+        ]);
+    }
+
+    private function invoicePdf(Request $request, Booking $booking, string $stage): Response
+    {
+        $booking->load(['room', 'extras']);
+
+        $filename = "invoice-{$stage}-{$booking->id}.pdf";
+        $pdf = Pdf::loadView('invoices.pdf', [
+            'booking' => $booking,
+            'stage' => $stage,
+        ])->setPaper('a4', 'portrait');
+
+        return $request->boolean('download') ? $pdf->download($filename) : $pdf->stream($filename);
+    }
+
+    /**
+     * wa.me click-to-chat link pre-filled with a plain-text bill summary.
+     * Null when the booking has no phone number to message.
+     */
+    private function whatsAppShareUrl(Booking $booking, string $stage): ?string
+    {
+        if (! $booking->customer_phone) {
+            return null;
+        }
+
+        $settings = Setting::current();
+        $currency = $settings->currency ?: 'LKR';
+        $money = fn (float $amount) => $currency.' '.number_format($amount, 2);
+
+        $lines = [
+            "*{$settings->villa_name}* - ".($stage === 'final' ? 'Final Invoice' : 'Booking Invoice'),
+            '',
+            "Hi {$booking->customer_name},",
+            'Stay: '.$booking->room_label.', '.$booking->check_in->format('d M Y').' - '.$booking->check_out->format('d M Y'),
+            'Room charges: '.$money((float) $booking->total_amount),
+        ];
+
+        foreach ($booking->extras as $extra) {
+            $lines[] = "{$extra->item_name} x{$extra->quantity}: ".$money($extra->line_total);
+        }
+
+        $lines[] = 'Total: '.$money($booking->grand_total);
+        $lines[] = 'Advance paid: '.$money((float) $booking->advance_payment);
+        $lines[] = $stage === 'final'
+            ? 'Balance paid at checkout: '.$money((float) $booking->final_settlement_amount)
+            : 'Balance due: '.$money($booking->remaining_balance);
+        $lines[] = '';
+        $lines[] = "Thank you for choosing {$settings->villa_name}!";
+
+        $chatId = app(\App\Services\WhatsAppService::class)->formatPhoneNumber($booking->customer_phone);
+
+        return 'https://wa.me/'.str_replace('@c.us', '', $chatId).'?text='.rawurlencode(implode("\n", $lines));
     }
 
     /**
@@ -412,7 +527,7 @@ class BookingController extends Controller
      */
     public function calendarFeed(): JsonResponse
     {
-        $events = Booking::with('room')->get()->map(function (Booking $booking) {
+        $events = Booking::with(['room', 'extras'])->get()->map(function (Booking $booking) {
             return [
                 'id' => $booking->id,
                 'title' => $booking->room_label.' — '.$booking->customer_name,

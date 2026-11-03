@@ -44,7 +44,7 @@ class SendBookingWhatsAppJob implements ShouldQueue
 
     public function handle(WhatsAppService $whatsapp): void
     {
-        $booking = Booking::with('room')->find($this->bookingId);
+        $booking = Booking::with(['room', 'extras'])->find($this->bookingId);
 
         if (! $booking) {
             Log::error('SendBookingWhatsAppJob: booking no longer exists', ['booking_id' => $this->bookingId]);
@@ -136,7 +136,7 @@ class SendBookingWhatsAppJob implements ShouldQueue
             "🏡 Room: {$booking->room_label}",
             '📅 Check-in: '.$booking->check_in->format('d M Y'),
             '📅 Check-out: '.$booking->check_out->format('d M Y'),
-            "💰 Total: {$currency} ".number_format((float) $booking->total_amount, 2),
+            "💰 Total: {$currency} ".number_format($booking->grand_total, 2),
         ];
 
         if ($isFinal) {

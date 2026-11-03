@@ -405,43 +405,7 @@
              both the desktop table and mobile cards above. --}}
         @foreach ($bookings as $booking)
           @if ($booking->status === 'confirmed')
-            <div class="modal fade" id="checkoutModal{{ $booking->id }}" tabindex="-1" aria-hidden="true">
-              <div class="modal-dialog modal-dialog-centered">
-                <div class="modal-content dash-modal">
-                  <form method="POST" action="{{ route('bookings.checkout', $booking) }}">
-                    @csrf
-                    <div class="modal-header">
-                      <div><span class="eyebrow">Checkout</span><h2 class="modal-title">Checkout {{ $booking->customer_name }}?</h2></div>
-                      <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                    </div>
-                    <div class="modal-body">
-                      <div class="balance-grid mb-3">
-                        <div class="balance-stat"><span>Total Amount</span><strong>{{ $globalSettings->currency }} {{ number_format($booking->total_amount, 2) }}</strong></div>
-                        <div class="balance-stat"><span>Advance Paid</span><strong>{{ $globalSettings->currency }} {{ number_format($booking->advance_payment, 2) }}</strong></div>
-                        <div class="balance-stat"><span>Balance Due</span><strong>{{ $globalSettings->currency }} {{ number_format($booking->remaining_balance, 2) }}</strong></div>
-                      </div>
-                      @if ($booking->remaining_balance > 0)
-                        <div class="mb-3">
-                          <label class="form-label" for="payment_method{{ $booking->id }}">Payment method for the balance received</label>
-                          <select class="form-select" name="payment_method" id="payment_method{{ $booking->id }}">
-                            <option value="cash">Cash</option>
-                            <option value="card">Card</option>
-                            <option value="bank_transfer">Bank Transfer</option>
-                          </select>
-                        </div>
-                        <p class="text-muted small mb-0">This confirms the remaining balance has been received. The booking will be marked as checked out and the final invoice will be generated.</p>
-                      @else
-                        <p class="text-muted small mb-0">This booking is already paid in full. Confirming will mark it as checked out and generate the final invoice.</p>
-                      @endif
-                    </div>
-                    <div class="modal-footer">
-                      <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
-                      <button type="submit" class="btn btn-primary"><i class="bi bi-check2-circle"></i> Confirm Checkout &amp; Complete</button>
-                    </div>
-                  </form>
-                </div>
-              </div>
-            </div>
+            @include('bookings._checkout-modal', ['booking' => $booking, 'modalId' => 'checkoutModal'.$booking->id])
           @endif
 
           @php

@@ -19,7 +19,8 @@
               <a class="btn btn-light" href="{{ route('bookings.invoice.confirmation', $booking) }}" target="_blank"><i class="bi bi-file-earmark-pdf"></i> Confirmation Invoice</a>
             @endif
             @if ($booking->status === 'checked_out')
-              <a class="btn btn-light" href="{{ route('bookings.invoice.final', $booking) }}" target="_blank"><i class="bi bi-file-earmark-check"></i> Final Invoice</a>
+              <a class="btn btn-light" href="{{ route('bookings.invoice.view', [$booking, 'final']) }}" target="_blank"><i class="bi bi-receipt"></i> View Bill</a>
+              <a class="btn btn-light" href="{{ route('bookings.invoice.final', [$booking, 'download' => 1]) }}"><i class="bi bi-file-earmark-pdf"></i> Download Final Invoice (PDF)</a>
             @endif
             @if (in_array($booking->status, ['confirmed', 'checked_out'], true) && $booking->customer_phone)
               <button type="button" class="btn btn-outline-success" @click="sendWhatsApp()" :disabled="waSending">
@@ -86,34 +87,29 @@
             <div class="panel booking-detail-balance">
               <div class="panel-head"><div><h2>Payment Summary</h2><p>Total, advance, and outstanding balance</p></div></div>
               <div class="balance-grid">
-                <div class="balance-stat"><span>Total Amount</span><strong>{{ number_format($booking->total_amount, 2) }}</strong></div>
+                <div class="balance-stat"><span>{{ $booking->extras->isNotEmpty() ? 'Total (incl. extras)' : 'Total Amount' }}</span><strong>{{ number_format($booking->grand_total, 2) }}</strong></div>
                 <div class="balance-stat"><span>Advance Payment</span><strong>{{ number_format($booking->advance_payment, 2) }}</strong></div>
                 <div class="balance-stat"><span>Remaining Balance</span><strong>{{ number_format($booking->remaining_balance, 2) }}</strong></div>
               </div>
+              @if ($booking->extras->isNotEmpty())
+                <div class="co-section mb-0">
+                  <div class="co-section-title">Charges</div>
+                  <div class="co-line mb-2"><span>Room charges</span><strong>{{ number_format($booking->total_amount, 2) }}</strong></div>
+                  @foreach ($booking->extras as $extra)
+                    <div class="co-line mb-2"><div><strong>{{ $extra->item_name }}</strong><small>{{ $extra->quantity }} × {{ number_format($extra->unit_price, 2) }}</small></div><strong>{{ number_format($extra->line_total, 2) }}</strong></div>
+                  @endforeach
+                  @if ($booking->payment_method)
+                    <small class="text-muted">Balance paid by {{ ucfirst(str_replace('_', ' ', $booking->payment_method)) }}</small>
+                  @endif
+                </div>
+              @endif
             </div>
           </div>
         </div>
 
-        <div class="modal fade" id="checkoutModal" tabindex="-1" aria-hidden="true">
-          <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content dash-modal">
-              <div class="modal-header">
-                <div><span class="eyebrow">Confirm Checkout</span><h2 class="modal-title">Mark this booking as fully paid?</h2></div>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-              </div>
-              <div class="modal-body">
-                <p>This confirms the remaining balance of <strong>{{ number_format($booking->remaining_balance, 2) }}</strong> has been received from {{ $booking->customer_name }}. The booking will be marked as checked out and the final invoice will be generated.</p>
-              </div>
-              <div class="modal-footer">
-                <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
-                <form method="POST" action="{{ route('bookings.checkout', $booking) }}">
-                  @csrf
-                  <button type="submit" class="btn btn-primary"><i class="bi bi-check2-circle"></i> Yes, Payment Received</button>
-                </form>
-              </div>
-            </div>
-          </div>
-        </div>
+        @if ($booking->status === 'confirmed')
+          @include('bookings._checkout-modal', ['booking' => $booking, 'modalId' => 'checkoutModal'])
+        @endif
 @endsection
 
 @push('scripts')

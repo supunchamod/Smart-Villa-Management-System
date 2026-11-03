@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Booking extends Model
 {
@@ -138,6 +139,11 @@ class Booking extends Model
      * first - the "what's coming up" query shared by the calendar's agenda
      * list and the Profit Analyzer's upcoming-bookings widget.
      */
+    public function extras(): HasMany
+    {
+        return $this->hasMany(BookingExtra::class)->orderBy('id');
+    }
+
     public function scopeUpcoming(Builder $query): Builder
     {
         return $query->where('status', 'confirmed')
@@ -151,6 +157,24 @@ class Booking extends Model
      * the settlement into advance_payment) so the income ledger can still
      * report them as two distinct cash-in events.
      */
+    /**
+     * Sum of the extra charges (meals, BBQ, jeep, ...) on this booking.
+     */
+    protected function extrasTotal(): Attribute
+    {
+        return Attribute::get(fn () => round((float) $this->extras->sum(fn (BookingExtra $extra) => $extra->line_total), 2));
+    }
+
+    /**
+     * Room/package charge plus extras - the full amount the guest owes
+     * before any advance is deducted. total_amount alone is only the
+     * original room/package charge.
+     */
+    protected function grandTotal(): Attribute
+    {
+        return Attribute::get(fn () => round((float) $this->total_amount + $this->extras_total, 2));
+    }
+
     protected function remainingBalance(): Attribute
     {
         return Attribute::get(function () {
@@ -158,8 +182,18 @@ class Booking extends Model
                 return 0.0;
             }
 
-            return (float) $this->total_amount - (float) $this->advance_payment;
+            return round($this->grand_total - (float) $this->advance_payment, 2);
         });
+    }
+
+    /**
+     * Number of nights billed for the room charge (at least 1).
+     */
+    protected function nights(): Attribute
+    {
+        return Attribute::get(fn () => $this->booking_type === 'safari_only' || ! $this->check_in || ! $this->check_out
+            ? 1
+            : max(1, (int) $this->check_in->diffInDays($this->check_out)));
     }
 
     /**

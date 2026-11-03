@@ -310,40 +310,28 @@
           </div>
           <div class="mdash-booking-list">
             @forelse ($todaysCheckouts as $booking)
-              <div
-                class="mdash-booking-card stacked"
-                x-data="checkoutCard(@js(route('bookings.checkout', $booking)), @js(route('bookings.invoice.final', $booking)))"
-              >
+              <div class="mdash-booking-card stacked">
                 <div class="mdash-card-top">
                   <span class="mdash-avatar sm alt">{{ $booking->customer_initials }}</span>
                   <div class="mdash-booking-info">
                     <strong>{{ $booking->customer_name }}</strong>
                     <small>{{ $booking->room_label }}</small>
                   </div>
-                  <span class="mdash-badge partial" x-show="!checkedOut">{{ $globalSettings->currency }} {{ number_format($booking->remaining_balance, 2) }}</span>
-                  <span class="mdash-badge paid" x-show="checkedOut">Paid</span>
+                  <span class="mdash-badge partial">{{ $globalSettings->currency }} {{ number_format($booking->remaining_balance, 2) }}</span>
                 </div>
 
                 @can('manage_bookings')
                   <button
                     type="button"
                     class="mdash-action-btn mdash-action-btn-amber"
-                    x-show="!checkedOut"
-                    :disabled="processing"
-                    @click="checkout()"
-                  ><i class="bi bi-box-arrow-right"></i> <span x-text="processing ? 'Processing…' : 'Checkout & Pay Balance'"></span></button>
-
-                  <a
-                    :href="finalInvoiceUrl"
-                    class="mdash-action-btn mdash-action-btn-success"
-                    target="_blank"
-                    rel="noopener"
-                    x-show="checkedOut"
-                  ><i class="bi bi-file-earmark-check"></i> Download Final Invoice PDF</a>
+                    data-bs-toggle="modal"
+                    data-bs-target="#checkoutModal{{ $booking->id }}"
+                  ><i class="bi bi-box-arrow-right"></i> Checkout &amp; Pay Balance</button>
                 @endcan
-
-                <p class="mdash-inline-error" x-show="error" x-text="error"></p>
               </div>
+              @can('manage_bookings')
+                @include('bookings._checkout-modal', ['booking' => $booking, 'modalId' => 'checkoutModal'.$booking->id])
+              @endcan
             @empty
               <p class="mdash-empty">No check-outs scheduled for today.</p>
             @endforelse
