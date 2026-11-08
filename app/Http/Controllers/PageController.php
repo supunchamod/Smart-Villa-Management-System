@@ -11,7 +11,7 @@ class PageController extends Controller
     public function calendar(): View
     {
         // Real confirmed bookings, soonest check-in first.
-        $upcoming = Booking::with(['room', 'extras'])->upcoming()->limit(6)->get();
+        $upcoming = Booking::with(['room', 'extras', 'safariTrips'])->upcoming()->limit(6)->get();
 
         return view('calendar', [
             'upcomingBookings' => $upcoming,

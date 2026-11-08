@@ -37,9 +37,7 @@ class PartnerBookingTest extends TestCase
             'stay_hotel_name' => 'Cinnamon Wild, Yala',
             'check_in' => today()->addDays(3)->toDateString(),
             'check_out' => today()->addDays(5)->toDateString(),
-            'safari_tour_name' => 'Yala Full Day Safari',
-            'safari_date' => today()->addDays(4)->toDateString(),
-            'group_pax_size' => 4,
+            'trips' => [['safari_date' => today()->addDays(4)->toDateString(), 'tour_name' => 'Yala Full Day Safari', 'pax_count' => 4]],
             'customer_name' => 'Supun Chamod',
             'total_amount' => 150000,
             'advance_payment' => 50000,
@@ -215,8 +213,7 @@ class PartnerBookingTest extends TestCase
         $this->actingAs($this->owner)->put(route('bookings.update', $booking), [
             'booking_type' => 'full_package', 'stay_hotel_name' => 'Wild Coast Tented Lodge',
             'check_in' => today()->addDays(3)->toDateString(), 'check_out' => today()->addDays(5)->toDateString(),
-            'safari_tour_name' => 'Yala Full Day Safari', 'safari_date' => today()->addDays(4)->toDateString(),
-            'group_pax_size' => 4, 'customer_name' => 'Supun Chamod', 'total_amount' => 150000, 'advance_payment' => 50000, 'status' => 'confirmed',
+            'trips' => [['safari_date' => today()->addDays(4)->toDateString(), 'tour_name' => 'Yala Full Day Safari', 'pax_count' => 4]], 'customer_name' => 'Supun Chamod', 'total_amount' => 150000, 'advance_payment' => 50000, 'status' => 'confirmed',
         ])->assertSessionHasNoErrors();
 
         $this->assertSame('Wild Coast Tented Lodge', $booking->partnerBooking->fresh()->partner_label);

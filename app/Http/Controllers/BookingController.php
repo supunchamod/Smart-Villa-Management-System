@@ -13,6 +13,7 @@ use App\Services\RoomAvailability;
 use App\Support\AutomatedWhatsApp;
 use App\Support\BookingDetails;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -20,6 +21,7 @@ use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
@@ -42,6 +44,11 @@ class BookingController extends Controller
      * plus every extra charge on the booking.
      */
     private const BALANCE_DUE_SQL = 'advance_payment < total_amount + COALESCE((SELECT SUM(booking_extras.quantity * booking_extras.unit_price) FROM booking_extras WHERE booking_extras.booking_id = bookings.id), 0)';
+
+    /**
+     * Calendar colour of a safari trip event (distinct from the stay colours).
+     */
+    private const SAFARI_COLOR = '#0e9f8e';
 
     private const STATUS_COLORS = [
         'pending' => '#f6a642',
@@ -79,7 +86,7 @@ class BookingController extends Controller
             ? $request->query('range')
             : null;
 
-        $bookingsQuery = Booking::query()->with(['room', 'extras', 'expenses'])->latest();
+        $bookingsQuery = Booking::query()->with(['room', 'extras', 'expenses', 'safariTrips'])->latest();
 
         match ($tab) {
             'active' => $bookingsQuery->where('status', 'confirmed'),
@@ -155,10 +162,12 @@ class BookingController extends Controller
     {
         $validated = $this->validateBooking($request);
         $charges = Arr::only($validated, ['lunch_charge', 'drone_charge']);
-        $data = Arr::except($validated, ['lunch_charge', 'drone_charge']);
+        $trips = $validated['trips'];
+        $data = Arr::except($validated, ['lunch_charge', 'drone_charge', 'trips']);
 
-        $booking = $this->saveWithAvailabilityCheck($data, function () use ($data, $charges) {
+        $booking = $this->saveWithAvailabilityCheck($data, function () use ($data, $charges, $trips) {
             $booking = Booking::create($data);
+            $this->syncSafariTrips($booking, $trips);
             $this->syncSafariCharges($booking, $data, $charges);
             // A Full Package registers in Partner Resort Bookings as "Pending Advance".
             $this->partners->syncRegistration($booking);
@@ -185,7 +194,7 @@ class BookingController extends Controller
     public function show(Booking $booking): View
     {
         return view('bookings.show', [
-            'booking' => $booking->load(['room', 'extras', 'expenses']),
+            'booking' => $booking->load(['room', 'extras', 'expenses', 'safariTrips']),
         ]);
     }
 
@@ -208,10 +217,12 @@ class BookingController extends Controller
         $validated = $this->validateBooking($request, $booking);
 
         $charges = Arr::only($validated, ['lunch_charge', 'drone_charge']);
-        $data = Arr::except($validated, ['lunch_charge', 'drone_charge']);
+        $trips = $validated['trips'];
+        $data = Arr::except($validated, ['lunch_charge', 'drone_charge', 'trips']);
 
-        $this->saveWithAvailabilityCheck($data, function () use ($booking, $data, $charges) {
+        $this->saveWithAvailabilityCheck($data, function () use ($booking, $data, $charges, $trips) {
             $booking->update($data);
+            $this->syncSafariTrips($booking, $trips);
             $this->syncSafariCharges($booking, $data, $charges);
             $this->partners->syncRegistration($booking);
         }, $booking);
@@ -509,7 +520,7 @@ class BookingController extends Controller
             return back()->with('error', 'This booking has not been checked out yet.');
         }
 
-        $booking->load(['room', 'extras']);
+        $booking->load(['room', 'extras', 'safariTrips']);
 
         return view('invoices.pdf', [
             'booking' => $booking,
@@ -521,7 +532,7 @@ class BookingController extends Controller
 
     private function invoicePdf(Request $request, Booking $booking, string $stage): Response
     {
-        $booking->load(['room', 'extras']);
+        $booking->load(['room', 'extras', 'safariTrips']);
 
         $filename = "invoice-{$stage}-{$booking->id}.pdf";
         $pdf = Pdf::loadView('invoices.pdf', [
@@ -578,18 +589,38 @@ class BookingController extends Controller
     {
         $settings = Setting::current();
 
-        $events = Booking::with(['room', 'extras'])->get()->map(function (Booking $booking) use ($settings) {
-            return [
-                'id' => $booking->id,
-                'title' => $booking->room_label.' — '.$booking->customer_name,
-                'start' => $booking->check_in->toDateString(),
-                'end' => $booking->check_out->toDateString(),
-                'color' => self::STATUS_COLORS[$booking->status] ?? '#5278ff',
-                'extendedProps' => BookingDetails::for($booking, $settings),
-            ];
-        });
+        $events = collect();
 
-        return response()->json($events);
+        foreach (Booking::with(['room', 'extras', 'safariTrips'])->get() as $booking) {
+            $details = BookingDetails::for($booking, $settings);
+            $hasTrips = $booking->safariTrips->isNotEmpty();
+
+            // The stay itself. A safari-only booking has no stay: its trips are its calendar entries.
+            if (! ($booking->booking_type === 'safari_only' && $hasTrips)) {
+                $events->push([
+                    'id' => $booking->id,
+                    'title' => $booking->room_label.' — '.$booking->customer_name,
+                    'start' => $booking->check_in->toDateString(),
+                    'end' => $booking->check_out->toDateString(),
+                    'color' => self::STATUS_COLORS[$booking->status] ?? '#5278ff',
+                    'extendedProps' => $details,
+                ]);
+            }
+
+            // Every safari trip gets its own one-day event on its own date.
+            foreach ($booking->safariTrips as $trip) {
+                $events->push([
+                    'id' => $booking->id.'-trip-'.$trip->id,
+                    'title' => 'Safari: '.$trip->tour_name.' — '.$booking->customer_name,
+                    'start' => $trip->safari_date->toDateString(),
+                    'allDay' => true,
+                    'color' => $booking->status === 'cancelled' ? self::STATUS_COLORS['cancelled'] : self::SAFARI_COLOR,
+                    'extendedProps' => $details + ['selected_trip' => $trip->toDisplay()],
+                ]);
+            }
+        }
+
+        return response()->json($events->values());
     }
 
     /**
@@ -622,13 +653,17 @@ class BookingController extends Controller
             'stay_hotel_name' => [$isFullPackage ? 'required' : 'nullable', 'string', 'max:255'],
             'check_in' => [$needsStayDates ? 'required' : 'nullable', 'date'],
             'check_out' => array_filter([$needsStayDates ? 'required' : 'nullable', 'date', $needsStayDates ? 'after:check_in' : null]),
-            'safari_tour_name' => [$needsSafari ? 'required' : 'nullable', 'string', 'max:255'],
-            'safari_date' => [$needsSafari ? 'required' : 'nullable', 'date'],
             'safari_vehicle_details' => ['nullable', 'string', 'max:255'],
-            // Trip logistics: pickup time + group size for safari-only and full packages; the rest safari-only.
+            // One row per safari tour. Safari-only bookings and full packages need at least one; a
+            // multi-night guest can have a different tour on each day.
+            'trips' => [$needsSafari ? 'required' : 'nullable', 'array', 'min:1', 'max:20'],
+            'trips.*.safari_date' => ['required', 'date'],
+            'trips.*.tour_name' => ['required', 'string', 'max:255'],
+            'trips.*.pickup_time' => ['nullable', 'date_format:H:i'],
+            'trips.*.pax_count' => ['required', 'integer', 'min:1', 'max:500'],
+            'trips.*.notes' => ['nullable', 'string', 'max:255'],
+            // Safari-only logistics (pickup time and pax are per trip, above).
             'pickup_location' => ['nullable', 'string', 'max:255'],
-            'pickup_time' => ['nullable', 'date_format:H:i'],
-            'group_pax_size' => [$isSafariOnly || $isFullPackage ? 'required' : 'nullable', 'integer', 'min:1', 'max:500'],
             'include_lunch' => ['nullable', 'boolean'],
             'include_drone_videos' => ['nullable', 'boolean'],
             'customer_name' => ['required', 'string', 'max:255'],
@@ -645,7 +680,26 @@ class BookingController extends Controller
             'drone_charge' => [$isSafariOnly && $request->boolean('include_drone_videos') ? 'required' : 'nullable', 'numeric', 'min:0', 'max:99999999'],
             'status' => [Rule::in(['pending', 'confirmed', 'checked_out', 'cancelled'])],
             'board_type' => ['nullable', Rule::in(array_keys(Booking::BOARD_TYPES))],
+        ], [], [
+            'trips' => 'safari trips',
+            'trips.*.safari_date' => 'safari trip date',
+            'trips.*.tour_name' => 'safari package',
+            'trips.*.pickup_time' => 'pickup time',
+            'trips.*.pax_count' => 'pax',
+            'trips.*.notes' => 'trip notes',
         ]);
+
+        $trips = $needsSafari ? $this->normaliseTrips($validated['trips'] ?? [], $validated, $isFullPackage) : [];
+        $validated['trips'] = $trips;
+
+        // The booking-level safari fields stay as a summary of its trips (first date, all tour
+        // names, first pickup time, largest group) so lists, search and labels keep working.
+        if ($trips !== []) {
+            $validated['safari_tour_name'] = Str::limit(collect($trips)->pluck('tour_name')->unique()->implode(' + '), 250, '');
+            $validated['safari_date'] = $trips[0]['safari_date'];
+            $validated['pickup_time'] = $trips[0]['pickup_time'];
+            $validated['group_pax_size'] = collect($trips)->max('pax_count');
+        }
 
         // The advance may cover the whole bill: room/package charge plus the safari extras.
         $safariExtras = ($isSafariOnly && $request->boolean('include_lunch') ? (float) ($validated['lunch_charge'] ?? 0) : 0.0)
@@ -714,6 +768,60 @@ class BookingController extends Controller
         }
 
         return $validated;
+    }
+
+    /**
+     * Clean the submitted trip rows: trimmed, typed, and sorted by date then
+     * pickup time. A full package's trips must fall within the stay.
+     *
+     * @param  array<int, array<string, mixed>>  $rows
+     * @param  array<string, mixed>  $validated
+     * @return array<int, array<string, mixed>>
+     */
+    private function normaliseTrips(array $rows, array $validated, bool $mustFallInStay): array
+    {
+        $stayStart = $mustFallInStay && ! empty($validated['check_in']) ? Carbon::parse($validated['check_in'])->startOfDay() : null;
+        $stayEnd = $mustFallInStay && ! empty($validated['check_out']) ? Carbon::parse($validated['check_out'])->startOfDay() : null;
+
+        $trips = [];
+
+        foreach (array_values($rows) as $index => $row) {
+            $date = Carbon::parse($row['safari_date'])->startOfDay();
+
+            if ($stayStart && $stayEnd && ($date->lt($stayStart) || $date->gt($stayEnd))) {
+                throw ValidationException::withMessages([
+                    "trips.{$index}.safari_date" => 'A safari trip date must fall within the stay ('.$stayStart->format('d M').' – '.$stayEnd->format('d M Y').').',
+                ]);
+            }
+
+            $trips[] = [
+                'safari_date' => $date->toDateString(),
+                'tour_name' => trim((string) $row['tour_name']),
+                'pickup_time' => ! empty($row['pickup_time']) ? $row['pickup_time'] : null,
+                'pax_count' => (int) $row['pax_count'],
+                'notes' => isset($row['notes']) && trim((string) $row['notes']) !== '' ? trim((string) $row['notes']) : null,
+            ];
+        }
+
+        usort($trips, fn (array $a, array $b) => [$a['safari_date'], $a['pickup_time'] ?? '99:99'] <=> [$b['safari_date'], $b['pickup_time'] ?? '99:99']);
+
+        return $trips;
+    }
+
+    /**
+     * Replace the booking's safari trips with the submitted list.
+     *
+     * @param  array<int, array<string, mixed>>  $trips
+     */
+    private function syncSafariTrips(Booking $booking, array $trips): void
+    {
+        $booking->safariTrips()->delete();
+
+        if ($trips !== []) {
+            $booking->safariTrips()->createMany($trips);
+        }
+
+        $booking->unsetRelation('safariTrips');
     }
 
     /**

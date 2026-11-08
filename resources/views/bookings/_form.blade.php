@@ -7,6 +7,20 @@
     $savedInclusions = collect(old('inclusions', $booking->inclusions ?? []))->map(fn ($item) => trim((string) $item))->filter()->values()->all();
     $selectedInclusions = array_values(array_intersect($inclusionOptions, $savedInclusions));
     $customInclusions = array_values(array_udiff($savedInclusions, $inclusionOptions, 'strcasecmp'));
+
+    // Safari trips (one row per tour/day): the submitted rows after a validation error, else the saved ones.
+    $tripRows = old('trips') ?? (isset($booking)
+        ? $booking->safariTrips->map(fn ($trip) => [
+            'safari_date' => $trip->safari_date->toDateString(),
+            'tour_name' => $trip->tour_name,
+            'pickup_time' => $trip->pickup_time_short,
+            'pax_count' => $trip->pax_count,
+            'notes' => $trip->notes,
+        ])->all()
+        : []);
+    $tourOptions = collect(["Baker's Bend", "Devil's Staircase", 'Yala Morning Safari', 'Yala Afternoon Safari', 'Yala Full Day Safari'])
+        ->merge(\App\Models\BookingSafariTrip::query()->select('tour_name')->distinct()->orderBy('tour_name')->limit(50)->pluck('tour_name'))
+        ->unique()->values()->all();
 @endphp
 <div
   class="row g-3"
@@ -21,6 +35,8 @@
       options: @js($inclusionOptions),
       selected: @js($selectedInclusions),
       customs: @js($customInclusions),
+      trips: @js($tripRows),
+      tourOptions: @js($tourOptions),
   })"
 >
   @if ($globalSettings->is_safari_enabled)
@@ -111,44 +127,67 @@
     @error('check_out')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror
   </div>
 
+  {{-- Safari trips: one card per tour, each with its own date, package, pickup time and pax. --}}
   <template x-if="bookingType !== 'accommodation_only'">
-    <div class="col-12"><hr><h3 class="h6 mb-0"><i class="bi bi-compass"></i> Safari Details</h3></div>
+    <div class="col-12">
+      <hr>
+      <h3 class="h6 mb-1"><i class="bi bi-compass"></i> Safari Trips</h3>
+      <p class="text-muted small mb-3">Add one trip per tour. A multi-night guest can have a different safari on each day - every date appears on the calendar.</p>
+
+      <div class="trip-list">
+        <template x-for="(trip, index) in trips" :key="trip.key">
+          <div class="trip-card">
+            <div class="trip-card-head">
+              <strong><i class="bi bi-signpost-split"></i> Safari trip <span x-text="index + 1"></span></strong>
+              <button type="button" class="trip-remove" @click="removeTrip(index)" x-show="trips.length > 1" aria-label="Remove this safari trip"><i class="bi bi-trash3"></i> Remove</button>
+            </div>
+            <div class="row g-2">
+              <div class="col-md-3 col-6">
+                <label class="form-label small">Date</label>
+                <input class="form-control" type="date" :name="`trips[${index}][safari_date]`" x-model="trip.safari_date" required>
+              </div>
+              <div class="col-md-5">
+                <label class="form-label small">Safari package</label>
+                <input class="form-control" type="text" :name="`trips[${index}][tour_name]`" x-model="trip.tour_name" :list="`tourOptions${index}`" placeholder="e.g. Baker's Bend" maxlength="255" required>
+                <datalist :id="`tourOptions${index}`"><template x-for="option in tourOptions" :key="option"><option :value="option"></option></template></datalist>
+              </div>
+              <div class="col-md-2 col-6">
+                <label class="form-label small">Pickup time</label>
+                <input class="form-control" type="time" :name="`trips[${index}][pickup_time]`" x-model="trip.pickup_time">
+              </div>
+              <div class="col-md-2 col-6">
+                <label class="form-label small">Pax</label>
+                <input class="form-control" type="number" min="1" max="500" step="1" inputmode="numeric" :name="`trips[${index}][pax_count]`" x-model.number="trip.pax_count" placeholder="e.g. 4" required>
+              </div>
+              <div class="col-12">
+                <label class="form-label small">Trip notes <span class="text-muted">(optional)</span></label>
+                <input class="form-control" type="text" :name="`trips[${index}][notes]`" x-model="trip.notes" maxlength="255" placeholder="e.g. Early start, guide requested">
+              </div>
+            </div>
+          </div>
+        </template>
+      </div>
+
+      <button type="button" class="btn btn-light mt-2" @click="addTrip()"><i class="bi bi-plus-lg"></i> Add Another Safari Trip</button>
+      @foreach ($errors->get('trips.*') as $messages)
+        @foreach ($messages as $message)<div class="invalid-feedback d-block">{{ $message }}</div>@endforeach
+      @endforeach
+      @error('trips')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror
+    </div>
   </template>
-  <div class="col-md-5" x-show="bookingType !== 'accommodation_only'">
-    <label class="form-label">Safari package / tour name</label>
-    <input class="form-control @error('safari_tour_name') is-invalid @enderror" name="safari_tour_name" value="{{ old('safari_tour_name', $booking->safari_tour_name ?? '') }}" placeholder="Yala Full Day Jeep Safari">
-    @error('safari_tour_name')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror
-  </div>
-  <div class="col-md-3" x-show="bookingType !== 'accommodation_only'">
-    <label class="form-label">Safari date</label>
-    <input class="form-control @error('safari_date') is-invalid @enderror" type="date" name="safari_date" value="{{ old('safari_date', optional($booking->safari_date ?? null)->toDateString()) }}">
-    @error('safari_date')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror
-  </div>
-  <div class="col-md-4" x-show="bookingType !== 'accommodation_only'">
+  <div class="col-md-6" x-show="bookingType !== 'accommodation_only'">
     <label class="form-label">Vehicle details</label>
-    <input class="form-control @error('safari_vehicle_details') is-invalid @enderror" name="safari_vehicle_details" value="{{ old('safari_vehicle_details', $booking->safari_vehicle_details ?? '') }}" placeholder="Jeep #3 — Driver: Sunil">
+    <input class="form-control @error('safari_vehicle_details') is-invalid @enderror" name="safari_vehicle_details" value="{{ old('safari_vehicle_details', $booking->safari_vehicle_details ?? '') }}" placeholder="Jeep #3 - Driver: Sunil">
     @error('safari_vehicle_details')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror
   </div>
-
-  {{-- Safari-only trip logistics --}}
-  <template x-if="bookingType === 'safari_only' || bookingType === 'full_package'">
-    <div class="col-12"><hr><h3 class="h6 mb-0"><i class="bi bi-geo-alt"></i> <span x-text="bookingType === 'safari_only' ? 'Safari Trip Details' : 'Package Trip Details'"></span></h3></div>
-  </template>
   <div class="col-md-6" x-show="bookingType === 'safari_only'">
     <label class="form-label">Pickup location</label>
     <input class="form-control @error('pickup_location') is-invalid @enderror" name="pickup_location" value="{{ old('pickup_location', $booking->pickup_location ?? '') }}" placeholder="e.g. Star Moon Cabana, Kalupahana" maxlength="255">
     @error('pickup_location')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror
   </div>
-  <div class="col-md-3 col-6" x-show="bookingType === 'safari_only' || bookingType === 'full_package'">
-    <label class="form-label">Pickup time</label>
-    <input class="form-control @error('pickup_time') is-invalid @enderror" type="time" name="pickup_time" value="{{ old('pickup_time', $booking->pickup_time_short ?? '') }}">
-    @error('pickup_time')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror
-  </div>
-  <div class="col-md-3 col-6" x-show="bookingType === 'safari_only' || bookingType === 'full_package'">
-    <label class="form-label">Group size (pax)</label>
-    <input class="form-control @error('group_pax_size') is-invalid @enderror" type="number" min="1" max="500" step="1" inputmode="numeric" name="group_pax_size" value="{{ old('group_pax_size', $booking->group_pax_size ?? '') }}" placeholder="e.g. 4" :required="bookingType === 'safari_only' || bookingType === 'full_package'">
-    @error('group_pax_size')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror
-  </div>
+  <template x-if="bookingType === 'safari_only'">
+    <div class="col-12"><hr><h3 class="h6 mb-0"><i class="bi bi-plus-circle"></i> Safari Add-ons</h3></div>
+  </template>
   <div class="col-md-6" x-show="bookingType === 'safari_only'">
     <div class="form-check form-switch">
       <input class="form-check-input" type="checkbox" role="switch" id="includeLunch" name="include_lunch" value="1" x-model="lunch">
@@ -251,6 +290,37 @@
             selected: config.selected || [],
             customs: config.customs || [],
             customInput: '',
+            trips: [],
+            tourOptions: config.tourOptions || [],
+            nextTripKey: 0,
+            init() {
+                this.trips = (config.trips || []).map((trip) => ({ key: ++this.nextTripKey, safari_date: '', tour_name: '', pickup_time: '', pax_count: '', notes: '', ...trip }));
+                if (this.bookingType !== 'accommodation_only' && this.trips.length === 0) this.addTrip();
+                // Switching to a safari type with no trips yet starts you with one empty trip.
+                this.$watch('bookingType', (type) => {
+                    if (type !== 'accommodation_only' && this.trips.length === 0) this.addTrip();
+                });
+            },
+            addTrip() {
+                const last = this.trips[this.trips.length - 1];
+                this.trips.push({
+                    key: ++this.nextTripKey,
+                    // A new trip defaults to the day after the previous one, with the same pickup time and group size.
+                    safari_date: last ? this.nextDay(last.safari_date) : '',
+                    tour_name: '',
+                    pickup_time: last ? last.pickup_time : '',
+                    pax_count: last ? last.pax_count : '',
+                    notes: '',
+                });
+            },
+            removeTrip(index) {
+                if (this.trips.length > 1) this.trips.splice(index, 1);
+            },
+            nextDay(iso) {
+                if (!iso) return '';
+                const [y, m, d] = iso.split('-').map(Number);
+                return new Date(Date.UTC(y, m - 1, d + 1)).toISOString().slice(0, 10);
+            },
             // Collapsed unless the booking already has inclusions (or the form is redisplayed with some).
             showIncl: (config.selected || []).length + (config.customs || []).length > 0,
             addCustom() {

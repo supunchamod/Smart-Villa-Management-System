@@ -25,7 +25,7 @@
       <h2 class="vc-title">Villa Bookings &amp; Events Calendar</h2>
       <p>Use month, week, day, and list views with working previous, next, and today controls.</p>
     </div>
-    <div class="calendar-legend"><span><i class="event-amber"></i> Pending</span><span><i class="event-blue"></i> Confirmed</span><span><i class="event-green"></i> Checked out</span><span><i class="event-red"></i> Cancelled</span></div>
+    <div class="calendar-legend"><span><i class="event-amber"></i> Pending</span><span><i class="event-blue"></i> Confirmed</span><span><i class="event-green"></i> Checked out</span><span><i class="event-red"></i> Cancelled</span><span><i class="event-teal"></i> Safari trip</span></div>
   </div>
  <div class="row g-4 mt-1">
     <!-- Calendar Component (Left - 9 Columns) -->
@@ -137,17 +137,8 @@
                 <template x-if="b.guests">
                   <div class="bd-field"><dt><i class="bi bi-people"></i>Guests</dt><dd x-text="b.guests"></dd></div>
                 </template>
-                <template x-if="b.safari">
-                  <div class="bd-field"><dt><i class="bi bi-calendar-event"></i>Safari date</dt><dd x-text="b.safari.date"></dd></div>
-                </template>
                 <template x-if="b.safari && b.safari.pickup_location">
                   <div class="bd-field bd-field-wide"><dt><i class="bi bi-geo-alt"></i>Pickup location</dt><dd x-text="b.safari.pickup_location"></dd></div>
-                </template>
-                <template x-if="b.safari && b.safari.pickup_time">
-                  <div class="bd-field"><dt><i class="bi bi-clock"></i>Pickup time</dt><dd x-text="b.safari.pickup_time"></dd></div>
-                </template>
-                <template x-if="b.safari && b.safari.group_pax">
-                  <div class="bd-field"><dt><i class="bi bi-people"></i>Group size</dt><dd x-text="b.safari.group_pax + ' pax'"></dd></div>
                 </template>
                 <template x-if="b.safari && b.safari.only">
                   <div class="bd-field bd-field-wide"><dt><i class="bi bi-check2-square"></i>Inclusions</dt><dd>
@@ -159,6 +150,21 @@
                   <div class="bd-field bd-field-wide"><dt><i class="bi bi-truck"></i>Vehicle</dt><dd x-text="b.safari.vehicle"></dd></div>
                 </template>
               </dl>
+            </div>
+
+            <div class="bd-group" x-show="b.trips && b.trips.length">
+              <h3><span x-text="b.trips.length > 1 ? 'Safari trips (' + b.trips.length + ')' : 'Safari trip'"></span></h3>
+              <ul class="trip-list-view">
+                <template x-for="trip in b.trips" :key="trip.id">
+                  <li :class="{ 'is-selected': b.selected_trip && b.selected_trip.id === trip.id }">
+                    <div class="trip-date"><i class="bi bi-calendar-event"></i> <span x-text="trip.date"></span></div>
+                    <div class="trip-main"><strong x-text="trip.tour"></strong>
+                      <small><span x-show="trip.pickup_time"><i class="bi bi-clock"></i> Pickup <span x-text="trip.pickup_time"></span></span> <span><i class="bi bi-people"></i> <span x-text="trip.pax"></span> pax</span></small>
+                      <small x-show="trip.notes" x-text="trip.notes"></small>
+                    </div>
+                  </li>
+                </template>
+              </ul>
             </div>
 
             <div class="bd-group" x-show="b.inclusions && b.inclusions.length">
@@ -259,11 +265,9 @@
                       + (b.board ? `<div class="vb-muted">Board: ${esc(b.board)}</div>` : '')
                       + (b.guests ? `<div class="vb-muted">${esc(b.guests)}</div>` : '')
                     : '';
-                const safari = b.safari
-                    ? `<div class="vb-strong">${esc(b.safari.tour)}</div><div class="vb-muted">${esc(b.safari.date || '')}${b.safari.vehicle ? ' · ' + esc(b.safari.vehicle) : ''}</div>`
-                      + ((b.safari.pickup_location || b.safari.pickup_time) ? `<div class="vb-muted">Pickup: ${esc(b.safari.pickup_location || '')}${b.safari.pickup_time ? ' at ' + esc(b.safari.pickup_time) : ''}</div>` : '')
-                      + (b.safari.group_pax ? `<div class="vb-muted">${esc(b.safari.group_pax)} pax</div>` : '')
-
+                const safari = b.safari && b.safari.vehicle ? `<div class="vb-muted">Vehicle: ${esc(b.safari.vehicle)}</div>` : '';
+                const schedule = (b.trips && b.trips.length)
+                    ? `<div class="vb-trips"><div class="vb-label">Safari Schedule</div><ul>${b.trips.map((t) => `<li><span>${esc(t.date_short)}</span><strong>${esc(t.tour)}</strong><em>${t.pickup_time ? 'Pickup ' + esc(t.pickup_time) + ' · ' : ''}${esc(t.pax)} pax</em></li>`).join('')}</ul></div>`
                     : '';
                 const item = (name, detail, amount) => `<div class="vb-item"><div class="vb-item-main"><strong>${esc(name)}</strong>${detail ? `<small>${esc(detail)}</small>` : ''}</div><span class="vb-item-amt">${esc(amount)}</span></div>`;
                 const extras = b.extras.length
@@ -280,6 +284,7 @@
                     <div class="vb-party"><div class="vb-label">Billed to</div><div class="vb-strong">${esc(b.customer_name)}</div>${b.customer_phone ? `<div class="vb-muted">${esc(b.customer_phone)}</div>` : ''}${b.customer_email ? `<div class="vb-muted">${esc(b.customer_email)}</div>` : ''}</div>
                     <div class="vb-party"><div class="vb-label">${b.is_stay ? 'Stay details' : 'Safari details'}</div>${b.is_stay ? `<div class="vb-strong">${esc(b.room)}${b.room_type ? ` <span class="vb-muted">· ${esc(b.room_type)}</span>` : ''}</div>` : ''}${stay}${safari}</div>
                   </div>
+                  ${schedule}
                   ${(b.inclusions && b.inclusions.length) ? `<div class="vb-incl"><div class="vb-label">Includes / Services Provided</div><ul>${b.inclusions.map((i) => `<li>${esc(i)}</li>`).join('')}</ul></div>` : ''}
                   <div class="vb-items"><div class="vb-items-head"><span>Description</span><span>Amount</span></div>${item(b.room_charges_label, b.room_charges_detail, b.room_charges)}${extras}</div>
                   <div class="vb-totals">

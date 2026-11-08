@@ -68,6 +68,10 @@ class BookingDetails
             'guests' => $isStay && $guests > 0
                 ? $guests.' '.($guests === 1 ? 'guest' : 'guests')
                 : null,
+            // Every scheduled safari tour: date, package, pickup time, pax, notes.
+            'trips' => $booking->booking_type !== 'accommodation_only'
+                ? $booking->safariTrips->map(fn ($trip) => $trip->toDisplay())->values()->all()
+                : [],
             'safari' => $booking->booking_type !== 'accommodation_only' && $booking->safari_tour_name ? [
                 'tour' => $booking->safari_tour_name,
                 'date' => $booking->safari_date?->format('D, d M Y'),

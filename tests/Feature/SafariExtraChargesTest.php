@@ -30,13 +30,11 @@ class SafariExtraChargesTest extends TestCase
     {
         return array_merge([
             'booking_type' => 'safari_only',
-            'safari_tour_name' => 'Yala Full-Day Safari',
-            'safari_date' => today()->addDays(5)->toDateString(),
+            'trips' => [['safari_date' => today()->addDays(5)->toDateString(), 'tour_name' => 'Yala Full-Day Safari', 'pax_count' => 4]],
             'customer_name' => 'Supun Chamod',
             'total_amount' => 45000,
             'advance_payment' => 15000,
             'status' => 'confirmed',
-            'group_pax_size' => 4,
             'include_lunch' => '1',
             'lunch_charge' => 4500,
             'include_drone_videos' => '1',

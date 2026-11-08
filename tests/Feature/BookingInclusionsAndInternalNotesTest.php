@@ -79,9 +79,7 @@ class BookingInclusionsAndInternalNotesTest extends TestCase
         $booking = $this->createBooking([
             'booking_type' => 'safari_only',
             'room_id' => null,
-            'safari_tour_name' => 'Yala Safari',
-            'safari_date' => today()->addDays(4)->toDateString(),
-            'group_pax_size' => 3,
+            'trips' => [['safari_date' => today()->addDays(4)->toDateString(), 'tour_name' => 'Yala Safari', 'pax_count' => 3]],
             'include_lunch' => '1',
             'lunch_charge' => 4500,
             'inclusions' => ['Safari Tour', 'Lunch', 'Drone Videos'],

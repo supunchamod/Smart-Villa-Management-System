@@ -44,7 +44,7 @@ class SendBookingWhatsAppJob implements ShouldQueue
 
     public function handle(WhatsAppService $whatsapp): void
     {
-        $booking = Booking::with(['room', 'extras'])->find($this->bookingId);
+        $booking = Booking::with(['room', 'extras', 'safariTrips'])->find($this->bookingId);
 
         if (! $booking) {
             Log::error('SendBookingWhatsAppJob: booking no longer exists', ['booking_id' => $this->bookingId]);
@@ -145,6 +145,13 @@ class SendBookingWhatsAppJob implements ShouldQueue
                 $quantity = $extra->quantity > 1 ? " × {$extra->quantity}" : '';
                 $lines[] = "   • {$extra->item_name}{$quantity}: {$currency} ".number_format($extra->line_total, 2);
             }
+        }
+
+        // Every scheduled safari trip, one line each.
+        foreach ($booking->safariTrips as $trip) {
+            $lines[] = '🚙 '.$trip->safari_date->format('d M').': '.$trip->tour_name
+                .($trip->pickup_time ? ' · pickup '.$trip->pickup_time_short : '')
+                .' · '.$trip->pax_count.' pax';
         }
 
         if (count($booking->all_inclusions) > 0) {

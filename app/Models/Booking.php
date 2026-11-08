@@ -180,12 +180,21 @@ class Booking extends Model
         static::deleting(function (Booking $booking) {
             $booking->expenses()->delete();
             $booking->partnerBooking()->delete();
+            $booking->safariTrips()->delete();
         });
     }
 
     public function room(): BelongsTo
     {
         return $this->belongsTo(Room::class);
+    }
+
+    /**
+     * The safari tours scheduled for this booking, in date / time order.
+     */
+    public function safariTrips(): HasMany
+    {
+        return $this->hasMany(BookingSafariTrip::class)->orderBy('safari_date')->orderBy('pickup_time')->orderBy('id');
     }
 
     public function partnerBooking(): HasOne

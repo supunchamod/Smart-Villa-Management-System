@@ -179,6 +179,10 @@
     }
 
     .incl-box { margin-top: 18px; padding: 12px 14px; border: 1px solid #e5e7eb; border-radius: 6px; background: #fafafa; }
+    .trip-table { margin-top: 6px; }
+    .trip-table th { text-align: left; padding: 4px 6px; font-size: 10.5px; letter-spacing: .05em; text-transform: uppercase; color: #6b7280; border-bottom: 1px solid #e5e7eb; }
+    .trip-table td { padding: 5px 6px; font-size: 12.5px; color: #374151; border-bottom: 1px solid #f0f0f0; vertical-align: top; }
+    .trip-table th.text-right, .trip-table td.text-right { text-align: right; }
     .incl-table { margin-top: 4px; }
     .incl-table td { width: 50%; padding: 2px 0; font-size: 12.5px; color: #374151; }
     .section-gap { margin-top: 14px; }

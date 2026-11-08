@@ -63,19 +63,12 @@
                 @elseif ($booking->stay_hotel_name)
                     <div>Stay: {{ $booking->stay_hotel_name }}</div>
                 @endif
-                @if ($booking->booking_type !== 'accommodation_only' && $booking->safari_tour_name)
-                    <div>Safari: {{ $booking->safari_tour_name }}</div>
-                    @if ($booking->safari_date)
-                        <div>Safari Date: {{ $booking->safari_date->format('d M Y') }}</div>
-                    @endif
+                @if ($booking->booking_type !== 'accommodation_only')
                     @if ($booking->safari_vehicle_details)
                         <div>Vehicle: {{ $booking->safari_vehicle_details }}</div>
                     @endif
-                    @if ($booking->pickup_location || $booking->pickup_time)
-                        <div>Pickup: {{ $booking->pickup_location }}@if ($booking->pickup_time) at {{ $booking->pickup_time_short }}@endif</div>
-                    @endif
-                    @if ($booking->group_pax_size)
-                        <div>Group size: {{ $booking->group_pax_size }} pax</div>
+                    @if ($booking->pickup_location)
+                        <div>Pickup: {{ $booking->pickup_location }}</div>
                     @endif
                 @endif
                 @if ($booking->booking_type !== 'safari_only')
@@ -88,6 +81,28 @@
             </td>
         </tr>
     </table>
+
+    {{-- Safari schedule: every trip with its date, package, pickup time and group size. --}}
+    @if ($booking->booking_type !== 'accommodation_only' && $booking->safariTrips->isNotEmpty())
+        <div class="incl-box">
+            <div class="section-label">Safari Schedule</div>
+            <table class="trip-table">
+                <thead>
+                    <tr><th>Date</th><th>Safari</th><th>Pickup</th><th class="text-right">Pax</th></tr>
+                </thead>
+                <tbody>
+                    @foreach ($booking->safariTrips as $trip)
+                        <tr>
+                            <td>{{ $trip->safari_date->format('D, d M Y') }}</td>
+                            <td>{{ $trip->tour_name }}@if ($trip->notes)<br><span class="muted">{{ $trip->notes }}</span>@endif</td>
+                            <td>{{ $trip->pickup_time ? $trip->pickup_time_short : '—' }}</td>
+                            <td class="text-right">{{ $trip->pax_count }}</td>
+                        </tr>
+                    @endforeach
+                </tbody>
+            </table>
+        </div>
+    @endif
 
     {{-- Guest-facing: what the booking includes. (Internal staff notes are deliberately never printed here.) --}}
     @if (count($booking->all_inclusions) > 0)

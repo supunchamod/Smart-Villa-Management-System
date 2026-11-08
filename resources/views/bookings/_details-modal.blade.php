@@ -93,14 +93,25 @@
               @endif
               @if ($isStay && $booking->board_type_label)<div class="vb-muted">Board: {{ $booking->board_type_label }}</div>@endif
               @if ($isStay && $guests > 0)<div class="vb-muted">{{ $guests }} {{ \Illuminate\Support\Str::plural('guest', $guests) }}</div>@endif
-              @if ($hasSafari && $booking->safari_tour_name)
-                <div class="vb-strong">{{ $booking->safari_tour_name }}</div>
-                <div class="vb-muted">{{ optional($booking->safari_date)->format('d M Y') }}@if ($booking->safari_vehicle_details) · {{ $booking->safari_vehicle_details }}@endif</div>
-                @if ($booking->pickup_location || $booking->pickup_time)<div class="vb-muted">Pickup: {{ $booking->pickup_location }}@if ($booking->pickup_time) at {{ $booking->pickup_time_short }}@endif</div>@endif
-                @if ($booking->group_pax_size)<div class="vb-muted">{{ $booking->group_pax_size }} pax</div>@endif
+              @if ($hasSafari && $booking->safari_vehicle_details)
+                <div class="vb-muted">Vehicle: {{ $booking->safari_vehicle_details }}</div>
+              @endif
+              @if ($hasSafari && $booking->pickup_location)
+                <div class="vb-muted">Pickup: {{ $booking->pickup_location }}</div>
               @endif
             </div>
           </div>
+
+          @if ($hasSafari && $booking->safariTrips->isNotEmpty())
+            <div class="vb-trips">
+              <div class="vb-label">Safari Schedule</div>
+              <ul>
+                @foreach ($booking->safariTrips as $trip)
+                  <li><span>{{ $trip->safari_date->format('d M Y') }}</span><strong>{{ $trip->tour_name }}</strong><em>@if ($trip->pickup_time)Pickup {{ $trip->pickup_time_short }} · @endif{{ $trip->pax_count }} pax</em></li>
+                @endforeach
+              </ul>
+            </div>
+          @endif
 
           @if (count($booking->all_inclusions) > 0)
             <div class="vb-incl">

@@ -34,10 +34,7 @@ class FullPackageBookingTest extends TestCase
             'stay_hotel_name' => 'Cinnamon Wild, Yala',
             'check_in' => today()->addDays(3)->toDateString(),
             'check_out' => today()->addDays(5)->toDateString(),
-            'safari_tour_name' => 'Yala Full Day Safari',
-            'safari_date' => today()->addDays(4)->toDateString(),
-            'pickup_time' => '05:30',
-            'group_pax_size' => 4,
+            'trips' => [['safari_date' => today()->addDays(4)->toDateString(), 'tour_name' => 'Yala Full Day Safari', 'pickup_time' => '05:30', 'pax_count' => 4]],
             'customer_name' => 'Supun Chamod',
             'total_amount' => 90000,
             'advance_payment' => 30000,
@@ -63,11 +60,11 @@ class FullPackageBookingTest extends TestCase
         $this->assertSame(60000.0, $booking->remaining_balance);
     }
 
-    public function test_the_hotel_name_and_group_size_are_required(): void
+    public function test_the_hotel_name_and_at_least_one_safari_trip_are_required(): void
     {
         $this->actingAs($this->owner)
-            ->post(route('bookings.store'), $this->payload(['stay_hotel_name' => '', 'group_pax_size' => '']))
-            ->assertSessionHasErrors(['stay_hotel_name', 'group_pax_size']);
+            ->post(route('bookings.store'), $this->payload(['stay_hotel_name' => '', 'trips' => []]))
+            ->assertSessionHasErrors(['stay_hotel_name', 'trips']);
     }
 
     public function test_a_full_package_still_needs_its_stay_dates(): void

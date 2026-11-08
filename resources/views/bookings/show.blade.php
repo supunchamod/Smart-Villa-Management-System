@@ -121,18 +121,11 @@
 
           @if ($hasSafari)
             <div class="bd-group">
-              <h3>Safari</h3>
-              <dl class="bd-fields">
-                <div class="bd-field"><dt><i class="bi bi-compass"></i>Tour</dt><dd>{{ $booking->safari_tour_name }}</dd></div>
-                <div class="bd-field"><dt><i class="bi bi-calendar-event"></i>Date</dt><dd>{{ optional($booking->safari_date)->format('D, d M Y') }}</dd></div>
+              <h3>Safari @if ($booking->safariTrips->count() > 1)<span class="text-muted">({{ $booking->safariTrips->count() }} trips)</span>@endif</h3>
+              @include('bookings._trips-list', ['trips' => $booking->safariTrips])
+              <dl class="bd-fields mt-3">
                 @if ($booking->pickup_location)
                   <div class="bd-field bd-field-wide"><dt><i class="bi bi-geo-alt"></i>Pickup location</dt><dd>{{ $booking->pickup_location }}</dd></div>
-                @endif
-                @if ($booking->pickup_time)
-                  <div class="bd-field"><dt><i class="bi bi-clock"></i>Pickup time</dt><dd>{{ $booking->pickup_time_short }}</dd></div>
-                @endif
-                @if ($booking->group_pax_size)
-                  <div class="bd-field"><dt><i class="bi bi-people"></i>Group size</dt><dd>{{ $booking->group_pax_size }} pax</dd></div>
                 @endif
                 @if ($booking->booking_type === 'safari_only')
                   <div class="bd-field bd-field-wide"><dt><i class="bi bi-check2-square"></i>Inclusions</dt><dd>
