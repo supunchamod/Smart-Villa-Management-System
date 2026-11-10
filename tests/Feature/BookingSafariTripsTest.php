@@ -143,8 +143,8 @@ class BookingSafariTripsTest extends TestCase
         // The stay plus one event per safari trip, on their own dates.
         $this->assertCount(3, $events);
 
-        $bakers = $events->firstWhere('title', "Safari: Baker's Bend — Supun Chamod");
-        $devils = $events->firstWhere('title', "Safari: Devil's Staircase — Supun Chamod");
+        $bakers = $events->firstWhere('title', "Safari: Baker's Bend");
+        $devils = $events->firstWhere('title', "Safari: Devil's Staircase");
 
         $this->assertNotNull($bakers);
         $this->assertNotNull($devils);
@@ -152,7 +152,12 @@ class BookingSafariTripsTest extends TestCase
         $this->assertSame(today()->addDays(3)->toDateString(), $devils['start']);
         $this->assertSame("Devil's Staircase", $devils['extendedProps']['selected_trip']['tour']);
         $this->assertCount(2, $devils['extendedProps']['trips']);
-        $this->assertNotSame($bakers['color'], $events->firstWhere('title', 'Cinnamon Wild, Yala — Supun Chamod')['color']);
+
+        // The stay bar is titled by its safari package(s), not the hotel or the guest.
+        $stay = $events->first(fn ($e) => isset($e['end'])); // trips are one-day events with no end
+        $this->assertSame("Safari: Baker's Bend + Devil's Staircase", $stay['title']);
+        $this->assertNotSame($bakers['color'], $stay['color']);
+        $this->assertSame([], $events->filter(fn ($e) => str_contains($e['title'], 'Cinnamon Wild') || str_contains($e['title'], 'Supun'))->all());
     }
 
     public function test_a_safari_only_booking_appears_on_the_calendar_only_through_its_trips(): void
@@ -164,7 +169,7 @@ class BookingSafariTripsTest extends TestCase
 
         $events = collect($this->actingAs($this->owner)->getJson(route('bookings.calendar'))->json());
 
-        $this->assertSame(['Safari: Yala Safari — Guest', 'Safari: Wilpattu Safari — Guest'], $events->pluck('title')->all());
+        $this->assertSame(['Safari: Yala Safari', 'Safari: Wilpattu Safari'], $events->pluck('title')->all());
         $this->assertSame([today()->addDays(4)->toDateString(), today()->addDays(6)->toDateString()], $events->pluck('start')->all());
     }
 

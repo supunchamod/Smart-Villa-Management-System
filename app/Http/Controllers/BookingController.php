@@ -595,11 +595,22 @@ class BookingController extends Controller
             $details = BookingDetails::for($booking, $settings);
             $hasTrips = $booking->safariTrips->isNotEmpty();
 
+            // Safari / package bookings are labelled by their safari package only - never the villa,
+            // cabana or stay hotel - so the grid stays focused on the excursion. (The guest, hotel and
+            // everything else are in the popup on click.)
+            $safariTitle = $booking->booking_type === 'accommodation_only'
+                ? null
+                : 'Safari: '.($hasTrips
+                    ? $booking->safariTrips->pluck('tour_name')->unique()->implode(' + ')
+                    : $booking->safari_tour_name);
+
             // The stay itself. A safari-only booking has no stay: its trips are its calendar entries.
             if (! ($booking->booking_type === 'safari_only' && $hasTrips)) {
                 $events->push([
                     'id' => $booking->id,
-                    'title' => $booking->room_label.' — '.$booking->customer_name,
+                    'title' => $safariTitle && ($hasTrips || $booking->safari_tour_name)
+                        ? $safariTitle
+                        : $booking->room_label.' — '.$booking->customer_name,
                     'start' => $booking->check_in->toDateString(),
                     'end' => $booking->check_out->toDateString(),
                     'color' => self::STATUS_COLORS[$booking->status] ?? '#5278ff',
@@ -611,7 +622,7 @@ class BookingController extends Controller
             foreach ($booking->safariTrips as $trip) {
                 $events->push([
                     'id' => $booking->id.'-trip-'.$trip->id,
-                    'title' => 'Safari: '.$trip->tour_name.' — '.$booking->customer_name,
+                    'title' => 'Safari: '.$trip->tour_name,
                     'start' => $trip->safari_date->toDateString(),
                     'allDay' => true,
                     'color' => $booking->status === 'cancelled' ? self::STATUS_COLORS['cancelled'] : self::SAFARI_COLOR,
