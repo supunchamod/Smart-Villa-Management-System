@@ -591,45 +591,55 @@ class BookingController extends Controller
 
         $events = collect();
 
-        foreach (Booking::with(['room', 'extras', 'safariTrips'])->get() as $booking) {
+        // Every event comes from a real row of the bookings table, once. (No joins are involved, but
+        // unique('id') makes that a guarantee rather than an assumption.)
+        $bookings = Booking::with(['room', 'extras', 'safariTrips'])->get()->unique('id');
+
+        foreach ($bookings as $booking) {
             $details = BookingDetails::for($booking, $settings);
-            $hasTrips = $booking->safariTrips->isNotEmpty();
 
-            // Safari / package bookings are labelled by their safari package only - never the villa,
-            // cabana or stay hotel - so the grid stays focused on the excursion. (The guest, hotel and
-            // everything else are in the popup on click.)
-            $safariTitle = $booking->booking_type === 'accommodation_only'
-                ? null
-                : ($hasTrips
-                    ? $booking->safariTrips->pluck('tour_name')->unique()->implode(' + ')
-                    : $booking->safari_tour_name);
+            // Safari-only bookings and full packages are plotted on their safari dates: ONE event per
+            // booking per date, titled by the package(s) running that day (never the hotel / cabana).
+            // Several trips on the same day merge into that one event, and identical trip rows
+            // (same date, package and pickup time) collapse. The stay itself is not drawn as a bar -
+            // it would only repeat the same booking on the same dates.
+            if ($booking->booking_type !== 'accommodation_only' && $booking->safariTrips->isNotEmpty()) {
+                $byDate = $booking->safariTrips
+                    ->unique(fn ($trip) => $trip->safari_date->toDateString().'|'.mb_strtolower(trim($trip->tour_name)).'|'.$trip->pickup_time)
+                    ->groupBy(fn ($trip) => $trip->safari_date->toDateString());
 
-            // The stay itself. A safari-only booking has no stay: its trips are its calendar entries.
-            if (! ($booking->booking_type === 'safari_only' && $hasTrips)) {
-                $events->push([
-                    'id' => $booking->id,
-                    'title' => $safariTitle
-                        ? $safariTitle
-                        : $booking->room_label.' — '.$booking->customer_name,
-                    'start' => $booking->check_in->toDateString(),
-                    'end' => $booking->check_out->toDateString(),
-                    'color' => self::STATUS_COLORS[$booking->status] ?? '#5278ff',
-                    'extendedProps' => $details,
-                ]);
+                foreach ($byDate as $date => $dayTrips) {
+                    $events->push([
+                        'id' => $booking->id.'-'.$date,
+                        'title' => $dayTrips->pluck('tour_name')->unique()->implode(' + '),
+                        'start' => $date,
+                        'allDay' => true,
+                        'color' => $booking->status === 'cancelled' ? self::STATUS_COLORS['cancelled'] : self::SAFARI_COLOR,
+                        'extendedProps' => $details + [
+                            'selected_trip' => $dayTrips->first()->toDisplay(),
+                            'selected_date' => $date,
+                        ],
+                    ]);
+                }
+
+                continue;
             }
 
-            // Every safari trip gets its own one-day event on its own date.
-            foreach ($booking->safariTrips as $trip) {
-                $events->push([
-                    'id' => $booking->id.'-trip-'.$trip->id,
-                    'title' => $trip->tour_name,
-                    'start' => $trip->safari_date->toDateString(),
-                    'allDay' => true,
-                    'color' => $booking->status === 'cancelled' ? self::STATUS_COLORS['cancelled'] : self::SAFARI_COLOR,
-                    'extendedProps' => $details + ['selected_trip' => $trip->toDisplay()],
-                ]);
-            }
+            // Accommodation stays (and any package with no trips recorded) keep their stay bar.
+            $events->push([
+                'id' => (string) $booking->id,
+                'title' => $booking->booking_type !== 'accommodation_only' && $booking->safari_tour_name
+                    ? $booking->safari_tour_name
+                    : $booking->room_label.' — '.$booking->customer_name,
+                'start' => $booking->check_in->toDateString(),
+                'end' => $booking->check_out->toDateString(),
+                'color' => self::STATUS_COLORS[$booking->status] ?? '#5278ff',
+                'extendedProps' => $details,
+            ]);
         }
+
+        // Final guard: one event per id.
+        $events = $events->unique('id');
 
         return response()->json($events->values());
     }

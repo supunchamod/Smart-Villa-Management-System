@@ -156,7 +156,7 @@
               <h3><span x-text="b.trips.length > 1 ? 'Safari trips (' + b.trips.length + ')' : 'Safari trip'"></span></h3>
               <ul class="trip-list-view">
                 <template x-for="trip in b.trips" :key="trip.id">
-                  <li :class="{ 'is-selected': b.selected_trip && b.selected_trip.id === trip.id }">
+                  <li :class="{ 'is-selected': b.selected_date ? b.selected_date === trip.date_iso : (b.selected_trip && b.selected_trip.id === trip.id) }">
                     <div class="trip-date"><i class="bi bi-calendar-event"></i> <span x-text="trip.date"></span></div>
                     <div class="trip-main"><strong x-text="trip.tour"></strong>
                       <small><span x-show="trip.pickup_time"><i class="bi bi-clock"></i> Pickup <span x-text="trip.pickup_time"></span></span> <span><i class="bi bi-people"></i> <span x-text="trip.pax"></span> pax</span></small>

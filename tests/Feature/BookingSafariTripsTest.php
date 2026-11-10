@@ -134,14 +134,14 @@ class BookingSafariTripsTest extends TestCase
         $this->assertSame(0, \App\Models\BookingSafariTrip::count());
     }
 
-    public function test_every_trip_date_is_plotted_on_the_calendar(): void
+    public function test_every_trip_date_is_plotted_on_the_calendar_once(): void
     {
         $this->createPackage();
 
         $events = collect($this->actingAs($this->owner)->getJson(route('bookings.calendar'))->assertOk()->json());
 
-        // The stay plus one event per safari trip, on their own dates.
-        $this->assertCount(3, $events);
+        // One event per safari date - and no separate stay bar repeating the booking on those dates.
+        $this->assertCount(2, $events);
 
         $bakers = $events->firstWhere('title', "Baker's Bend");
         $devils = $events->firstWhere('title', "Devil's Staircase");
@@ -151,13 +151,59 @@ class BookingSafariTripsTest extends TestCase
         $this->assertSame(today()->addDays(2)->toDateString(), $bakers['start']);
         $this->assertSame(today()->addDays(3)->toDateString(), $devils['start']);
         $this->assertSame("Devil's Staircase", $devils['extendedProps']['selected_trip']['tour']);
+        $this->assertSame(today()->addDays(3)->toDateString(), $devils['extendedProps']['selected_date']);
         $this->assertCount(2, $devils['extendedProps']['trips']);
 
-        // The stay bar is titled by its safari package(s), not the hotel or the guest.
-        $stay = $events->first(fn ($e) => isset($e['end'])); // trips are one-day events with no end
-        $this->assertSame("Baker's Bend + Devil's Staircase", $stay['title']);
-        $this->assertNotSame($bakers['color'], $stay['color']);
+        // Titled by the package only - never the hotel or the guest.
         $this->assertSame([], $events->filter(fn ($e) => str_contains($e['title'], 'Cinnamon Wild') || str_contains($e['title'], 'Supun'))->all());
+    }
+
+    public function test_a_booking_never_appears_twice_on_the_same_date(): void
+    {
+        // Two different tours on the same day plus an exact duplicate trip row.
+        $booking = $this->createPackage(['trips' => [
+            $this->trip(2, "Baker's Bend"),
+            $this->trip(2, "Devil's Staircase"),
+            $this->trip(2, "Baker's Bend"),
+            $this->trip(3, 'Yala Sunrise'),
+        ]]);
+
+        $events = collect($this->actingAs($this->owner)->getJson(route('bookings.calendar'))->assertOk()->json());
+
+        $this->assertSame($events->count(), $events->pluck('id')->unique()->count(), 'event ids must be unique');
+        $this->assertSame(
+            $events->count(),
+            $events->map(fn ($e) => $e['extendedProps']['id'].'|'.$e['start'])->unique()->count(),
+            'a booking must render once per date'
+        );
+
+        $this->assertCount(2, $events);
+        $this->assertSame("Baker's Bend + Devil's Staircase", $events->firstWhere('start', today()->addDays(2)->toDateString())['title']);
+        $this->assertSame('Yala Sunrise', $events->firstWhere('start', today()->addDays(3)->toDateString())['title']);
+        $this->assertSame($booking->id, $events->first()['extendedProps']['id']);
+    }
+
+    public function test_every_booking_is_listed_once_and_accommodation_keeps_its_stay_bar(): void
+    {
+        $room = \App\Models\Room::create(['name_or_number' => 'Cabana A', 'type' => 'Deluxe', 'price_per_night' => 15000]);
+
+        $this->actingAs($this->owner)->post(route('bookings.store'), [
+            'booking_type' => 'accommodation_only', 'room_id' => $room->id,
+            'check_in' => today()->addDays(2)->toDateString(), 'check_out' => today()->addDays(4)->toDateString(),
+            'customer_name' => 'Guest', 'total_amount' => 30000, 'advance_payment' => 0, 'status' => 'confirmed',
+        ])->assertSessionHasNoErrors();
+        $this->createPackage();
+
+        $events = collect($this->actingAs($this->owner)->getJson(route('bookings.calendar'))->assertOk()->json());
+
+        $stay = $events->first(fn ($e) => isset($e['end']));
+        $this->assertSame('Cabana A — Guest', $stay['title']);
+        $this->assertSame(today()->addDays(2)->toDateString(), $stay['start']);
+        $this->assertSame(today()->addDays(4)->toDateString(), $stay['end']);
+
+        // The stay bar plus the package's two trip dates; every id unique.
+        $this->assertCount(3, $events);
+        $this->assertSame(3, $events->pluck('id')->unique()->count());
     }
 
     public function test_a_safari_only_booking_appears_on_the_calendar_only_through_its_trips(): void

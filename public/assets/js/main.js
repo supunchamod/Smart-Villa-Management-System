@@ -755,7 +755,24 @@
           day: 'Day',
           list: 'List'
         },
-        events: eventsUrl || calendarEvents,
+        events: eventsUrl
+          ? {
+              url: eventsUrl,
+              // One event per booking per date: drop repeats (same id, or same booking + start day).
+              success: (events) => {
+                const seen = new Set();
+                return events.filter((event) => {
+                  const bookingId = event.extendedProps && event.extendedProps.id;
+                  const key = `${event.id}`;
+                  const dayKey = `${bookingId ?? event.id}|${String(event.start).slice(0, 10)}|${event.end ? String(event.end).slice(0, 10) : ''}`;
+                  if (seen.has(key) || seen.has(dayKey)) return false;
+                  seen.add(key);
+                  seen.add(dayKey);
+                  return true;
+                });
+              }
+            }
+          : calendarEvents,
         eventClick: (info) => {
           info.jsEvent.preventDefault();
           window.dispatchEvent(new CustomEvent('calendar-event-selected', {
