@@ -600,7 +600,7 @@ class BookingController extends Controller
             // everything else are in the popup on click.)
             $safariTitle = $booking->booking_type === 'accommodation_only'
                 ? null
-                : 'Safari: '.($hasTrips
+                : ($hasTrips
                     ? $booking->safariTrips->pluck('tour_name')->unique()->implode(' + ')
                     : $booking->safari_tour_name);
 
@@ -608,7 +608,7 @@ class BookingController extends Controller
             if (! ($booking->booking_type === 'safari_only' && $hasTrips)) {
                 $events->push([
                     'id' => $booking->id,
-                    'title' => $safariTitle && ($hasTrips || $booking->safari_tour_name)
+                    'title' => $safariTitle
                         ? $safariTitle
                         : $booking->room_label.' — '.$booking->customer_name,
                     'start' => $booking->check_in->toDateString(),
@@ -622,7 +622,7 @@ class BookingController extends Controller
             foreach ($booking->safariTrips as $trip) {
                 $events->push([
                     'id' => $booking->id.'-trip-'.$trip->id,
-                    'title' => 'Safari: '.$trip->tour_name,
+                    'title' => $trip->tour_name,
                     'start' => $trip->safari_date->toDateString(),
                     'allDay' => true,
                     'color' => $booking->status === 'cancelled' ? self::STATUS_COLORS['cancelled'] : self::SAFARI_COLOR,

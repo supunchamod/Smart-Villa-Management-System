@@ -143,8 +143,8 @@ class BookingSafariTripsTest extends TestCase
         // The stay plus one event per safari trip, on their own dates.
         $this->assertCount(3, $events);
 
-        $bakers = $events->firstWhere('title', "Safari: Baker's Bend");
-        $devils = $events->firstWhere('title', "Safari: Devil's Staircase");
+        $bakers = $events->firstWhere('title', "Baker's Bend");
+        $devils = $events->firstWhere('title', "Devil's Staircase");
 
         $this->assertNotNull($bakers);
         $this->assertNotNull($devils);
@@ -155,7 +155,7 @@ class BookingSafariTripsTest extends TestCase
 
         // The stay bar is titled by its safari package(s), not the hotel or the guest.
         $stay = $events->first(fn ($e) => isset($e['end'])); // trips are one-day events with no end
-        $this->assertSame("Safari: Baker's Bend + Devil's Staircase", $stay['title']);
+        $this->assertSame("Baker's Bend + Devil's Staircase", $stay['title']);
         $this->assertNotSame($bakers['color'], $stay['color']);
         $this->assertSame([], $events->filter(fn ($e) => str_contains($e['title'], 'Cinnamon Wild') || str_contains($e['title'], 'Supun'))->all());
     }
@@ -169,7 +169,7 @@ class BookingSafariTripsTest extends TestCase
 
         $events = collect($this->actingAs($this->owner)->getJson(route('bookings.calendar'))->json());
 
-        $this->assertSame(['Safari: Yala Safari', 'Safari: Wilpattu Safari'], $events->pluck('title')->all());
+        $this->assertSame(['Yala Safari', 'Wilpattu Safari'], $events->pluck('title')->all());
         $this->assertSame([today()->addDays(4)->toDateString(), today()->addDays(6)->toDateString()], $events->pluck('start')->all());
     }
 
