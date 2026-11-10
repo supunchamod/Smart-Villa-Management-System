@@ -47,22 +47,49 @@
         <div class="crm-kpi-grid">
           <div class="crm-kpi-card metric-primary"><div><span>Confirmed Bookings</span><h3>{{ $confirmedBookings }}</h3></div><i class="bi bi-journal-check bg-primary-soft"></i></div>
           <div class="crm-kpi-card metric-success"><div><span>Available Rooms</span><h3>{{ $availableRooms }}</h3></div><i class="bi bi-door-open bg-success-soft"></i></div>
+          @if ($canViewFinance)
           <div class="crm-kpi-card metric-info"><div><span>Monthly Expenses</span><h3>{{ $globalSettings->currency }} {{ number_format($monthlyExpenses, 2) }}</h3>@if ($expensesTrend !== null)<small class="text-info"><i class="bi bi-caret-{{ $expensesTrend >= 0 ? 'up' : 'down' }}-fill"></i> {{ $expensesTrend >= 0 ? '+' : '' }}{{ $expensesTrend }}%</small>@endif</div><i class="bi bi-receipt-cutoff bg-info-soft"></i></div>
           <div class="crm-kpi-card metric-warning"><div><span>Monthly Revenue</span><h3>{{ $globalSettings->currency }} {{ number_format($monthlyRevenue, 2) }}</h3>@if ($revenueTrend !== null)<small class="text-warning"><i class="bi bi-caret-{{ $revenueTrend >= 0 ? 'up' : 'down' }}-fill"></i> {{ $revenueTrend >= 0 ? '+' : '' }}{{ $revenueTrend }}%</small>@endif</div><i class="bi bi-cash-stack bg-warning-soft"></i></div>
+          @else
+            <div class="crm-kpi-card metric-info"><div><span>Check-ins Today</span><h3>{{ $checkInsToday }}</h3></div><i class="bi bi-box-arrow-in-right bg-info-soft"></i></div>
+            <div class="crm-kpi-card metric-warning"><div><span>Occupied Rooms</span><h3>{{ $occupiedRooms }} / {{ $totalRooms }}</h3></div><i class="bi bi-house-door bg-warning-soft"></i></div>
+          @endif
           <div class="crm-kpi-card metric-success"><div><span>Checked Out Today</span><h3>{{ $checkedOutToday }}</h3></div><i class="bi bi-check2-circle bg-success-soft"></i></div>
         </div>
 <div class="row g-4 mt-1">
   <div class="col-xl-8">
     <div class="panel">
-      <div class="panel-head"><div><h2>Income &amp; Expenses Overview</h2><p>Daily income and expenses for the last 7 days</p></div><div class="segmented"><button>All</button><button class="active">6M</button><button>1Y</button></div></div>
+      @if ($canViewFinance)
+        <div class="panel-head"><div><h2>Income &amp; Expenses Overview</h2><p>Daily income and expenses for the last 7 days</p></div><div class="segmented"><button>All</button><button class="active">6M</button><button>1Y</button></div></div>
+      @else
+        <div class="panel-head"><div><h2>Today's Operations</h2><p>Bookings, rooms and safari excursions at a glance</p></div></div>
+      @endif
       <div class="balance-grid">
         <div class="balance-stat"><span>Total Bookings</span><strong>{{ $totalBookings }}</strong><small>All time</small></div>
         <div class="balance-stat"><span>Confirmed Bookings</span><strong>{{ $confirmedBookings }}</strong><small>Currently confirmed</small></div>
         <div class="balance-stat"><span>Total Rooms</span><strong>{{ $totalRooms }}</strong><small>Villa inventory</small></div>
       </div>
-      <div x-data='dashboardChart(@json($chartLabels), @json($chartIncome), @json($chartExpenses))'>
-        <canvas class="chart-md" x-ref="canvas"></canvas>
+      @if ($canViewFinance)
+        <div x-data='dashboardChart(@json($chartLabels), @json($chartIncome), @json($chartExpenses))'>
+          <canvas class="chart-md" x-ref="canvas"></canvas>
+        </div>
+      @else
+        <div class="ops-trips">
+        <h3 class="ops-trips-title"><i class="bi bi-compass"></i> Active safari trips today <span>{{ $todaysSafariTrips->count() }}</span></h3>
+        @forelse ($todaysSafariTrips as $trip)
+          <div class="ops-trip">
+            <span class="ops-trip-time">{{ $trip->pickup_time ? $trip->pickup_time_short : '—' }}</span>
+            <div>
+              <strong>{{ $trip->tour_name }}</strong>
+              <small>{{ $trip->booking->customer_name }} &middot; {{ $trip->pax_count }} pax@if ($trip->booking->pickup_location) &middot; {{ $trip->booking->pickup_location }}@endif</small>
+              @if ($trip->notes)<small class="ops-trip-note">{{ $trip->notes }}</small>@endif
+            </div>
+          </div>
+        @empty
+          <p class="text-muted small mb-0">No safari trips scheduled for today.</p>
+        @endforelse
       </div>
+      @endif
     </div>
   </div>
   <div class="col-xl-4">
@@ -132,6 +159,7 @@
   </div>
 </div>
 <div class="row g-4 mt-1">
+  @if ($canViewFinance)
   <div class="col-xl-7">
     <div class="panel" x-data="{ filter: 'all' }">
       <div class="panel-head">
@@ -172,7 +200,8 @@
       </div>
     </div>
   </div>
-  <div class="col-xl-5">
+  @endif
+  <div class="col-xl-{{ $canViewFinance ? 5 : 12 }}">
     <div class="panel crm-widget team-members-widget">
       <div class="panel-head"><div><h2>Staff</h2><p>Active managers and their access</p></div><button class="btn btn-sm btn-light">30 Days</button></div>
       @forelse ($staffMembers as $member)
@@ -200,6 +229,26 @@
           <small>Welcome back</small>
           <h2>Hello, {{ $ownerFirstName }}</h2>
         </div>
+
+        @if ($todaysSafariTrips->isNotEmpty())
+          <div class="panel ops-mobile-trips">
+            <div class="ops-trips">
+        <h3 class="ops-trips-title"><i class="bi bi-compass"></i> Active safari trips today <span>{{ $todaysSafariTrips->count() }}</span></h3>
+        @forelse ($todaysSafariTrips as $trip)
+          <div class="ops-trip">
+            <span class="ops-trip-time">{{ $trip->pickup_time ? $trip->pickup_time_short : '—' }}</span>
+            <div>
+              <strong>{{ $trip->tour_name }}</strong>
+              <small>{{ $trip->booking->customer_name }} &middot; {{ $trip->pax_count }} pax@if ($trip->booking->pickup_location) &middot; {{ $trip->booking->pickup_location }}@endif</small>
+              @if ($trip->notes)<small class="ops-trip-note">{{ $trip->notes }}</small>@endif
+            </div>
+          </div>
+        @empty
+          <p class="text-muted small mb-0">No safari trips scheduled for today.</p>
+        @endforelse
+      </div>
+          </div>
+        @endif
 
         @if (config('features.landing_page_ui') && $publicVillaUrl)
           <div class="pubsite-mobile-card" x-data='publicLinkWidget(@json($publicVillaUrl))'>
@@ -317,7 +366,11 @@
                     <strong>{{ $booking->customer_name }}</strong>
                     <small>{{ $booking->room_label }}</small>
                   </div>
-                  <span class="mdash-badge partial">{{ $globalSettings->currency }} {{ number_format($booking->remaining_balance, 2) }}</span>
+                  @if ($canViewFinance)
+                    <span class="mdash-badge partial">{{ $globalSettings->currency }} {{ number_format($booking->remaining_balance, 2) }}</span>
+                  @elseif ($booking->remaining_balance > 0)
+                    <span class="mdash-badge partial">Balance due</span>
+                  @endif
                 </div>
 
                 @can('manage_bookings')

@@ -3,11 +3,13 @@
 namespace App\Http\Controllers;
 
 use App\Models\Booking;
+use App\Models\BookingSafariTrip;
 use App\Models\Room;
 use App\Models\Setting;
 use App\Models\User;
 use App\Support\ExpenseLedger;
 use App\Support\IncomeLedger;
+use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Illuminate\View\View;
 
@@ -19,8 +21,13 @@ class DashboardController extends Controller
      * upcoming check-ins, the active booking list, and a room status
      * breakdown.
      */
-    public function index(): View
+    public function index(Request $request): View
     {
+        // Money (revenue, expenses, profit, payments, balances) is only for users holding the
+        // view_finance permission - the owner always does; managers only if the owner granted it.
+        // For everyone else those figures are not even computed, so nothing financial reaches the page.
+        $canViewFinance = (bool) $request->user()?->can('view_finance');
+
         $today = today();
         $monthStart = now()->startOfMonth();
         $monthEnd = now()->endOfMonth();
@@ -45,12 +52,19 @@ class DashboardController extends Controller
             ->unique()
             ->count();
 
-        // Both general expenses and per-booking direct costs count as spending.
-        $monthlyExpenses = ExpenseLedger::total(ExpenseLedger::between($monthStart, $monthEnd));
-        $previousMonthlyExpenses = ExpenseLedger::total(ExpenseLedger::between($previousMonthStart, $previousMonthEnd));
+        $monthlyExpenses = $monthlyRevenue = $expensesTrend = $revenueTrend = null;
 
-        $monthlyRevenue = (float) IncomeLedger::between($monthStart, $monthEnd)->sum('amount');
-        $previousMonthlyRevenue = (float) IncomeLedger::between($previousMonthStart, $previousMonthEnd)->sum('amount');
+        if ($canViewFinance) {
+            // Both general expenses and per-booking direct costs count as spending.
+            $monthlyExpenses = ExpenseLedger::total(ExpenseLedger::between($monthStart, $monthEnd));
+            $previousMonthlyExpenses = ExpenseLedger::total(ExpenseLedger::between($previousMonthStart, $previousMonthEnd));
+
+            $monthlyRevenue = (float) IncomeLedger::between($monthStart, $monthEnd)->sum('amount');
+            $previousMonthlyRevenue = (float) IncomeLedger::between($previousMonthStart, $previousMonthEnd)->sum('amount');
+
+            $expensesTrend = $this->percentChange($monthlyExpenses, $previousMonthlyExpenses);
+            $revenueTrend = $this->percentChange($monthlyRevenue, $previousMonthlyRevenue);
+        }
 
         $checkedOutToday = Booking::where(function ($query) use ($today) {
             $query->whereDate('check_out', $today)
@@ -59,31 +73,42 @@ class DashboardController extends Controller
                 });
         })->count();
 
-        // Trailing 7-day income vs expenses series for the overview chart.
-        $chartStart = $today->copy()->subDays(6);
-        $incomeEvents = IncomeLedger::between($chartStart->copy()->startOfDay(), $today->copy()->endOfDay());
-        $expenseRows = ExpenseLedger::between($chartStart->copy()->startOfDay(), $today->copy()->endOfDay());
-
+        // Trailing 7-day income vs expenses series for the overview chart (finance users only).
         $chartLabels = [];
         $chartIncome = [];
         $chartExpenses = [];
-        $cursor = $chartStart->copy();
 
-        while ($cursor->lte($today)) {
-            $dayKey = $cursor->toDateString();
+        if ($canViewFinance) {
+            $chartStart = $today->copy()->subDays(6);
+            $incomeEvents = IncomeLedger::between($chartStart->copy()->startOfDay(), $today->copy()->endOfDay());
+            $expenseRows = ExpenseLedger::between($chartStart->copy()->startOfDay(), $today->copy()->endOfDay());
 
-            $chartLabels[] = $cursor->format('D');
-            $chartIncome[] = round(
-                $incomeEvents->filter(fn (array $event) => $event['date']->toDateString() === $dayKey)->sum('amount'),
-                2
-            );
-            $chartExpenses[] = round(
-                (float) $expenseRows->filter(fn (array $expense) => $expense['date']->toDateString() === $dayKey)->sum('amount'),
-                2
-            );
+            $cursor = $chartStart->copy();
 
-            $cursor->addDay();
+            while ($cursor->lte($today)) {
+                $dayKey = $cursor->toDateString();
+
+                $chartLabels[] = $cursor->format('D');
+                $chartIncome[] = round(
+                    $incomeEvents->filter(fn (array $event) => $event['date']->toDateString() === $dayKey)->sum('amount'),
+                    2
+                );
+                $chartExpenses[] = round(
+                    (float) $expenseRows->filter(fn (array $expense) => $expense['date']->toDateString() === $dayKey)->sum('amount'),
+                    2
+                );
+
+                $cursor->addDay();
+            }
         }
+
+        // Safari excursions scheduled for today (operational view for everyone).
+        $todaysSafariTrips = BookingSafariTrip::with('booking')
+            ->whereDate('safari_date', $today)
+            ->whereHas('booking', fn ($booking) => $booking->where('status', '!=', 'cancelled'))
+            ->orderByRaw('pickup_time IS NULL')
+            ->orderBy('pickup_time')
+            ->get();
 
         // Room turnover widgets only ever concern accommodation stays - a
         // safari-only booking has no room, and its safari_date (which
@@ -135,12 +160,10 @@ class DashboardController extends Controller
             ->get();
 
         // Advance payments (recorded at booking time) and final settlements
-        // (recorded at checkout) - same events IncomeLedger feeds to the
-        // Income/Profit/Reports modules, most recent first.
-        $recentPayments = IncomeLedger::events()
-            ->sortByDesc('date')
-            ->take(6)
-            ->values();
+        // (recorded at checkout), most recent first - money, so finance users only.
+        $recentPayments = $canViewFinance
+            ? IncomeLedger::events()->sortByDesc('date')->take(6)->values()
+            : collect();
 
         return view('dashboard', [
             'today' => $today,
@@ -153,10 +176,12 @@ class DashboardController extends Controller
             'availableRooms' => $availableRooms,
             'maintenanceRooms' => $maintenanceRooms,
             'occupiedRooms' => $occupiedRooms,
+            'canViewFinance' => $canViewFinance,
             'monthlyExpenses' => $monthlyExpenses,
-            'expensesTrend' => $this->percentChange($monthlyExpenses, $previousMonthlyExpenses),
+            'expensesTrend' => $expensesTrend,
             'monthlyRevenue' => $monthlyRevenue,
-            'revenueTrend' => $this->percentChange($monthlyRevenue, $previousMonthlyRevenue),
+            'revenueTrend' => $revenueTrend,
+            'todaysSafariTrips' => $todaysSafariTrips,
             'checkedOutToday' => $checkedOutToday,
             'checkInsToday' => $checkInsToday,
             'chartLabels' => $chartLabels,
