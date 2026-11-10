@@ -81,7 +81,7 @@
             <span class="ops-trip-time">{{ $trip->pickup_time ? $trip->pickup_time_short : '—' }}</span>
             <div>
               <strong>{{ $trip->tour_name }}</strong>
-              <small>{{ $trip->booking->customer_name }} &middot; {{ $trip->pax_count }} pax@if ($trip->booking->pickup_location) &middot; {{ $trip->booking->pickup_location }}@endif</small>
+              <small>{{ $trip->booking->customer_name }} &middot; {{ $trip->pax_count }} pax @if ($trip->booking->pickup_location) &middot; {{ $trip->booking->pickup_location }}@endif</small>
               @if ($trip->notes)<small class="ops-trip-note">{{ $trip->notes }}</small>@endif
             </div>
           </div>
@@ -239,7 +239,7 @@
             <span class="ops-trip-time">{{ $trip->pickup_time ? $trip->pickup_time_short : '—' }}</span>
             <div>
               <strong>{{ $trip->tour_name }}</strong>
-              <small>{{ $trip->booking->customer_name }} &middot; {{ $trip->pax_count }} pax@if ($trip->booking->pickup_location) &middot; {{ $trip->booking->pickup_location }}@endif</small>
+              <small>{{ $trip->booking->customer_name }} &middot; {{ $trip->pax_count }} pax @if ($trip->booking->pickup_location) &middot; {{ $trip->booking->pickup_location }}@endif</small>
               @if ($trip->notes)<small class="ops-trip-note">{{ $trip->notes }}</small>@endif
             </div>
           </div>
